@@ -1,191 +1,87 @@
-# RepeatTree: Repeat Customer Intelligence SaaS
+# RepeatTree: Customer Revenue Intelligence SaaS
 
-RepeatTree is a CSV-first MVP for small ecommerce merchants who sell across Shopee, TikTok Shop, Instagram, Facebook, website, and custom order sheets.
+RepeatTree is a production-grade Customer Revenue Intelligence platform for ecommerce operators. It is designed to help teams understand repeat purchase behavior, retention, LTV, channel quality, churn risk, lifecycle opportunities, and the actions that increase repeat revenue.
 
-It answers the first questions a merchant asks after importing orders:
+This is not a CSV-first MVP or a demo dashboard. CSV import remains available only as a fallback ingestion path. The production architecture is multi-tenant, database-backed, observable, billable, and built for native ecommerce integrations.
 
-- Who buys repeatedly?
-- Who is VIP?
-- Who is at risk or lost?
-- Which channels create the highest repeat revenue?
-- Where did repeat customers first buy, and where did they come back?
-- Which cohorts, RFM segments, and products deserve attention next?
-- What is total gross income, estimated VAT, and a simple net snapshot?
+## Product Direction
 
-This is not a generic CRM. It is a repeat customer intelligence dashboard.
+RepeatTree is a revenue operating system for ecommerce businesses. It must support:
 
-## Current Mode
+- organizations, workspaces, team memberships, RBAC, and audit logs
+- secure tenant isolation derived from the authenticated server session
+- subscription billing, plan limits, and usage controls
+- native integrations for Shopify, WooCommerce, Stripe, Meta Ads, Google Ads, TikTok Shop, Shopee, and Lazada
+- ingestion jobs, raw event capture, normalized orders, identity resolution, metric snapshots, cohort metrics, channel attribution, segments, recommendations, and automation events
+- churn alerts, win-back triggers, repeat purchase reminders, VIP detection, revenue anomaly alerts, and operator-grade AI insights
 
-The app is currently optimized for clean-account MVP testing.
-
-- New accounts start with an empty workspace: no demo customers, orders, imports, or revenue.
-- Imported data is saved through Supabase/Prisma when configured, with browser `localStorage` as the local fallback.
-- If Supabase environment variables are missing, protected pages stay open for local clean-workspace testing.
-- Sample CSV data is opt-in from `/imports`; it is never auto-loaded on signup.
-- No live marketplace APIs are implemented yet.
-- Scheduled CSV sync is available for merchant-provided HTTPS CSV export URLs.
-- Auth supports username/password accounts and optional Google sign-in when Supabase is configured.
-
-## Tech Stack
+## Required Stack
 
 - Next.js App Router
 - TypeScript
-- Tailwind CSS
-- Prisma schema for Postgres
-- Supabase auth scaffolding
-- Supabase Email/Password and Google OAuth sign-in
-- Recharts
-- PapaParse CSV parsing
+- Supabase Auth
+- Supabase Postgres
+- Prisma
+- Redis / Upstash
+- Inngest
+- Stripe
+- Resend
+- PostHog
+- Sentry
 
 ## Local Setup
 
 ```bash
 npm install
 cp .env.example .env.local
+npm run prisma:generate
 npm run dev
 ```
 
-Open:
+Protected product routes require Supabase configuration unless explicit local demo mode is enabled:
 
-```text
-http://localhost:3000
-http://localhost:3000/dashboard
-http://localhost:3000/analytics
-http://localhost:3000/income
-http://localhost:3000/imports
+```env
+ALLOW_LOCAL_DEMO_MODE=true
+NEXT_PUBLIC_ALLOW_LOCAL_DEMO_MODE=true
 ```
 
-## Useful Scripts
+Do not enable local demo mode in production.
+
+## Production Environment
+
+Fill `.env.local` or Vercel environment variables for:
+
+- Supabase Auth and Postgres: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `DATABASE_URL`, `DIRECT_URL`
+- Jobs and webhooks: `CRON_SECRET`, `INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY`, `INTEGRATION_WEBHOOK_SECRET`
+- Platform services: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`, `POSTHOG_KEY`, `SENTRY_DSN`
+- Stripe plans: `STRIPE_PRICE_STARTER`, `STRIPE_PRICE_GROWTH`, `STRIPE_PRICE_SCALE`
+
+## Current Architecture
+
+Core production foundations now live in:
+
+- `prisma/schema.prisma`: organizations, workspaces, memberships, billing, integrations, ingestion, identity, metrics, recommendations, automation, and audit logs
+- `src/lib/tenancy.ts`: server-derived `TenantContext`
+- `src/lib/rbac.ts`: role and permission model
+- `src/lib/server/dataset-store.ts`: database dataset persistence boundary
+- `src/inngest/*` and `src/app/api/inngest/route.ts`: background job entrypoint
+- `src/app/api/billing/stripe/route.ts`: Stripe webhook sync
+- `src/app/api/integrations/[provider]/webhook/route.ts`: native integration webhook contract
+- `src/app/admin/page.tsx`: read-only operational diagnostics
+
+## Verification
+
+Use this baseline before shipping changes:
 
 ```bash
-npm run dev              # start local dev server
-npm run lint             # run ESLint
-npm run build            # production build
-npm run prisma:generate  # generate Prisma client
-```
-
-## Environment Variables
-
-See `.env.example`.
-
-For demo mode, Supabase values can stay empty. For production auth/database work, fill:
-
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `DATABASE_URL`
-- `NEXT_PUBLIC_APP_URL`
-- `CRON_SECRET`
-
-No secrets should be committed.
-
-For username/password and Google sign-in:
-
-- Enable Email/Password in Supabase Auth.
-- Enable Google in Supabase Auth Providers.
-- Add `http://localhost:3000/auth/callback` and your deployed `/auth/callback` URL to Supabase redirect URLs.
-- Google is used only for sign-up/sign-in identity. RepeatTree does not request Gmail API scopes or read inbox data.
-
-For scheduled CSV sync:
-
-- Add `CRON_SECRET` in local/Vercel env vars.
-- Vercel Cron calls `GET /api/sync/csv` hourly.
-- The route requires `Authorization: Bearer $CRON_SECRET`.
-
-## Demo Flow
-
-1. Open `/dashboard`.
-2. Confirm the workspace is empty and click the import CTA.
-3. Open `/imports`.
-4. Click “Try sample” for Shopee, TikTok Shop, or Custom CSV.
-5. Confirm import.
-6. Return to `/dashboard` and read the top insight cards:
-   - best repeat channel
-   - top channel path
-   - remarketing revenue at risk
-7. Open `/analytics` to inspect cohorts, RFM segments, product repeat intelligence, and opportunity lists.
-8. Open `/income` to review gross income, net snapshot, VAT estimate, and channel income.
-9. Open `/income?tab=sync` to add an HTTPS CSV URL when testing auto-sync.
-10. Open `/customers`.
-11. Export Repeat, VIP, RFM, product, or At Risk customer groups.
-12. Open a customer profile to inspect merged identity and channel journey.
-
-## Testing Real Merchant CSVs
-
-Use `/imports`.
-
-Required fields:
-
-- order ID
-- customer name
-- order date
-- total amount
-
-Strongly recommended fields:
-
-- phone
-- email
-- product name
-- source channel
-
-Optional finance fields:
-
-- `tax_amount`
-- `discount_amount`
-- `shipping_amount`
-- `platform_fee_amount`
-- `refund_amount`
-
-Identity matching works best when phone or email exists. If both are missing, the MVP falls back to fuzzy customer name matching.
-
-See `docs/csv-import-guide.md` for mapping examples and common issues.
-
-## Data Model
-
-The Prisma schema is in `prisma/schema.prisma`.
-
-Core tables:
-
-- users
-- stores
-- customer_profiles
-- orders
-- order_items
-- imports
-- csv_sync_connections
-- csv_sync_runs
-
-The current UI starts from an empty workspace, then uses Supabase/Prisma or local fallback data after imports.
-
-`users` stores the Supabase user id, email, and unique lowercase username used for username-based login.
-
-## Deployment Readiness
-
-The app is Vercel-ready as a Next.js project.
-
-Before deploying a real beta:
-
-- create a Supabase project
-- enable Email/Password and Google auth providers
-- set auth redirect URLs
-- provide Vercel environment variables
-- set `CRON_SECRET` for scheduled CSV sync
-- run Prisma migration against Supabase Postgres
-- run end-to-end checks against server actions/database writes
-
-## Verification Checklist
-
-```bash
+npm run prisma:generate
+npm run health:env
+npm run typecheck
 npm run lint
+npm test
 npm run build
 ```
 
-Manual checks:
+For live database changes, use expand/backfill/contract migrations. Do not force destructive Prisma pushes against production data.
 
-- dashboard starts empty without Supabase env vars
-- sample CSV imports correctly
-- duplicate buyers merge by phone/email
-- analytics shows cohorts, RFM segments, channel quality, product repeat data, and opportunities
-- income shows gross income, net snapshot, VAT estimates, channel income, and CSV sync controls
-- customer status labels make sense
-- Repeat/VIP/At Risk exports download CSV files
-- customer detail pages show merged channels and purchase history
+Production migration and deploy verification steps live in `docs/production-migration-runbook.md`.

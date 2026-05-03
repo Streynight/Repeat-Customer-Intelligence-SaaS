@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { BarChart3, CalendarDays, CircleDollarSign, LineChart, LogOut, Menu, Settings, Upload, Users } from 'lucide-react'
+import { BarChart3, CalendarDays, CircleDollarSign, LineChart, LogOut, Menu, Settings, ShieldCheck, Upload, Users } from 'lucide-react'
 import { BrandLogo } from '@/components/brand-logo'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -16,6 +16,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { createClient } from '@/lib/supabase/client'
+import { hasSupabaseRuntimeConfig } from '@/lib/runtime-config'
 import { cn } from '@/lib/utils'
 
 const navItems = [
@@ -26,11 +27,10 @@ const navItems = [
   { href: '/imports', label: 'Imports', icon: Upload },
   { href: '/customers', label: 'Customers', icon: Users },
   { href: '/settings', label: 'Settings', icon: Settings },
+  { href: '/admin', label: 'Admin', icon: ShieldCheck },
 ]
 
-const hasSupabase =
-  Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
-  !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('example.supabase.co')
+const hasSupabase = hasSupabaseRuntimeConfig()
 
 function UserMenu() {
   const router = useRouter()
@@ -39,9 +39,14 @@ function UserMenu() {
   useEffect(() => {
     if (!hasSupabase) return
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => {
-      setEmail(data.user?.email ?? null)
-    })
+    supabase.auth
+      .getUser()
+      .then(({ data }) => {
+        setEmail(data.user?.email ?? null)
+      })
+      .catch(() => {
+        setEmail(null)
+      })
   }, [])
 
   if (!hasSupabase || !email) return null

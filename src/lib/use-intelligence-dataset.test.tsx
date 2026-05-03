@@ -1,13 +1,43 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { IntelligenceDataset } from '@/lib/types'
+import { makeDataset, makeOrder } from '@/test/fixtures'
+import type { IntelligenceDataset, OrderInput, SourceChannel } from '@/lib/types'
 
-function Probe({ useDataset }: { useDataset: () => { dataset: IntelligenceDataset; loading: boolean } }) {
+type UseDatasetResult = {
+  dataset: IntelligenceDataset
+  loading: boolean
+  importOrders: (orders: OrderInput[], fileName: string, sourceChannel: SourceChannel) => Promise<void>
+  clearDataset: () => Promise<void>
+  updateVipThreshold: (vipThreshold: number) => void
+}
+
+function Probe({ label = 'probe', useDataset }: { label?: string; useDataset: () => UseDatasetResult }) {
   const { dataset, loading } = useDataset()
 
   return (
+    <div data-testid={label}>
+      {loading ? 'loading' : 'ready'}:{dataset.customers.length}:{dataset.orders.length}:{dataset.imports.length}:{dataset.vipThreshold}
+    </div>
+  )
+}
+
+function ActionsProbe({ useDataset }: { useDataset: () => UseDatasetResult }) {
+  const { clearDataset, importOrders, updateVipThreshold } = useDataset()
+
+  return (
     <div>
-      {loading ? 'loading' : 'ready'}:{dataset.customers.length}:{dataset.orders.length}:{dataset.imports.length}
+      <button
+        type="button"
+        onClick={() => void importOrders([makeOrder({ externalOrderId: 'LOCAL-1' })], 'orders.csv', 'shopee')}
+      >
+        import
+      </button>
+      <button type="button" onClick={() => updateVipThreshold(9000)}>
+        vip
+      </button>
+      <button type="button" onClick={() => void clearDataset()}>
+        clear
+      </button>
     </div>
   )
 }
@@ -23,11 +53,12 @@ describe('useIntelligenceDataset clean workspace defaults', () => {
   it('starts local fallback workspaces empty when no saved dataset exists', async () => {
     installLocalStorageMock()
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://example.supabase.co')
+    vi.stubEnv('NEXT_PUBLIC_ALLOW_LOCAL_DEMO_MODE', 'true')
     vi.doMock('@/app/actions/dataset', () => ({
-      clearStoreDataset: vi.fn(),
+      clearCurrentDataset: vi.fn(),
       ensureUserStore: vi.fn(),
-      loadDataset: vi.fn(),
-      persistImport: vi.fn(),
+      loadCurrentDataset: vi.fn(),
+      persistCurrentImport: vi.fn(),
     }))
     vi.doMock('@/lib/supabase/client', () => ({
       createClient: vi.fn(),
@@ -37,24 +68,25 @@ describe('useIntelligenceDataset clean workspace defaults', () => {
 
     render(<Probe useDataset={useIntelligenceDataset} />)
 
-    expect(screen.getByText('ready:0:0:0')).toBeInTheDocument()
+    expect(screen.getByText('ready:0:0:0:6500')).toBeInTheDocument()
   })
 
   it('does not replace an empty Supabase store with demo data', async () => {
     installLocalStorageMock()
     const ensureUserStore = vi.fn().mockResolvedValue('store-1')
-    const loadDataset = vi.fn().mockResolvedValue({
+    const loadCurrentDataset = vi.fn().mockResolvedValue({
       customers: [],
       orders: [],
       imports: [],
     })
 
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://repeat-tree.supabase.co')
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'anon-key')
     vi.doMock('@/app/actions/dataset', () => ({
-      clearStoreDataset: vi.fn(),
+      clearCurrentDataset: vi.fn(),
       ensureUserStore,
-      loadDataset,
-      persistImport: vi.fn(),
+      loadCurrentDataset,
+      persistCurrentImport: vi.fn(),
     }))
     vi.doMock('@/lib/supabase/client', () => ({
       createClient: () => ({
@@ -68,9 +100,123 @@ describe('useIntelligenceDataset clean workspace defaults', () => {
 
     render(<Probe useDataset={useIntelligenceDataset} />)
 
-    await waitFor(() => expect(screen.getByText('ready:0:0:0')).toBeInTheDocument())
-    expect(ensureUserStore).toHaveBeenCalledWith('user-1', 'owner@store.com')
-    expect(loadDataset).toHaveBeenCalledWith('store-1')
+    await waitFor(() => expect(screen.getByText('ready:0:0:0:6500')).toBeInTheDocument())
+    expect(ensureUserStore).toHaveBeenCalledWith()
+    expect(loadCurrentDataset).toHaveBeenCalledWith()
+  })
+
+  it('loads the Supabase dataset once and reuses it for later hook instances', async () => {
+    installLocalStorageMock()
+    const ensureUserStore = vi.fn().mockResolvedValue('store-1')
+    const loadCurrentDataset = vi.fn().mockResolvedValue({
+      customers: makeDataset().customers,
+      orders: makeDataset().orders,
+      imports: [],
+    })
+
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://repeat-tree.supabase.co')
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'anon-key')
+    vi.doMock('@/app/actions/dataset', () => ({
+      clearCurrentDataset: vi.fn(),
+      ensureUserStore,
+      loadCurrentDataset,
+      persistCurrentImport: vi.fn(),
+    }))
+    vi.doMock('@/lib/supabase/client', () => ({
+      createClient: () => ({
+        auth: {
+          getUser: () => Promise.resolve({ data: { user: { id: 'user-1', email: 'owner@store.com' } } }),
+        },
+      }),
+    }))
+
+    const { useIntelligenceDataset } = await import('@/lib/use-intelligence-dataset')
+    const { rerender } = render(<Probe label="first" useDataset={useIntelligenceDataset} />)
+
+    await waitFor(() => expect(screen.getByTestId('first')).toHaveTextContent('ready:1:1:0:6500'))
+
+    rerender(
+      <>
+        <Probe label="first" useDataset={useIntelligenceDataset} />
+        <Probe label="second" useDataset={useIntelligenceDataset} />
+      </>,
+    )
+
+    expect(screen.getByTestId('second')).toHaveTextContent('ready:1:1:0:6500')
+    expect(ensureUserStore).toHaveBeenCalledTimes(1)
+    expect(loadCurrentDataset).toHaveBeenCalledTimes(1)
+  })
+
+  it('shares import, clear, and VIP updates across hook subscribers in one session', async () => {
+    installLocalStorageMock()
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://example.supabase.co')
+    vi.stubEnv('NEXT_PUBLIC_ALLOW_LOCAL_DEMO_MODE', 'true')
+    vi.doMock('@/app/actions/dataset', () => ({
+      clearCurrentDataset: vi.fn(),
+      ensureUserStore: vi.fn(),
+      loadCurrentDataset: vi.fn(),
+      persistCurrentImport: vi.fn(),
+    }))
+    vi.doMock('@/lib/supabase/client', () => ({
+      createClient: vi.fn(),
+    }))
+
+    const { useIntelligenceDataset } = await import('@/lib/use-intelligence-dataset')
+
+    render(
+      <>
+        <Probe label="first" useDataset={useIntelligenceDataset} />
+        <ActionsProbe useDataset={useIntelligenceDataset} />
+      </>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'import' }))
+    await waitFor(() => expect(screen.getByTestId('first')).toHaveTextContent('ready:1:1:1:6500'))
+
+    render(<Probe label="second" useDataset={useIntelligenceDataset} />)
+    expect(screen.getByTestId('second')).toHaveTextContent('ready:1:1:1:6500')
+
+    fireEvent.click(screen.getByRole('button', { name: 'vip' }))
+    await waitFor(() => expect(screen.getByTestId('first')).toHaveTextContent('ready:1:1:1:9000'))
+    expect(screen.getByTestId('second')).toHaveTextContent('ready:1:1:1:9000')
+
+    fireEvent.click(screen.getByRole('button', { name: 'clear' }))
+    await waitFor(() => expect(screen.getByTestId('first')).toHaveTextContent('ready:0:0:0:9000'))
+    expect(screen.getByTestId('second')).toHaveTextContent('ready:0:0:0:9000')
+  })
+
+  it('falls back to an empty local workspace when Supabase data loading fails', async () => {
+    installLocalStorageMock()
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const ensureUserStore = vi.fn().mockRejectedValue(new Error('database unavailable'))
+
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://repeat-tree.supabase.co')
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'anon-key')
+    vi.doMock('@/app/actions/dataset', () => ({
+      clearCurrentDataset: vi.fn(),
+      ensureUserStore,
+      loadCurrentDataset: vi.fn(),
+      persistCurrentImport: vi.fn(),
+    }))
+    vi.doMock('@/lib/supabase/client', () => ({
+      createClient: () => ({
+        auth: {
+          getUser: () => Promise.resolve({ data: { user: { id: 'user-1', email: 'owner@store.com' } } }),
+        },
+      }),
+    }))
+
+    const { useIntelligenceDataset } = await import('@/lib/use-intelligence-dataset')
+
+    render(<Probe useDataset={useIntelligenceDataset} />)
+
+    await waitFor(() => expect(screen.getByText('ready:0:0:0:6500')).toBeInTheDocument())
+    expect(ensureUserStore).toHaveBeenCalledWith()
+    expect(consoleError).toHaveBeenCalledWith(
+      'Failed to load production dataset.',
+      expect.any(Error),
+    )
+    consoleError.mockRestore()
   })
 })
 

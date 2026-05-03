@@ -3,7 +3,9 @@
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createAvailableUsername, normalizeUsername, validateUsername } from '@/lib/auth-users'
+import { databaseUnavailableMessage, normalizeDatabaseError } from '@/lib/database-errors'
 import { prisma } from '@/lib/prisma'
+import { hasSupabaseRuntimeConfig } from '@/lib/runtime-config'
 import { createClient } from '@/lib/supabase/server'
 
 type AuthResult = {
@@ -11,11 +13,7 @@ type AuthResult = {
 }
 
 function hasSupabaseConfig() {
-  return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
-      !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('example.supabase.co'),
-  )
+  return hasSupabaseRuntimeConfig()
 }
 
 function friendlyAuthError(message: string) {
@@ -34,7 +32,7 @@ function friendlyAuthError(message: string) {
   }
 
   if (normalized.includes('fetch') || normalized.includes('not configured')) {
-    return 'Authentication is not connected yet. You can still open a clean workspace below.'
+    return 'Authentication is not configured for this environment.'
   }
 
   return message || 'Authentication failed. Please try again.'
@@ -50,7 +48,7 @@ export async function signUpWithPassword({
   password: string
 }): Promise<AuthResult> {
   if (!hasSupabaseConfig()) {
-    return { error: 'Authentication is not connected yet. You can still open a clean workspace below.' }
+    return { error: 'Authentication is not configured for this environment.' }
   }
 
   const { username, error: usernameError } = validateUsername(rawUsername)
@@ -60,7 +58,9 @@ export async function signUpWithPassword({
   if (!email || !email.includes('@')) return { error: 'Please enter a valid email address.' }
   if (password.length < 6) return { error: 'Password must be at least 6 characters.' }
 
-  const existingUsername = await prisma.user.findUnique({ where: { username } })
+  const usernameLookup = await safeAuthRead(() => prisma.user.findUnique({ where: { username } }))
+  if (usernameLookup.error) return { error: usernameLookup.error }
+  const existingUsername = usernameLookup.data
   if (existingUsername) return { error: 'That username is already taken.' }
 
   const supabase = await createClient()
@@ -83,7 +83,11 @@ export async function signUpWithPassword({
         username,
       },
     })
-  } catch {
+  } catch (error) {
+    if (normalizeDatabaseError(error).message === databaseUnavailableMessage) {
+      return { error: databaseUnavailableMessage }
+    }
+
     return { error: 'That username or email is already connected to another account.' }
   }
 
@@ -98,7 +102,7 @@ export async function signInWithPassword({
   password: string
 }): Promise<AuthResult> {
   if (!hasSupabaseConfig()) {
-    return { error: 'Authentication is not connected yet. You can still open a clean workspace below.' }
+    return { error: 'Authentication is not configured for this environment.' }
   }
 
   const identifier = rawIdentifier.trim().toLowerCase()
@@ -107,7 +111,9 @@ export async function signInWithPassword({
   let email = identifier
   if (!identifier.includes('@')) {
     const username = normalizeUsername(identifier)
-    const user = await prisma.user.findUnique({ where: { username } })
+    const userLookup = await safeAuthRead(() => prisma.user.findUnique({ where: { username } }))
+    if (userLookup.error) return { error: userLookup.error }
+    const user = userLookup.data
     if (!user) return { error: 'Username, email, or password is incorrect.' }
     email = user.email
   }
@@ -144,18 +150,34 @@ export async function signInWithGoogle() {
 }
 
 export async function ensureAuthUserProfile(userId: string, email: string) {
-  const existing = await prisma.user.findUnique({ where: { id: userId } })
-  if (existing) {
-    await prisma.user.update({ where: { id: userId }, data: { email } })
-    return existing
-  }
+  try {
+    const existing = await prisma.user.findUnique({ where: { id: userId } })
+    if (existing) {
+      await prisma.user.update({ where: { id: userId }, data: { email } })
+      return existing
+    }
 
-  const username = await createAvailableUsername(email)
-  return prisma.user.create({
-    data: {
-      id: userId,
-      email,
-      username,
-    },
-  })
+    const username = await createAvailableUsername(email)
+    return prisma.user.create({
+      data: {
+        id: userId,
+        email,
+        username,
+      },
+    })
+  } catch (error) {
+    throw normalizeDatabaseError(error)
+  }
+}
+
+async function safeAuthRead<T>(read: () => Promise<T>) {
+  try {
+    return { data: await read(), error: null }
+  } catch (error) {
+    if (normalizeDatabaseError(error).message === databaseUnavailableMessage) {
+      return { data: null as T, error: databaseUnavailableMessage }
+    }
+
+    throw error
+  }
 }

@@ -37,7 +37,7 @@ export function SettingsClient() {
             <TreeSprout className="size-9 rounded-lg" />
             <div>
               <CardTitle>Classification rules</CardTitle>
-              <CardDescription>Simple MVP rules that keep repeat intelligence easy to explain.</CardDescription>
+              <CardDescription>Operational rules used by retention scoring, segmentation, and lifecycle automation.</CardDescription>
             </div>
           </CardHeader>
           <CardContent>
@@ -56,11 +56,11 @@ export function SettingsClient() {
             <TreeSprout className="size-9 rounded-lg" />
             <div>
               <CardTitle>Automation-ready webhook architecture</CardTitle>
-              <CardDescription>Boundaries are ready without building messaging automation yet.</CardDescription>
+              <CardDescription>Lifecycle triggers are backed by jobs, audit logs, and tenant permissions.</CardDescription>
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-sm leading-6 text-muted-foreground">Future n8n workflows can subscribe to completed imports, VIP creation, and at-risk customer exports. This MVP keeps those boundaries clean.</p>
+            <p className="text-sm leading-6 text-muted-foreground">Automation events support churn alerts, VIP detection, repeat reminders, win-back triggers, and revenue anomaly workflows.</p>
             <Button variant="outline" className="mt-5 font-black" disabled={clearing} onClick={() => void clearWorkspace()}>
               {clearing ? 'Clearing...' : 'Clear workspace data'}
             </Button>

@@ -10,31 +10,157 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  username  String   @unique
-  createdAt DateTime @default(now()) @map("created_at")
-  stores    Store[]
+  id                   String         @id @default(uuid())
+  email                String         @unique
+  username             String         @unique
+  createdAt            DateTime       @default(now()) @map("created_at")
+  createdOrganizations Organization[] @relation("OrganizationCreator")
+  memberships          Membership[]
+  invitationsSent      Invitation[]   @relation("InvitationSender")
+  auditLogs            AuditLog[]     @relation("AuditActor")
 
   @@map("users")
 }
 
+model Organization {
+  id                  String               @id @default(uuid())
+  name                String
+  slug                String               @unique
+  createdByUserId     String?              @map("created_by_user_id")
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
+  createdBy           User?                @relation("OrganizationCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  workspaces          Workspace[]
+  memberships         Membership[]
+  invitations         Invitation[]
+  auditLogs           AuditLog[]
+  billingSubscription BillingSubscription?
+
+  @@index([createdByUserId])
+  @@map("organizations")
+}
+
+model Workspace {
+  id                      String                   @id @default(uuid())
+  organizationId          String                   @map("organization_id")
+  name                    String
+  slug                    String
+  isDefault               Boolean                  @default(false) @map("is_default")
+  createdAt               DateTime                 @default(now()) @map("created_at")
+  updatedAt               DateTime                 @updatedAt @map("updated_at")
+  organization            Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  stores                  Store[]
+  integrationConnections  IntegrationConnection[]
+  ingestionJobs           IngestionJob[]
+  rawEvents               RawEvent[]
+  normalizedOrders        NormalizedOrder[]
+  customerIdentities      CustomerIdentity[]
+  customerMetricSnapshots CustomerMetricSnapshot[]
+  cohortMetrics           CohortMetric[]
+  channelAttributions     ChannelAttribution[]
+  segments                Segment[]
+  recommendations         Recommendation[]
+  automationRules         AutomationRule[]
+  automationEvents        AutomationEvent[]
+  auditLogs               AuditLog[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@map("workspaces")
+}
+
+model Membership {
+  id             String         @id @default(uuid())
+  organizationId String         @map("organization_id")
+  userId         String         @map("user_id")
+  role           MembershipRole @default(owner)
+  permissions    Permission[]
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@map("memberships")
+}
+
+model Invitation {
+  id             String         @id @default(uuid())
+  organizationId String         @map("organization_id")
+  email          String
+  role           MembershipRole @default(viewer)
+  tokenHash      String         @unique @map("token_hash")
+  invitedByUserId String?       @map("invited_by_user_id")
+  acceptedAt     DateTime?      @map("accepted_at")
+  expiresAt      DateTime       @map("expires_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy      User?          @relation("InvitationSender", fields: [invitedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, email])
+  @@map("invitations")
+}
+
+model AuditLog {
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  workspaceId    String?       @map("workspace_id")
+  actorUserId    String?       @map("actor_user_id")
+  action         String
+  resourceType   String        @map("resource_type")
+  resourceId     String?       @map("resource_id")
+  metadata       Json?
+  ipAddress      String?       @map("ip_address")
+  userAgent      String?       @map("user_agent")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workspace      Workspace?    @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  actorUser      User?         @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([workspaceId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@map("audit_logs")
+}
+
+model BillingSubscription {
+  id                   String              @id @default(uuid())
+  organizationId       String              @unique @map("organization_id")
+  stripeCustomerId     String?             @unique @map("stripe_customer_id")
+  stripeSubscriptionId String?             @unique @map("stripe_subscription_id")
+  plan                 SubscriptionPlan    @default(starter)
+  status               SubscriptionStatus  @default(trialing)
+  currentPeriodEnd     DateTime?           @map("current_period_end")
+  monthlyOrderLimit    Int                 @default(10000) @map("monthly_order_limit")
+  monthlyOrderUsage    Int                 @default(0) @map("monthly_order_usage")
+  workspaceLimit       Int                 @default(1) @map("workspace_limit")
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedAt            DateTime            @updatedAt @map("updated_at")
+  organization         Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("billing_subscriptions")
+}
+
 model Store {
   id                 String              @id @default(uuid())
-  userId             String              @map("user_id")
+  workspaceId        String?             @map("workspace_id")
+  legacyUserId       String?             @map("user_id")
   name               String
   taxCountry         String              @default("TH") @map("tax_country")
   taxLabel           String              @default("VAT") @map("tax_label")
   taxRate            Decimal             @default(0.07) @map("tax_rate") @db.Decimal(5, 4)
   taxIncluded        Boolean             @default(true) @map("tax_included")
   createdAt          DateTime            @default(now()) @map("created_at")
-  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace          Workspace?          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   customers          CustomerProfile[]
   orders             Order[]
   imports            Import[]
   csvSyncConnections CsvSyncConnection[]
   csvSyncRuns        CsvSyncRun[]
 
+  @@index([workspaceId])
+  @@index([legacyUserId])
   @@map("stores")
 }
 
@@ -57,6 +183,9 @@ model CustomerProfile {
   updatedAt      DateTime       @updatedAt @map("updated_at")
   store          Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
   orders         Order[]
+  identities     CustomerIdentity[]
+  metricSnapshots CustomerMetricSnapshot[]
+  recommendations Recommendation[]
 
   @@index([storeId, phone])
   @@index([storeId, email])
@@ -157,6 +286,238 @@ model CsvSyncRun {
   @@map("csv_sync_runs")
 }
 
+model IntegrationConnection {
+  id                String            @id @default(uuid())
+  workspaceId       String            @map("workspace_id")
+  provider          IntegrationProvider
+  status            IntegrationStatus @default(disconnected)
+  name              String
+  externalAccountId String?           @map("external_account_id")
+  credentialsRef    String?           @map("credentials_ref")
+  scopes            String[]
+  metadata          Json?
+  lastSyncAt        DateTime?         @map("last_sync_at")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  workspace         Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  ingestionJobs     IngestionJob[]
+  rawEvents         RawEvent[]
+
+  @@unique([workspaceId, provider, externalAccountId])
+  @@index([workspaceId, status])
+  @@map("integration_connections")
+}
+
+model IngestionJob {
+  id              String             @id @default(uuid())
+  workspaceId     String             @map("workspace_id")
+  connectionId    String?            @map("connection_id")
+  provider        IntegrationProvider
+  jobType         IngestionJobType    @map("job_type")
+  status          IngestionJobStatus  @default(queued)
+  idempotencyKey  String?             @unique @map("idempotency_key")
+  totalRows       Int                 @default(0) @map("total_rows")
+  processedRows   Int                 @default(0) @map("processed_rows")
+  failedRows      Int                 @default(0) @map("failed_rows")
+  errorMessage    String?             @map("error_message")
+  startedAt       DateTime?           @map("started_at")
+  finishedAt      DateTime?           @map("finished_at")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  workspace       Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  connection      IntegrationConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  rawEvents       RawEvent[]
+
+  @@index([workspaceId, status, createdAt])
+  @@map("ingestion_jobs")
+}
+
+model RawEvent {
+  id             String            @id @default(uuid())
+  workspaceId    String            @map("workspace_id")
+  connectionId   String?           @map("connection_id")
+  ingestionJobId String?           @map("ingestion_job_id")
+  provider       IntegrationProvider
+  externalId     String?           @map("external_id")
+  eventType      String            @map("event_type")
+  dedupeKey      String?           @map("dedupe_key")
+  occurredAt     DateTime?         @map("occurred_at")
+  payload        Json
+  status         RawEventStatus    @default(received)
+  errorMessage   String?           @map("error_message")
+  processedAt    DateTime?         @map("processed_at")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  workspace      Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  connection     IntegrationConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  ingestionJob   IngestionJob?     @relation(fields: [ingestionJobId], references: [id], onDelete: SetNull)
+
+  @@unique([workspaceId, provider, dedupeKey])
+  @@index([workspaceId, status, createdAt])
+  @@map("raw_events")
+}
+
+model NormalizedOrder {
+  id                 String              @id @default(uuid())
+  workspaceId        String              @map("workspace_id")
+  storeId            String?             @map("store_id")
+  provider           IntegrationProvider
+  externalOrderId    String              @map("external_order_id")
+  externalCustomerId String?             @map("external_customer_id")
+  orderDate          DateTime            @map("order_date")
+  currency           String              @default("THB")
+  subtotalAmount     Decimal             @default(0) @map("subtotal_amount") @db.Decimal(12, 2)
+  totalAmount        Decimal             @map("total_amount") @db.Decimal(12, 2)
+  rawPayload         Json?               @map("raw_payload")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  workspace          Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, provider, externalOrderId])
+  @@index([workspaceId, orderDate])
+  @@map("normalized_orders")
+}
+
+model CustomerIdentity {
+  id                String               @id @default(uuid())
+  workspaceId       String               @map("workspace_id")
+  customerProfileId String               @map("customer_profile_id")
+  type              CustomerIdentityType
+  valueHash         String               @map("value_hash")
+  rawValue          String?              @map("raw_value")
+  sourceChannel     SourceChannel?       @map("source_channel")
+  confidence        Decimal              @default(1) @db.Decimal(4, 3)
+  verifiedAt        DateTime?            @map("verified_at")
+  createdAt         DateTime             @default(now()) @map("created_at")
+  workspace         Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  customerProfile   CustomerProfile      @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, type, valueHash])
+  @@index([customerProfileId])
+  @@map("customer_identities")
+}
+
+model CustomerMetricSnapshot {
+  id                    String          @id @default(uuid())
+  workspaceId           String          @map("workspace_id")
+  customerProfileId     String          @map("customer_profile_id")
+  snapshotDate          DateTime        @map("snapshot_date")
+  totalOrders           Int             @default(0) @map("total_orders")
+  lifetimeValue         Decimal         @default(0) @map("lifetime_value") @db.Decimal(12, 2)
+  predictedLifetimeValue Decimal        @default(0) @map("predicted_lifetime_value") @db.Decimal(12, 2)
+  churnRiskScore        Decimal         @default(0) @map("churn_risk_score") @db.Decimal(5, 4)
+  repeatProbability     Decimal         @default(0) @map("repeat_probability") @db.Decimal(5, 4)
+  segmentLabel          String?         @map("segment_label")
+  metrics               Json?
+  createdAt             DateTime        @default(now()) @map("created_at")
+  workspace             Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  customerProfile       CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, customerProfileId, snapshotDate])
+  @@index([workspaceId, snapshotDate])
+  @@map("customer_metric_snapshots")
+}
+
+model CohortMetric {
+  id              String    @id @default(uuid())
+  workspaceId     String    @map("workspace_id")
+  cohortMonth     String    @map("cohort_month")
+  monthOffset     Int       @map("month_offset")
+  activeCustomers Int       @default(0) @map("active_customers")
+  revenue         Decimal   @default(0) @db.Decimal(12, 2)
+  retentionRate   Decimal   @default(0) @map("retention_rate") @db.Decimal(5, 4)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, cohortMonth, monthOffset])
+  @@index([workspaceId, cohortMonth])
+  @@map("cohort_metrics")
+}
+
+model ChannelAttribution {
+  id                String             @id @default(uuid())
+  workspaceId       String             @map("workspace_id")
+  sourceChannel     SourceChannel      @map("source_channel")
+  model             AttributionModel   @default(firstTouch)
+  firstTouchRevenue Decimal            @default(0) @map("first_touch_revenue") @db.Decimal(12, 2)
+  repeatRevenue     Decimal            @default(0) @map("repeat_revenue") @db.Decimal(12, 2)
+  lifetimeValue     Decimal            @default(0) @map("lifetime_value") @db.Decimal(12, 2)
+  customerCount     Int                @default(0) @map("customer_count")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  workspace         Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, sourceChannel, model])
+  @@map("channel_attributions")
+}
+
+model Segment {
+  id            String       @id @default(uuid())
+  workspaceId   String       @map("workspace_id")
+  name          String
+  type          SegmentType
+  rules         Json
+  customerCount Int          @default(0) @map("customer_count")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  workspace     Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, name])
+  @@map("segments")
+}
+
+model Recommendation {
+  id                String                 @id @default(uuid())
+  workspaceId       String                 @map("workspace_id")
+  customerProfileId String?                @map("customer_profile_id")
+  type              RecommendationType
+  priority          RecommendationPriority @default(medium)
+  status            RecommendationStatus   @default(open)
+  source            RecommendationSource   @default(rule)
+  title             String
+  detail            String
+  estimatedValue    Decimal                @default(0) @map("estimated_value") @db.Decimal(12, 2)
+  evidence          Json?
+  createdAt         DateTime               @default(now()) @map("created_at")
+  resolvedAt        DateTime?              @map("resolved_at")
+  workspace         Workspace              @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  customerProfile   CustomerProfile?       @relation(fields: [customerProfileId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, status, priority])
+  @@map("recommendations")
+}
+
+model AutomationRule {
+  id             String           @id @default(uuid())
+  workspaceId    String           @map("workspace_id")
+  type           AutomationType
+  name           String
+  enabled        Boolean          @default(true)
+  triggerConfig  Json             @map("trigger_config")
+  actionConfig   Json             @map("action_config")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+  workspace      Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  events         AutomationEvent[]
+
+  @@index([workspaceId, enabled])
+  @@map("automation_rules")
+}
+
+model AutomationEvent {
+  id             String                @id @default(uuid())
+  workspaceId    String                @map("workspace_id")
+  automationRuleId String?             @map("automation_rule_id")
+  customerProfileId String?            @map("customer_profile_id")
+  type           AutomationType
+  status         AutomationEventStatus @default(queued)
+  payload        Json
+  errorMessage   String?               @map("error_message")
+  createdAt      DateTime              @default(now()) @map("created_at")
+  processedAt    DateTime?             @map("processed_at")
+  workspace      Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  automationRule AutomationRule?       @relation(fields: [automationRuleId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, status, createdAt])
+  @@map("automation_events")
+}
+
 enum SourceChannel {
   shopee
   tiktok
@@ -185,4 +546,145 @@ enum CsvSyncStatus {
   success
   failed
   skipped
+}
+
+enum MembershipRole {
+  owner
+  admin
+  analyst
+  billing
+  viewer
+}
+
+enum Permission {
+  manageOrganization
+  manageMembers
+  manageBilling
+  manageIntegrations
+  manageWorkspace
+  manageImports
+  manageAutomations
+  readAnalytics
+  viewAdmin
+}
+
+enum SubscriptionPlan {
+  starter
+  growth
+  scale
+  enterprise
+}
+
+enum SubscriptionStatus {
+  trialing
+  active
+  past_due
+  canceled
+  incomplete
+}
+
+enum IntegrationProvider {
+  shopify
+  woocommerce
+  stripe
+  meta_ads
+  google_ads
+  tiktok_shop
+  shopee
+  lazada
+  csv
+}
+
+enum IntegrationStatus {
+  disconnected
+  connected
+  action_required
+  failed
+}
+
+enum IngestionJobType {
+  fullSync
+  incrementalSync
+  webhookImport
+  csvImport
+  metricRecompute
+}
+
+enum IngestionJobStatus {
+  queued
+  running
+  succeeded
+  failed
+  canceled
+}
+
+enum RawEventStatus {
+  received
+  normalized
+  failed
+  skipped
+}
+
+enum CustomerIdentityType {
+  email
+  phone
+  externalCustomerId
+  platformId
+  lineId
+  fuzzyName
+}
+
+enum AttributionModel {
+  firstTouch
+  lastTouch
+  linear
+}
+
+enum SegmentType {
+  rfm
+  lifecycle
+  revenue
+  custom
+}
+
+enum RecommendationType {
+  churnRisk
+  winBack
+  secondPurchase
+  vipProtect
+  crossSell
+  anomaly
+}
+
+enum RecommendationPriority {
+  high
+  medium
+  low
+}
+
+enum RecommendationStatus {
+  open
+  accepted
+  dismissed
+  completed
+}
+
+enum RecommendationSource {
+  rule
+  ai
+}
+
+enum AutomationType {
+  churnAlert
+  winBack
+  repeatReminder
+  vipDetected
+  revenueAnomaly
+}
+
+enum AutomationEventStatus {
+  queued
+  sent
+  skipped
+  failed
 }
