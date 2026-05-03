@@ -23,7 +23,7 @@ import {
 } from '@/lib/services/customer-filters'
 import { downloadCsv, exportCustomersCsv } from '@/lib/services/export'
 import { rfmSegments, type RfmSegment } from '@/lib/services/retention-analytics'
-import { useIntelligenceDataset } from '@/lib/use-intelligence-dataset'
+import { useIntelligenceDataset } from '@/components/hooks/use-intelligence-dataset'
 import { channelLabels, sourceChannels, type CustomerStatus, type SourceChannel } from '@/lib/types'
 import { money } from '@/lib/utils'
 

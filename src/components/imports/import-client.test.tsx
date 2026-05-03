@@ -8,7 +8,7 @@ import { makeDataset } from '@/test/fixtures'
 const importOrders = vi.fn()
 let mockDataset = makeDataset()
 
-vi.mock('@/lib/use-intelligence-dataset', () => ({
+vi.mock('@/components/hooks/use-intelligence-dataset', () => ({
   useIntelligenceDataset: () => ({
     dataset: mockDataset,
     importOrders,

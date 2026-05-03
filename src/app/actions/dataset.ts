@@ -1,7 +1,9 @@
 'use server'
 
 import { normalizeDatabaseError } from '@/lib/database-errors'
-import { clearDatasetForStore, loadDatasetForStore, persistImportForStore } from '@/lib/server/dataset-store'
+import { captureOperationalError, recordTenantEvent } from '@/lib/observability'
+import { clearDatasetForStore, loadDatasetForStore } from '@/lib/server/dataset-store'
+import { importOrdersForTenant, type ImportOrdersCommand } from '@/lib/services/dataset-import'
 import { requireTenantContext, writeAuditLog } from '@/lib/tenancy'
 import type { IntelligenceDataset } from '@/lib/types'
 
@@ -23,21 +25,36 @@ export async function loadCurrentDataset(): Promise<Omit<IntelligenceDataset, 'v
   }
 }
 
-export async function persistCurrentImport(dataset: IntelligenceDataset): Promise<void> {
+export async function importCurrentOrders(command: ImportOrdersCommand): Promise<Omit<IntelligenceDataset, 'vipThreshold'>> {
+  let context: Awaited<ReturnType<typeof requireTenantContext>> | null = null
+
   try {
-    const context = await requireTenantContext({ permission: 'manageImports' })
-    await persistImportForStore(context.storeId, dataset)
+    context = await requireTenantContext({ permission: 'manageImports' })
+    const dataset = await importOrdersForTenant(context, command)
     await writeAuditLog(context, {
       action: 'dataset.import.persisted',
       resourceType: 'store',
       resourceId: context.storeId,
       metadata: {
+        fileName: command.fileName,
+        sourceChannel: command.sourceChannel,
+        submittedRows: command.orders.length,
         customers: dataset.customers.length,
         orders: dataset.orders.length,
         imports: dataset.imports.length,
       },
     })
+    return dataset
   } catch (error) {
+    captureOperationalError(error, {
+      operation: 'dataset.import',
+      tenant: context ?? undefined,
+      properties: {
+        fileName: command.fileName,
+        sourceChannel: command.sourceChannel,
+        submittedRows: Array.isArray(command.orders) ? command.orders.length : 0,
+      },
+    })
     throw normalizeDatabaseError(error)
   }
 }
@@ -51,7 +68,13 @@ export async function clearCurrentDataset(): Promise<void> {
       resourceType: 'store',
       resourceId: context.storeId,
     })
+    recordTenantEvent({
+      event: 'dataset_cleared',
+      tenant: context,
+      properties: { storeId: context.storeId },
+    })
   } catch (error) {
+    captureOperationalError(error, { operation: 'dataset.clear' })
     throw normalizeDatabaseError(error)
   }
 }

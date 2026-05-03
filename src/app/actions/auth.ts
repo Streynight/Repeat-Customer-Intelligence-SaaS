@@ -2,7 +2,7 @@
 
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { createAvailableUsername, normalizeUsername, validateUsername } from '@/lib/auth-users'
+import { normalizeUsername, validateUsername } from '@/lib/auth-users'
 import { databaseUnavailableMessage, normalizeDatabaseError } from '@/lib/database-errors'
 import { prisma } from '@/lib/prisma'
 import { hasSupabaseRuntimeConfig } from '@/lib/runtime-config'
@@ -148,28 +148,6 @@ export async function signInWithGoogle() {
 
   redirect(data.url)
 }
-
-export async function ensureAuthUserProfile(userId: string, email: string) {
-  try {
-    const existing = await prisma.user.findUnique({ where: { id: userId } })
-    if (existing) {
-      await prisma.user.update({ where: { id: userId }, data: { email } })
-      return existing
-    }
-
-    const username = await createAvailableUsername(email)
-    return prisma.user.create({
-      data: {
-        id: userId,
-        email,
-        username,
-      },
-    })
-  } catch (error) {
-    throw normalizeDatabaseError(error)
-  }
-}
-
 async function safeAuthRead<T>(read: () => Promise<T>) {
   try {
     return { data: await read(), error: null }

@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TreeSprout } from '@/components/ui/tree-surfaces'
-import { useIntelligenceDataset } from '@/lib/use-intelligence-dataset'
+import { useIntelligenceDataset } from '@/components/hooks/use-intelligence-dataset'
 
 export function SettingsClient() {
   const { dataset, updateVipThreshold, clearDataset } = useIntelligenceDataset()

@@ -2,10 +2,10 @@
 
 import { prisma } from '@/lib/prisma'
 import { isDatabaseConnectionError, normalizeDatabaseError } from '@/lib/database-errors'
-import { defaultVipThreshold } from '@/lib/empty-dataset'
-import { loadDatasetForStore, persistImportForStore } from '@/lib/server/dataset-store'
+import { recordTenantEvent } from '@/lib/observability'
 import { defaultFinanceSettings } from '@/lib/services/finance'
-import { connectionToSyncInput, normalizeColumnMapping, runCsvSyncFromUrl, testCsvSyncUrl } from '@/lib/services/csv-sync'
+import { normalizeColumnMapping, testCsvSyncUrl } from '@/lib/services/csv-sync'
+import { runCsvSyncConnectionForStore } from '@/lib/services/csv-sync-runner'
 import { getTenantContext, requireTenantContext, writeAuditLog } from '@/lib/tenancy'
 import type { ColumnMapping } from '@/lib/services/import-pipeline'
 import type { CsvSyncConnectionState, CsvSyncRunResult, FinanceSettings, SourceChannel } from '@/lib/types'
@@ -146,76 +146,24 @@ export async function testCsvSyncConnectionUrl(input: {
   sourceChannel: SourceChannel
   columnMapping?: Partial<ColumnMapping>
 }) {
+  await requireTenantContext({ permission: 'manageIntegrations' })
   return testCsvSyncUrl(input.csvUrl, input.sourceChannel, normalizeColumnMapping(input.columnMapping))
 }
 
 export async function runCsvSyncNow(id: string) {
   const context = await requireTenantContext({ permission: 'manageImports' })
-  return runCsvSyncConnectionById(id, context.storeId)
-}
-
-export async function runDueCsvSyncConnections() {
-  const connections = await prisma.csvSyncConnection.findMany({
-    where: { enabled: true },
-    orderBy: { createdAt: 'asc' },
-  })
-  const results: CsvSyncRunResult[] = []
-  const now = Date.now()
-
-  for (const connection of connections) {
-    const dueAt = connection.lastSyncedAt
-      ? connection.lastSyncedAt.getTime() + connection.intervalMinutes * 60_000
-      : 0
-    if (dueAt > now) continue
-
-    results.push(await runCsvSyncConnectionById(connection.id, connection.storeId))
-  }
-
-  return results
-}
-
-async function runCsvSyncConnectionById(id: string, storeId: string) {
-  const connection = await prisma.csvSyncConnection.findFirst({
-    where: { id, storeId },
-  })
-
-  if (!connection) {
-    throw new Error('CSV sync connection not found')
-  }
-
-  const dbDataset = await loadDatasetForStore(storeId)
-  const result = await runCsvSyncFromUrl(connectionToSyncInput(connectionToState(connection)), {
-    ...dbDataset,
-    vipThreshold: defaultVipThreshold,
-  })
-
-  if (result.run.status === 'success') {
-    await persistImportForStore(storeId, result.dataset)
-  }
-
-  await prisma.csvSyncRun.create({
-    data: {
-      storeId,
-      connectionId: connection.id,
-      status: result.run.status,
-      totalRows: result.run.totalRows,
-      importedRows: result.run.importedRows,
-      errorMessage: result.run.errorMessage ?? null,
-      startedAt: new Date(result.run.startedAt),
-      finishedAt: result.run.finishedAt ? new Date(result.run.finishedAt) : null,
+  const result = await runCsvSyncConnectionForStore(id, context.storeId)
+  recordTenantEvent({
+    event: 'csv_sync_manual_run_completed',
+    tenant: context,
+    properties: {
+      connectionId: id,
+      status: result.status,
+      importedRows: result.importedRows,
+      totalRows: result.totalRows,
     },
   })
-
-  await prisma.csvSyncConnection.update({
-    where: { id: connection.id },
-    data: {
-      lastSyncStatus: result.run.status,
-      lastSyncError: result.run.errorMessage ?? null,
-      lastSyncedAt: new Date(),
-    },
-  })
-
-  return result.run
+  return result
 }
 
 async function getCurrentStoreId() {

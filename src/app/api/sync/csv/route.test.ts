@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { GET, isAuthorizedCronRequest } from './route'
 
-vi.mock('@/app/actions/finance', () => ({
+vi.mock('@/lib/services/csv-sync-runner', () => ({
   runDueCsvSyncConnections: vi.fn().mockResolvedValue([
     {
       connectionId: 'sync-1',

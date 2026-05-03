@@ -19,7 +19,7 @@ import {
   type ImportDiagnostics,
 } from '@/lib/services/import-pipeline'
 import { downloadSampleCsv, sampleCsvTemplates, type SampleCsvTemplate } from '@/lib/sample-csv'
-import { useIntelligenceDataset } from '@/lib/use-intelligence-dataset'
+import { useIntelligenceDataset } from '@/components/hooks/use-intelligence-dataset'
 import { channelLabels, sourceChannels, type SourceChannel } from '@/lib/types'
 
 export function ImportClient() {

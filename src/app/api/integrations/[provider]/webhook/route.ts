@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { getIntegrationContract } from '@/lib/integrations/providers'
-import { prisma } from '@/lib/prisma'
-import { isIdempotencyKeyUsed } from '@/lib/platform/redis'
+import { captureOperationalError } from '@/lib/observability'
+import { IntegrationWebhookError, recordIntegrationWebhook } from '@/lib/services/integration-webhook'
 
 export async function POST(
   request: NextRequest,
@@ -22,39 +22,33 @@ export async function POST(
     return NextResponse.json({ ok: false, error: 'Missing connection_id.' }, { status: 400 })
   }
 
-  const connection = await prisma.integrationConnection.findUnique({
-    where: { id: connectionId },
-    select: { id: true, workspaceId: true, provider: true },
-  })
-
-  if (!connection || connection.provider !== provider) {
-    return NextResponse.json({ ok: false, error: 'Connection not found.' }, { status: 404 })
+  let payload: unknown
+  try {
+    payload = await request.json()
+  } catch {
+    return NextResponse.json({ ok: false, error: 'Webhook payload must be valid JSON.' }, { status: 400 })
   }
 
-  const payload = await request.json()
-  const externalId = readExternalId(payload)
-  const dedupeKey = `${provider}:${connection.id}:${externalId ?? crypto.randomUUID()}`
-
-  if (await isIdempotencyKeyUsed(dedupeKey)) {
-    return NextResponse.json({ ok: true, duplicate: true })
-  }
-
-  const rawEvent = await prisma.rawEvent.create({
-    data: {
-      workspaceId: connection.workspaceId,
-      connectionId: connection.id,
-      provider,
-      externalId,
-      dedupeKey,
-      eventType: String(payload.type ?? payload.event ?? 'webhook'),
-      occurredAt: payload.created_at || payload.created ? new Date(payload.created_at ?? payload.created) : null,
+  try {
+    const result = await recordIntegrationWebhook({
+      provider: contract.provider,
+      connectionId,
       payload,
-      status: 'received',
-    },
-    select: { id: true },
-  })
+    })
 
-  return NextResponse.json({ ok: true, rawEventId: rawEvent.id }, { status: 202 })
+    return NextResponse.json({ ok: true, ...result }, { status: result.duplicate ? 200 : 202 })
+  } catch (error) {
+    if (error instanceof IntegrationWebhookError) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: error.status })
+    }
+
+    captureOperationalError(error, {
+      operation: 'integration.webhook',
+      properties: { provider, connectionId },
+    })
+
+    return NextResponse.json({ ok: false, error: 'Webhook could not be recorded.' }, { status: 500 })
+  }
 }
 
 function isAuthorizedWebhook(request: NextRequest) {
@@ -62,12 +56,4 @@ function isAuthorizedWebhook(request: NextRequest) {
   if (!secret) return false
 
   return request.headers.get('authorization') === `Bearer ${secret}`
-}
-
-function readExternalId(payload: unknown) {
-  if (!payload || typeof payload !== 'object') return null
-  const record = payload as Record<string, unknown>
-  const candidate = record.id ?? record.order_id ?? record.event_id
-
-  return candidate ? String(candidate) : null
 }

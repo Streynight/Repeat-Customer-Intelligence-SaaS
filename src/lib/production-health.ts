@@ -42,7 +42,10 @@ const envServiceDefinitions: EnvServiceDefinition[] = [
     label: 'Application runtime',
     required: ['NEXT_PUBLIC_APP_URL'],
     optional: ['HEALTHCHECK_SECRET', 'ALLOW_LOCAL_DEMO_MODE', 'NEXT_PUBLIC_ALLOW_LOCAL_DEMO_MODE'],
-    validate: (env) => validateUrl(env, 'NEXT_PUBLIC_APP_URL'),
+    validate: (env) => [
+      ...validateUrl(env, 'NEXT_PUBLIC_APP_URL'),
+      ...validateDemoModeDisabledOutsideLocal(env),
+    ],
   },
   {
     id: 'supabase',
@@ -268,4 +271,19 @@ function validatePostgresUrl(env: EnvSource, name: string) {
 function validateNotPlaceholder(env: EnvSource, name: string, placeholder: string) {
   const value = env[name]?.trim()
   return value?.includes(placeholder) ? [`${name} still points to ${placeholder}.`] : []
+}
+
+function validateDemoModeDisabledOutsideLocal(env: EnvSource) {
+  const appUrl = env.NEXT_PUBLIC_APP_URL?.trim()
+  const localDemoEnabled = env.ALLOW_LOCAL_DEMO_MODE === 'true' || env.NEXT_PUBLIC_ALLOW_LOCAL_DEMO_MODE === 'true'
+  if (!appUrl || !localDemoEnabled) return []
+
+  try {
+    const hostname = new URL(appUrl).hostname
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') return []
+  } catch {
+    return []
+  }
+
+  return ['Local demo mode must be disabled outside localhost.']
 }

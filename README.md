@@ -56,6 +56,8 @@ Fill `.env.local` or Vercel environment variables for:
 - Platform services: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`, `POSTHOG_KEY`, `SENTRY_DSN`
 - Stripe plans: `STRIPE_PRICE_STARTER`, `STRIPE_PRICE_GROWTH`, `STRIPE_PRICE_SCALE`
 
+Production health must fail if `ALLOW_LOCAL_DEMO_MODE` or `NEXT_PUBLIC_ALLOW_LOCAL_DEMO_MODE` is enabled for a non-localhost `NEXT_PUBLIC_APP_URL`. Demo mode is only a local development fallback, never production truth.
+
 ## Current Architecture
 
 Core production foundations now live in:
@@ -74,13 +76,12 @@ Core production foundations now live in:
 Use this baseline before shipping changes:
 
 ```bash
-npm run prisma:generate
-npm run health:env
-npm run typecheck
-npm run lint
-npm test
-npm run build
+npm run release:verify
 ```
+
+The release verifier includes `npm run architecture:check`, which blocks regressions where API routes call server actions for background work, lib/service code depends on app actions, billing reservations lose release handling, or lifecycle automation loses idempotency guards.
+
+For code-only checks before production secrets are configured, run `npm run release:verify:code`. Production promotion still requires `npm run health:env` and `npm run health:live` to pass against real environment variables.
 
 For live database changes, use expand/backfill/contract migrations. Do not force destructive Prisma pushes against production data.
 

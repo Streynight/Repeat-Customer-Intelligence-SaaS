@@ -1,8 +1,8 @@
 import { headers } from 'next/headers'
-import { ensureAuthUserProfile } from '@/app/actions/auth'
 import type { Prisma } from '@/generated/prisma/client'
 import { prisma } from '@/lib/prisma'
 import { hasPermission, permissionsForRole, type MembershipRole, type Permission } from '@/lib/rbac'
+import { ensureAuthUserProfile } from '@/lib/server/auth-profile'
 import { createClient } from '@/lib/supabase/server'
 import { storeAccessWhere } from '@/lib/tenant-isolation'
 

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { ensureAuthUserProfile } from '@/app/actions/auth'
 import { createClient } from '@/lib/supabase/server'
+import { ensureAuthUserProfile } from '@/lib/server/auth-profile'
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)

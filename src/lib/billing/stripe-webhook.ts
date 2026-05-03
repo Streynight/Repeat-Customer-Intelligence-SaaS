@@ -3,7 +3,7 @@ import { planLimits, type PlanId } from '@/lib/billing/plans'
 
 type BillingSubscriptionWriter = {
   upsert(args: unknown): Promise<unknown>
-  updateMany(args: unknown): Promise<unknown>
+  updateMany(args: unknown): Promise<{ count: number }>
 }
 
 export async function syncCheckoutSessionToBilling(
@@ -13,7 +13,9 @@ export async function syncCheckoutSessionToBilling(
   const organizationId = session.metadata?.organizationId
   const plan = normalizeStripePlan(session.metadata?.plan)
 
-  if (!organizationId || !session.customer) return
+  if (!organizationId || !session.customer) {
+    return { action: 'checkout_skipped' as const, plan }
+  }
 
   await billingSubscription.upsert({
     where: { organizationId },
@@ -31,6 +33,8 @@ export async function syncCheckoutSessionToBilling(
       workspaceLimit: planLimits[plan].workspaces,
     },
   })
+
+  return { action: 'checkout_synced' as const, organizationId, plan }
 }
 
 export async function syncSubscriptionToBilling(
@@ -41,7 +45,7 @@ export async function syncSubscriptionToBilling(
   const plan = normalizeStripePlan(subscription.metadata?.plan)
   const currentPeriodEnd = subscription.items.data[0]?.current_period_end
 
-  await billingSubscription.updateMany({
+  const result = await billingSubscription.updateMany({
     where: { stripeCustomerId: customerId },
     data: {
       stripeSubscriptionId: subscription.id,
@@ -52,6 +56,13 @@ export async function syncSubscriptionToBilling(
       currentPeriodEnd: currentPeriodEnd ? new Date(currentPeriodEnd * 1000) : null,
     },
   })
+
+  return {
+    action: result.count > 0 ? 'subscription_synced' as const : 'subscription_unmatched' as const,
+    customerId,
+    plan,
+    status: normalizeStripeStatus(subscription.status),
+  }
 }
 
 export function normalizeStripePlan(value: string | undefined): PlanId {

@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, MetricCard }
 import { TreeEmptyState } from '@/components/ui/tree-surfaces'
 import { buildCalendarMonth, getDefaultCalendarMonth, type CalendarDayInsight } from '@/lib/services/calendar'
 import { buildCustomersHref } from '@/lib/services/customer-filters'
-import { useIntelligenceDataset } from '@/lib/use-intelligence-dataset'
+import { useIntelligenceDataset } from '@/components/hooks/use-intelligence-dataset'
 import { channelLabels } from '@/lib/types'
 import { cn, dateLabel, money } from '@/lib/utils'
 

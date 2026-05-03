@@ -57,14 +57,14 @@ describe('useIntelligenceDataset clean workspace defaults', () => {
     vi.doMock('@/app/actions/dataset', () => ({
       clearCurrentDataset: vi.fn(),
       ensureUserStore: vi.fn(),
+      importCurrentOrders: vi.fn(),
       loadCurrentDataset: vi.fn(),
-      persistCurrentImport: vi.fn(),
     }))
     vi.doMock('@/lib/supabase/client', () => ({
       createClient: vi.fn(),
     }))
 
-    const { useIntelligenceDataset } = await import('@/lib/use-intelligence-dataset')
+    const { useIntelligenceDataset } = await import('@/components/hooks/use-intelligence-dataset')
 
     render(<Probe useDataset={useIntelligenceDataset} />)
 
@@ -85,8 +85,8 @@ describe('useIntelligenceDataset clean workspace defaults', () => {
     vi.doMock('@/app/actions/dataset', () => ({
       clearCurrentDataset: vi.fn(),
       ensureUserStore,
+      importCurrentOrders: vi.fn(),
       loadCurrentDataset,
-      persistCurrentImport: vi.fn(),
     }))
     vi.doMock('@/lib/supabase/client', () => ({
       createClient: () => ({
@@ -96,7 +96,7 @@ describe('useIntelligenceDataset clean workspace defaults', () => {
       }),
     }))
 
-    const { useIntelligenceDataset } = await import('@/lib/use-intelligence-dataset')
+    const { useIntelligenceDataset } = await import('@/components/hooks/use-intelligence-dataset')
 
     render(<Probe useDataset={useIntelligenceDataset} />)
 
@@ -119,8 +119,8 @@ describe('useIntelligenceDataset clean workspace defaults', () => {
     vi.doMock('@/app/actions/dataset', () => ({
       clearCurrentDataset: vi.fn(),
       ensureUserStore,
+      importCurrentOrders: vi.fn(),
       loadCurrentDataset,
-      persistCurrentImport: vi.fn(),
     }))
     vi.doMock('@/lib/supabase/client', () => ({
       createClient: () => ({
@@ -130,7 +130,7 @@ describe('useIntelligenceDataset clean workspace defaults', () => {
       }),
     }))
 
-    const { useIntelligenceDataset } = await import('@/lib/use-intelligence-dataset')
+    const { useIntelligenceDataset } = await import('@/components/hooks/use-intelligence-dataset')
     const { rerender } = render(<Probe label="first" useDataset={useIntelligenceDataset} />)
 
     await waitFor(() => expect(screen.getByTestId('first')).toHaveTextContent('ready:1:1:0:6500'))
@@ -154,14 +154,14 @@ describe('useIntelligenceDataset clean workspace defaults', () => {
     vi.doMock('@/app/actions/dataset', () => ({
       clearCurrentDataset: vi.fn(),
       ensureUserStore: vi.fn(),
+      importCurrentOrders: vi.fn(),
       loadCurrentDataset: vi.fn(),
-      persistCurrentImport: vi.fn(),
     }))
     vi.doMock('@/lib/supabase/client', () => ({
       createClient: vi.fn(),
     }))
 
-    const { useIntelligenceDataset } = await import('@/lib/use-intelligence-dataset')
+    const { useIntelligenceDataset } = await import('@/components/hooks/use-intelligence-dataset')
 
     render(
       <>
@@ -185,6 +185,68 @@ describe('useIntelligenceDataset clean workspace defaults', () => {
     expect(screen.getByTestId('second')).toHaveTextContent('ready:0:0:0:9000')
   })
 
+  it('imports production orders through a server-owned command instead of sending a full dataset', async () => {
+    installLocalStorageMock()
+    const ensureUserStore = vi.fn().mockResolvedValue('store-1')
+    const loadCurrentDataset = vi.fn().mockResolvedValue({
+      customers: [],
+      orders: [],
+      imports: [],
+    })
+    const importedDataset = makeDataset()
+    const importCurrentOrders = vi.fn().mockResolvedValue({
+      customers: importedDataset.customers,
+      orders: importedDataset.orders,
+      imports: [{
+        id: 'server-import-1',
+        fileName: 'orders.csv',
+        sourceChannel: 'shopee',
+        importStatus: 'completed',
+        totalRows: 1,
+        importedRows: 1,
+        createdAt: '2026-05-03T00:00:00.000Z',
+      }],
+    })
+
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://repeat-tree.supabase.co')
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'anon-key')
+    vi.doMock('@/app/actions/dataset', () => ({
+      clearCurrentDataset: vi.fn(),
+      ensureUserStore,
+      importCurrentOrders,
+      loadCurrentDataset,
+    }))
+    vi.doMock('@/lib/supabase/client', () => ({
+      createClient: () => ({
+        auth: {
+          getUser: () => Promise.resolve({ data: { user: { id: 'user-1', email: 'owner@store.com' } } }),
+        },
+      }),
+    }))
+
+    const { useIntelligenceDataset } = await import('@/components/hooks/use-intelligence-dataset')
+
+    render(
+      <>
+        <Probe label="first" useDataset={useIntelligenceDataset} />
+        <ActionsProbe useDataset={useIntelligenceDataset} />
+      </>,
+    )
+
+    await waitFor(() => expect(screen.getByTestId('first')).toHaveTextContent('ready:0:0:0:6500'))
+    fireEvent.click(screen.getByRole('button', { name: 'import' }))
+
+    await waitFor(() => expect(importCurrentOrders).toHaveBeenCalledTimes(1))
+    expect(importCurrentOrders.mock.calls[0][0]).toMatchObject({
+      fileName: 'orders.csv',
+      sourceChannel: 'shopee',
+      vipThreshold: 6500,
+      orders: [expect.objectContaining({ externalOrderId: 'LOCAL-1' })],
+    })
+    expect(importCurrentOrders.mock.calls[0][0]).not.toHaveProperty('customers')
+    await waitFor(() => expect(screen.getByTestId('first')).toHaveTextContent('ready:1:1:1:6500'))
+  })
+
   it('falls back to an empty local workspace when Supabase data loading fails', async () => {
     installLocalStorageMock()
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -195,8 +257,8 @@ describe('useIntelligenceDataset clean workspace defaults', () => {
     vi.doMock('@/app/actions/dataset', () => ({
       clearCurrentDataset: vi.fn(),
       ensureUserStore,
+      importCurrentOrders: vi.fn(),
       loadCurrentDataset: vi.fn(),
-      persistCurrentImport: vi.fn(),
     }))
     vi.doMock('@/lib/supabase/client', () => ({
       createClient: () => ({
@@ -206,7 +268,7 @@ describe('useIntelligenceDataset clean workspace defaults', () => {
       }),
     }))
 
-    const { useIntelligenceDataset } = await import('@/lib/use-intelligence-dataset')
+    const { useIntelligenceDataset } = await import('@/components/hooks/use-intelligence-dataset')
 
     render(<Probe useDataset={useIntelligenceDataset} />)
 

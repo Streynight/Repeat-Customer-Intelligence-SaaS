@@ -5,8 +5,8 @@ const completeEnv = {
   NEXT_PUBLIC_APP_URL: 'https://app.repeattree.test',
   NEXT_PUBLIC_SUPABASE_URL: 'https://project.supabase.co',
   NEXT_PUBLIC_SUPABASE_ANON_KEY: 'anon',
-  DATABASE_URL: 'postgresql://user:pass@db.test:5432/app',
-  DIRECT_URL: 'postgresql://user:pass@db.test:5432/app',
+  DATABASE_URL: 'postgresql://db.test:5432/app',
+  DIRECT_URL: 'postgresql://db.test:5432/app',
   UPSTASH_REDIS_REST_URL: 'https://redis.test',
   UPSTASH_REDIS_REST_TOKEN: 'redis-token',
   INNGEST_EVENT_KEY: 'inngest-event',
@@ -51,5 +51,16 @@ describe('production health', () => {
     expect(summary.environment.failedServices).toBe(0)
     expect(JSON.stringify(report)).not.toContain('stripe-secret')
     expect(JSON.stringify(report)).not.toContain('redis-token')
+  })
+
+  it('blocks local demo mode outside localhost', () => {
+    const report = checkProductionEnv({
+      ...completeEnv,
+      NEXT_PUBLIC_ALLOW_LOCAL_DEMO_MODE: 'true',
+    })
+
+    const app = report.services.find((service) => service.id === 'app')
+    expect(report.status).toBe('fail')
+    expect(app?.invalid).toContain('Local demo mode must be disabled outside localhost.')
   })
 })

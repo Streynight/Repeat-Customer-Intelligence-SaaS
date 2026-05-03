@@ -1,4 +1,4 @@
-import { runDueCsvSyncConnections } from '@/app/actions/finance'
+import { runDueCsvSyncConnections } from '@/lib/services/csv-sync-runner'
 
 export async function GET(request: Request) {
   if (!isAuthorizedCronRequest(request)) {

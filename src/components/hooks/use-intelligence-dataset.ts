@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { clearCurrentDataset, ensureUserStore, loadCurrentDataset, persistCurrentImport } from '@/app/actions/dataset'
+import { clearCurrentDataset, ensureUserStore, importCurrentOrders, loadCurrentDataset } from '@/app/actions/dataset'
 import { createEmptyDataset, defaultVipThreshold } from '@/lib/empty-dataset'
 import { allowsLocalDemoMode, hasSupabaseRuntimeConfig } from '@/lib/runtime-config'
 import { processOrders } from '@/lib/services/import-pipeline'
@@ -53,18 +53,28 @@ export function useIntelligenceDataset() {
           return
         }
 
-        const newDataset = processOrders(current.dataset, orders, fileName, sourceChannel)
-
         if (current.storeId) {
           try {
-            await persistCurrentImport(newDataset)
-            updateSessionState((state) => ({ ...state, dataset: newDataset }))
+            const persistedDataset = await importCurrentOrders({
+              orders,
+              fileName,
+              sourceChannel,
+              vipThreshold: current.dataset.vipThreshold,
+            })
+            updateSessionState((state) => ({
+              ...state,
+              dataset: {
+                ...persistedDataset,
+                vipThreshold: state.dataset.vipThreshold,
+              },
+            }))
           } catch (error) {
             console.error('Failed to persist production dataset. Keeping database as source of truth.', error)
           }
           return
         }
 
+        const newDataset = processOrders(current.dataset, orders, fileName, sourceChannel)
         updateSessionState((state) => ({ ...state, dataset: newDataset }))
       },
       clearDataset: async () => {

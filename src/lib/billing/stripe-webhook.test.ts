@@ -16,10 +16,10 @@ describe('stripe webhook billing sync', () => {
   it('upserts organization billing from completed checkout sessions', async () => {
     const billingSubscription = {
       upsert: vi.fn().mockResolvedValue({}),
-      updateMany: vi.fn().mockResolvedValue({}),
+      updateMany: vi.fn().mockResolvedValue({ count: 1 }),
     }
 
-    await syncCheckoutSessionToBilling(billingSubscription, {
+    const result = await syncCheckoutSessionToBilling(billingSubscription, {
       customer: 'cus_123',
       metadata: { organizationId: 'org_123', plan: 'scale' },
     } as never)
@@ -32,15 +32,16 @@ describe('stripe webhook billing sync', () => {
         monthlyOrderLimit: 1_000_000,
       }),
     }))
+    expect(result).toEqual({ action: 'checkout_synced', organizationId: 'org_123', plan: 'scale' })
   })
 
   it('updates subscriptions by Stripe customer id', async () => {
     const billingSubscription = {
       upsert: vi.fn().mockResolvedValue({}),
-      updateMany: vi.fn().mockResolvedValue({}),
+      updateMany: vi.fn().mockResolvedValue({ count: 1 }),
     }
 
-    await syncSubscriptionToBilling(billingSubscription, {
+    const result = await syncSubscriptionToBilling(billingSubscription, {
       id: 'sub_123',
       customer: 'cus_123',
       status: 'active',
@@ -57,5 +58,28 @@ describe('stripe webhook billing sync', () => {
         workspaceLimit: 3,
       }),
     }))
+    expect(result).toEqual({
+      action: 'subscription_synced',
+      customerId: 'cus_123',
+      plan: 'growth',
+      status: 'active',
+    })
+  })
+
+  it('reports unmatched subscription updates for operational monitoring', async () => {
+    const billingSubscription = {
+      upsert: vi.fn().mockResolvedValue({}),
+      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+    }
+
+    const result = await syncSubscriptionToBilling(billingSubscription, {
+      id: 'sub_123',
+      customer: 'cus_missing',
+      status: 'active',
+      metadata: { plan: 'growth' },
+      items: { data: [] },
+    } as never)
+
+    expect(result.action).toBe('subscription_unmatched')
   })
 })

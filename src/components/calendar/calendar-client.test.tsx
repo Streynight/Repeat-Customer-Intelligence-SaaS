@@ -8,7 +8,7 @@ import type { IntelligenceDataset } from '@/lib/types'
 let mockDataset: IntelligenceDataset = createEmptyDataset()
 let mockLoading = false
 
-vi.mock('@/lib/use-intelligence-dataset', () => ({
+vi.mock('@/components/hooks/use-intelligence-dataset', () => ({
   useIntelligenceDataset: () => ({
     dataset: mockDataset,
     loading: mockLoading,

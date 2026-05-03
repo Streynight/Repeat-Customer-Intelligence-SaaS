@@ -21,7 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TreeEmptyState } from '@/components/ui/tree-surfaces'
 import { buildChannelIncomeRows, buildIncomeSummary, buildMonthlyIncomeRows, buildVatSummary, defaultFinanceSettings, exportVatSummaryCsv } from '@/lib/services/finance'
 import { downloadCsv } from '@/lib/services/export'
-import { useIntelligenceDataset } from '@/lib/use-intelligence-dataset'
+import { useIntelligenceDataset } from '@/components/hooks/use-intelligence-dataset'
 import { channelLabels, sourceChannels, type CsvSyncConnectionState, type CsvSyncRunResult, type FinanceSettings, type SourceChannel } from '@/lib/types'
 
 type IncomeTab = 'overview' | 'vat' | 'channels' | 'sync'

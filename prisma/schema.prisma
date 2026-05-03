@@ -507,6 +507,7 @@ model AutomationEvent {
   customerProfileId String?            @map("customer_profile_id")
   type           AutomationType
   status         AutomationEventStatus @default(queued)
+  idempotencyKey String?               @unique @map("idempotency_key")
   payload        Json
   errorMessage   String?               @map("error_message")
   createdAt      DateTime              @default(now()) @map("created_at")

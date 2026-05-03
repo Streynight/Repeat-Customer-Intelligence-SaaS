@@ -10,7 +10,7 @@ import { dashboardMetrics, customersByStatus, firstVsRepeatChannel, monthlyRepea
 import { buildCustomersHref } from '@/lib/services/customer-filters'
 import { buildIncomeSummary } from '@/lib/services/finance'
 import { buildRetentionAnalytics } from '@/lib/services/retention-analytics'
-import { useIntelligenceDataset } from '@/lib/use-intelligence-dataset'
+import { useIntelligenceDataset } from '@/components/hooks/use-intelligence-dataset'
 import { channelLabels, type SourceChannel } from '@/lib/types'
 import { money, percent } from '@/lib/utils'
 

@@ -12,7 +12,7 @@ let mockLoading = false
 let mockSearchParams = new URLSearchParams()
 const push = vi.fn()
 
-vi.mock('@/lib/use-intelligence-dataset', () => ({
+vi.mock('@/components/hooks/use-intelligence-dataset', () => ({
   useIntelligenceDataset: () => ({
     dataset: mockDataset,
     loading: mockLoading,

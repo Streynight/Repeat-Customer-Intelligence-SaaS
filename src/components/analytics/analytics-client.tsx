@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TreeEmptyState } from '@/components/ui/tree-surfaces'
 import { buildCustomersHref } from '@/lib/services/customer-filters'
 import { buildRetentionAnalytics, type CustomerOpportunity, type ProductRepeatInsight, type RfmSegment } from '@/lib/services/retention-analytics'
-import { useIntelligenceDataset } from '@/lib/use-intelligence-dataset'
+import { useIntelligenceDataset } from '@/components/hooks/use-intelligence-dataset'
 import { channelLabels } from '@/lib/types'
 import { money, percent } from '@/lib/utils'
 
