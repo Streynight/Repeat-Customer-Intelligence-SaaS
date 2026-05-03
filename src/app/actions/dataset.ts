@@ -28,7 +28,7 @@ export async function loadDataset(
   const [dbCustomers, dbImports] = await Promise.all([
     prisma.customerProfile.findMany({
       where: { storeId },
-      include: { orders: true },
+      include: { orders: { include: { items: true } } },
     }),
     prisma.import.findMany({
       where: { storeId },
@@ -61,7 +61,18 @@ export async function loadDataset(
       provinceRaw: o.provinceRaw ?? undefined,
       orderDate: o.orderDate.toISOString(),
       totalAmount: Number(o.totalAmount),
-      items: [],
+      taxAmount: Number(o.taxAmount),
+      discountAmount: Number(o.discountAmount),
+      shippingAmount: Number(o.shippingAmount),
+      platformFeeAmount: Number(o.platformFeeAmount),
+      refundAmount: Number(o.refundAmount),
+      taxRate: Number(o.taxRate),
+      taxIncluded: o.taxIncluded,
+      items: o.items.map((item) => ({
+        productName: item.productName,
+        quantity: item.quantity,
+        unitPrice: Number(item.unitPrice),
+      })),
     })),
   }))
 
@@ -125,12 +136,38 @@ export async function persistImport(storeId: string, dataset: IntelligenceDatase
       provinceRaw: order.provinceRaw ?? null,
       orderDate: new Date(order.orderDate),
       totalAmount: order.totalAmount,
+      taxAmount: order.taxAmount ?? 0,
+      discountAmount: order.discountAmount ?? 0,
+      shippingAmount: order.shippingAmount ?? 0,
+      platformFeeAmount: order.platformFeeAmount ?? 0,
+      refundAmount: order.refundAmount ?? 0,
+      taxRate: order.taxRate ?? 0.07,
+      taxIncluded: order.taxIncluded ?? true,
     })),
   )
 
   await writeInBatches(orders, 500, async (data) => {
     await prisma.order.createMany({ data, skipDuplicates: true })
   })
+
+  await prisma.orderItem.deleteMany({ where: { order: { storeId } } })
+
+  const orderItems = dataset.customers.flatMap((customer) =>
+    customer.orders.flatMap((order) =>
+      order.items.map((item) => ({
+        orderId: orderIdForStore(storeId, order),
+        productName: item.productName,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+      })),
+    ),
+  )
+
+  if (orderItems.length > 0) {
+    await writeInBatches(orderItems, 500, async (data) => {
+      await prisma.orderItem.createMany({ data })
+    })
+  }
 
   const imports = dataset.imports.map((imp) => ({
     id: imp.id,

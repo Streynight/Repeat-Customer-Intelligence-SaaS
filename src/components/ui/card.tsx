@@ -14,7 +14,7 @@ function Card({
       data-slot="card"
       data-size={size}
       className={cn(
-        "group/card flex flex-col gap-4 overflow-hidden rounded-xl border border-border/80 bg-card/95 p-5 text-sm text-card-foreground shadow-sm shadow-stone-200/70 ring-1 ring-foreground/5 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:p-4 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        "group/card relative flex flex-col gap-4 overflow-hidden rounded-xl border border-border/80 bg-card/95 p-5 text-sm text-card-foreground shadow-sm shadow-stone-200/80 ring-1 ring-foreground/5 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:p-4 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
         className
       )}
       {...props}
@@ -115,7 +115,7 @@ function MetricCard({
   label: string
   value: string
   detail?: string
-  tone?: "neutral" | "repeat" | "vip" | "risk"
+  tone?: "neutral" | "repeat" | "vip" | "risk" | "income"
   href?: string
 }) {
   const toneClass = {
@@ -123,12 +123,21 @@ function MetricCard({
     repeat: "border-emerald-200/80 bg-emerald-50/70 shadow-emerald-100/40",
     vip: "border-yellow-200/80 bg-yellow-50/75 shadow-yellow-100/40",
     risk: "border-amber-200/80 bg-amber-50/75 shadow-amber-100/40",
+    income: "border-orange-200/80 bg-orange-50/70 shadow-orange-100/40",
   }[tone]
   const labelClass = {
     neutral: "text-muted-foreground",
     repeat: "text-emerald-800",
     vip: "text-yellow-800",
     risk: "text-amber-800",
+    income: "text-orange-800",
+  }[tone]
+  const stripClass = {
+    neutral: "bg-primary/50",
+    repeat: "bg-emerald-600",
+    vip: "bg-yellow-600",
+    risk: "bg-amber-600",
+    income: "bg-orange-600",
   }[tone]
 
   const content = (
@@ -136,9 +145,10 @@ function MetricCard({
       size="sm"
       className={cn(
         toneClass,
-        href && "transition group-hover/metric:-translate-y-0.5 group-hover/metric:shadow-md group-hover/metric:shadow-stone-200/60",
+        href && "tree-tactile group-hover/metric:shadow-md group-hover/metric:shadow-stone-200/70",
       )}
     >
+      <span className={cn("absolute inset-x-0 top-0 h-1", stripClass)} aria-hidden="true" />
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className={`text-[0.7rem] font-black uppercase ${labelClass}`}>{label}</p>

@@ -25,12 +25,24 @@ Map these fields before confirming import:
 | `quantity` | Used for order item display. |
 | `unit_price` | Used for order item display. |
 
+## Optional Finance Fields
+
+These fields power `/income`. If they are missing, RepeatTree still imports the order and estimates Thailand VAT from `total_amount`.
+
+| Field | Why it matters |
+| --- | --- |
+| `tax_amount` | Uses explicit tax from the merchant export instead of an estimate. |
+| `discount_amount` | Shows discounts in the income mix. |
+| `shipping_amount` | Separates shipping collected from product/order income context. |
+| `platform_fee_amount` | Helps net income snapshot subtract marketplace fees. |
+| `refund_amount` | Helps net income snapshot subtract refunds. |
+
 ## Recommended Header Format
 
 ```csv
-order_id,customer_name,email,phone,line_id,province,order_date,total_amount,product_name,quantity,unit_price
-SHP-2001,Siriporn C,siri@example.com,0814409911,,Bangkok,2026-04-01,1290,Vitamin C serum,1,1290
-SHP-2003,Siriporn Ch,siri@example.com,0814409911,,Bangkok,2026-04-19,1890,Night cream refill,1,1890
+order_id,customer_name,email,phone,line_id,province,order_date,total_amount,product_name,quantity,unit_price,tax_amount,discount_amount,shipping_amount,platform_fee_amount,refund_amount
+SHP-2001,Siriporn C,siri@example.com,0814409911,,Bangkok,2026-04-01,1290,Vitamin C serum,1,1290,84.39,0,40,35,0
+SHP-2003,Siriporn Ch,siri@example.com,0814409911,,Bangkok,2026-04-19,1890,Night cream refill,1,1890,123.64,50,40,45,0
 ```
 
 ## Channel Mapping Notes
@@ -38,6 +50,7 @@ SHP-2003,Siriporn Ch,siri@example.com,0814409911,,Bangkok,2026-04-19,1890,Night 
 - Choose the source channel before import: Shopee, TikTok Shop, Instagram, Facebook, Website, or Custom CSV.
 - The selected channel is applied to all rows in that import.
 - If one CSV mixes multiple channels, split it into separate files for the clearest attribution.
+- Scheduled CSV sync uses the same headers and channel rule as manual import.
 
 ## Identity Resolution Rules
 

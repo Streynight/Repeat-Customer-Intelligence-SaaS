@@ -12,17 +12,18 @@ export function BrandLogo({
   showText?: boolean
 }) {
   return (
-    <span className={cn('inline-flex items-center gap-2 font-black tracking-tight text-foreground', className)}>
+    <span className={cn('group/logo inline-flex items-center gap-2 font-black tracking-tight text-foreground', className)}>
       <span
         className={cn(
-          'grid size-9 shrink-0 place-items-center rounded-lg border border-primary/15 bg-primary/10 text-primary',
+          'relative grid size-9 shrink-0 place-items-center rounded-lg border border-primary/15 bg-gradient-to-br from-primary/12 via-accent/35 to-yellow-100/70 text-primary shadow-sm shadow-stone-200/70 transition group-hover/logo:border-primary/30 group-hover/logo:shadow-md',
           markClassName,
         )}
         aria-hidden="true"
       >
+        <span className="absolute -right-1 -top-1 size-3 rounded-full border border-card bg-accent shadow-sm" />
         <svg
           viewBox="0 0 40 40"
-          className="size-7"
+          className="size-7 transition group-hover/logo:-rotate-2"
           role="img"
         >
           <path

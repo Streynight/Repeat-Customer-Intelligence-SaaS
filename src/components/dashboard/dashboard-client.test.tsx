@@ -55,8 +55,10 @@ describe('DashboardClient', () => {
 
     render(<DashboardClient />)
 
+    expect(screen.getByText('Total income').closest('a')).toHaveAttribute('href', '/income')
     expect(screen.getByText('Bought again').closest('a')).toHaveAttribute('href', '/customers?segment=repeat')
     expect(screen.getByText('Repeat revenue').closest('a')).toHaveAttribute('href', '/customers?segment=repeat&sort=repeatRevenue')
+    expect(screen.getByText('Open deep analytics').closest('a')).toHaveAttribute('href', '/analytics')
     expect(linkByHref('/customers?repeatChannel=tiktok&sort=repeatRevenue')).toBeInTheDocument()
   })
 })

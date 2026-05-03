@@ -14,6 +14,11 @@ export type ColumnMapping = {
   productName: string
   quantity: string
   unitPrice: string
+  taxAmount: string
+  discountAmount: string
+  shippingAmount: string
+  platformFeeAmount: string
+  refundAmount: string
 }
 
 export const defaultMapping: ColumnMapping = {
@@ -28,6 +33,11 @@ export const defaultMapping: ColumnMapping = {
   productName: 'product_name',
   quantity: 'quantity',
   unitPrice: 'unit_price',
+  taxAmount: 'tax_amount',
+  discountAmount: 'discount_amount',
+  shippingAmount: 'shipping_amount',
+  platformFeeAmount: 'platform_fee_amount',
+  refundAmount: 'refund_amount',
 }
 
 export type ImportDiagnosticIssue = {
@@ -95,6 +105,11 @@ export function rowsToOrders(
       const totalAmount = Number(cleanMoney(row[mapping.totalAmount]))
       const quantity = Number(row[mapping.quantity] || 1)
       const unitPrice = Number(cleanMoney(row[mapping.unitPrice])) || totalAmount
+      const taxAmount = optionalMoney(row[mapping.taxAmount])
+      const discountAmount = optionalMoney(row[mapping.discountAmount])
+      const shippingAmount = optionalMoney(row[mapping.shippingAmount])
+      const platformFeeAmount = optionalMoney(row[mapping.platformFeeAmount])
+      const refundAmount = optionalMoney(row[mapping.refundAmount])
 
       return {
         externalOrderId: row[mapping.externalOrderId] || `${sourceChannel}-${index + 1}`,
@@ -106,6 +121,11 @@ export function rowsToOrders(
         provinceRaw: emptyToUndefined(row[mapping.provinceRaw]),
         orderDate: normalizeDate(row[mapping.orderDate]),
         totalAmount: Number.isFinite(totalAmount) ? totalAmount : 0,
+        taxAmount,
+        discountAmount,
+        shippingAmount,
+        platformFeeAmount,
+        refundAmount,
         items: [
           {
             productName: row[mapping.productName] || 'Imported product',
@@ -308,6 +328,13 @@ export function processOrders(
 
 function cleanMoney(value?: string) {
   return (value ?? '').replace(/[$,฿]/g, '').trim()
+}
+
+function optionalMoney(value?: string) {
+  const cleaned = cleanMoney(value)
+  if (!cleaned) return undefined
+  const parsed = Number(cleaned)
+  return Number.isFinite(parsed) ? parsed : undefined
 }
 
 function readMapped(row: Record<string, string>, key?: string) {

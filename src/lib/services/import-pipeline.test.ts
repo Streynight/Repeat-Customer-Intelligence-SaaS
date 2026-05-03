@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { analyzeImportRows, defaultMapping } from '@/lib/services/import-pipeline'
+import { analyzeImportRows, defaultMapping, rowsToOrders } from '@/lib/services/import-pipeline'
 import { csvRow, makeCustomer, makeDataset } from '@/test/fixtures'
 
 describe('analyzeImportRows', () => {
@@ -72,5 +72,27 @@ describe('analyzeImportRows', () => {
     expect(diagnostics.likelyMergeCounts.email).toBe(1)
     expect(diagnostics.likelyMergeCounts.lineId).toBe(1)
     expect(diagnostics.likelyMergeCounts.fuzzyName).toBe(1)
+  })
+
+  it('maps optional finance columns into order inputs', () => {
+    const [order] = rowsToOrders([
+      csvRow({
+        tax_amount: '70',
+        discount_amount: '20',
+        shipping_amount: '40',
+        platform_fee_amount: '30',
+        refund_amount: '10',
+      }),
+    ], 'shopee', defaultMapping)
+
+    expect(defaultMapping.taxAmount).toBe('tax_amount')
+    expect(defaultMapping.platformFeeAmount).toBe('platform_fee_amount')
+    expect(order).toMatchObject({
+      taxAmount: 70,
+      discountAmount: 20,
+      shippingAmount: 40,
+      platformFeeAmount: 30,
+      refundAmount: 10,
+    })
   })
 })

@@ -20,14 +20,20 @@ model User {
 }
 
 model Store {
-  id        String            @id @default(uuid())
-  userId    String            @map("user_id")
-  name      String
-  createdAt DateTime          @default(now()) @map("created_at")
-  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  customers CustomerProfile[]
-  orders    Order[]
-  imports   Import[]
+  id                 String              @id @default(uuid())
+  userId             String              @map("user_id")
+  name               String
+  taxCountry         String              @default("TH") @map("tax_country")
+  taxLabel           String              @default("VAT") @map("tax_label")
+  taxRate            Decimal             @default(0.07) @map("tax_rate") @db.Decimal(5, 4)
+  taxIncluded        Boolean             @default(true) @map("tax_included")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customers          CustomerProfile[]
+  orders             Order[]
+  imports            Import[]
+  csvSyncConnections CsvSyncConnection[]
+  csvSyncRuns        CsvSyncRun[]
 
   @@map("stores")
 }
@@ -70,6 +76,13 @@ model Order {
   provinceRaw       String?         @map("province_raw")
   orderDate         DateTime        @map("order_date")
   totalAmount       Decimal         @map("total_amount") @db.Decimal(12, 2)
+  taxAmount         Decimal         @default(0) @map("tax_amount") @db.Decimal(12, 2)
+  discountAmount    Decimal         @default(0) @map("discount_amount") @db.Decimal(12, 2)
+  shippingAmount    Decimal         @default(0) @map("shipping_amount") @db.Decimal(12, 2)
+  platformFeeAmount Decimal         @default(0) @map("platform_fee_amount") @db.Decimal(12, 2)
+  refundAmount      Decimal         @default(0) @map("refund_amount") @db.Decimal(12, 2)
+  taxRate           Decimal         @default(0.07) @map("tax_rate") @db.Decimal(5, 4)
+  taxIncluded       Boolean         @default(true) @map("tax_included")
   createdAt         DateTime        @default(now()) @map("created_at")
   store             Store           @relation(fields: [storeId], references: [id], onDelete: Cascade)
   customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
@@ -93,17 +106,55 @@ model OrderItem {
 }
 
 model Import {
-  id           String       @id @default(uuid())
-  storeId      String       @map("store_id")
-  fileName     String       @map("file_name")
+  id            String        @id @default(uuid())
+  storeId       String        @map("store_id")
+  fileName      String        @map("file_name")
   sourceChannel SourceChannel @map("source_channel")
-  importStatus ImportStatus @default(pending) @map("import_status")
-  totalRows    Int          @default(0) @map("total_rows")
-  importedRows Int          @default(0) @map("imported_rows")
-  createdAt    DateTime     @default(now()) @map("created_at")
-  store        Store        @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  importStatus  ImportStatus  @default(pending) @map("import_status")
+  totalRows     Int           @default(0) @map("total_rows")
+  importedRows  Int           @default(0) @map("imported_rows")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  store         Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@map("imports")
+}
+
+model CsvSyncConnection {
+  id              String         @id @default(uuid())
+  storeId         String         @map("store_id")
+  name            String
+  csvUrl          String         @map("csv_url")
+  sourceChannel   SourceChannel  @map("source_channel")
+  columnMapping   Json           @map("column_mapping")
+  enabled         Boolean        @default(true)
+  intervalMinutes Int            @default(60) @map("interval_minutes")
+  lastSyncStatus  CsvSyncStatus? @map("last_sync_status")
+  lastSyncError   String?        @map("last_sync_error")
+  lastSyncedAt    DateTime?      @map("last_synced_at")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  store           Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  runs            CsvSyncRun[]
+
+  @@index([storeId, enabled])
+  @@map("csv_sync_connections")
+}
+
+model CsvSyncRun {
+  id           String            @id @default(uuid())
+  storeId      String            @map("store_id")
+  connectionId String            @map("connection_id")
+  status       CsvSyncStatus
+  totalRows    Int               @default(0) @map("total_rows")
+  importedRows Int               @default(0) @map("imported_rows")
+  errorMessage String?           @map("error_message")
+  startedAt    DateTime          @default(now()) @map("started_at")
+  finishedAt   DateTime?         @map("finished_at")
+  store        Store             @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  connection   CsvSyncConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, startedAt])
+  @@map("csv_sync_runs")
 }
 
 enum SourceChannel {
@@ -128,4 +179,10 @@ enum ImportStatus {
   processing
   completed
   failed
+}
+
+enum CsvSyncStatus {
+  success
+  failed
+  skipped
 }

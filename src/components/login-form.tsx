@@ -5,11 +5,13 @@ import Link from 'next/link'
 import { signInWithGoogle, signInWithPassword } from '@/app/actions/auth'
 import { BrandLogo } from '@/components/brand-logo'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
+import { TreeSprout } from '@/components/ui/tree-surfaces'
 
 export function LoginForm() {
   const [identifier, setIdentifier] = useState('')
@@ -37,8 +39,17 @@ export function LoginForm() {
   }
 
   return (
-    <main className="grid min-h-screen place-items-center bg-background px-5">
-      <Card className="w-full max-w-md border-primary/10">
+    <main className="grid min-h-screen place-items-center bg-[linear-gradient(180deg,var(--background)_0%,var(--muted)_100%)] px-5 py-8">
+      <div className="grid w-full max-w-5xl gap-5 lg:grid-cols-[1fr_430px] lg:items-center">
+        <section className="hidden rounded-3xl border border-primary/10 bg-gradient-to-br from-card via-secondary/50 to-accent/25 p-8 shadow-xl shadow-stone-200/60 lg:block">
+          <TreeSprout />
+          <Badge className="mt-5" variant="secondary">Clean workspace</Badge>
+          <h1 className="mt-4 text-4xl font-black tracking-tight">Welcome back to the grove.</h1>
+          <p className="mt-4 max-w-md text-sm leading-6 text-muted-foreground">
+            Your repeat buyers, channel paths, income snapshots, and calendar reminders are ready when your order data is.
+          </p>
+        </section>
+      <Card className="w-full border-primary/10">
         <CardHeader>
           <Link href="/" aria-label="RepeatTree home">
             <BrandLogo />
@@ -115,6 +126,7 @@ export function LoginForm() {
         </p>
         </CardContent>
       </Card>
+      </div>
     </main>
   )
 }
