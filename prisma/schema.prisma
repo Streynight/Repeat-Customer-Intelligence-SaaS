@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  username  String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  stores    Store[]
+
+  @@map("users")
+}
+
+model Store {
+  id        String            @id @default(uuid())
+  userId    String            @map("user_id")
+  name      String
+  createdAt DateTime          @default(now()) @map("created_at")
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customers CustomerProfile[]
+  orders    Order[]
+  imports   Import[]
+
+  @@map("stores")
+}
+
+model CustomerProfile {
+  id             String         @id @default(uuid())
+  storeId        String         @map("store_id")
+  fullName       String         @map("full_name")
+  email          String?
+  phone          String?
+  lineId         String?        @map("line_id")
+  province       String?
+  firstChannel   SourceChannel  @default(csv) @map("first_channel")
+  lastChannel    SourceChannel  @default(csv) @map("last_channel")
+  totalOrders    Int            @default(0) @map("total_orders")
+  totalSpent     Decimal        @default(0) @map("total_spent") @db.Decimal(12, 2)
+  firstOrderDate DateTime?      @map("first_order_date")
+  lastOrderDate  DateTime?      @map("last_order_date")
+  customerStatus CustomerStatus @default(New) @map("customer_status")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  store          Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  orders         Order[]
+
+  @@index([storeId, phone])
+  @@index([storeId, email])
+  @@index([storeId, lineId])
+  @@map("customer_profiles")
+}
+
+model Order {
+  id                String          @id @default(uuid())
+  storeId           String          @map("store_id")
+  customerProfileId String          @map("customer_profile_id")
+  externalOrderId   String?         @map("external_order_id")
+  sourceChannel     SourceChannel   @default(csv) @map("source_channel")
+  customerNameRaw   String          @map("customer_name_raw")
+  emailRaw          String?         @map("email_raw")
+  phoneRaw          String?         @map("phone_raw")
+  provinceRaw       String?         @map("province_raw")
+  orderDate         DateTime        @map("order_date")
+  totalAmount       Decimal         @map("total_amount") @db.Decimal(12, 2)
+  createdAt         DateTime        @default(now()) @map("created_at")
+  store             Store           @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+  items             OrderItem[]
+
+  @@unique([storeId, externalOrderId, sourceChannel])
+  @@index([storeId, sourceChannel])
+  @@index([customerProfileId, orderDate])
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String  @id @default(uuid())
+  orderId     String  @map("order_id")
+  productName String  @map("product_name")
+  quantity    Int
+  unitPrice   Decimal @map("unit_price") @db.Decimal(12, 2)
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("order_items")
+}
+
+model Import {
+  id           String       @id @default(uuid())
+  storeId      String       @map("store_id")
+  fileName     String       @map("file_name")
+  sourceChannel SourceChannel @map("source_channel")
+  importStatus ImportStatus @default(pending) @map("import_status")
+  totalRows    Int          @default(0) @map("total_rows")
+  importedRows Int          @default(0) @map("imported_rows")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  store        Store        @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@map("imports")
+}
+
+enum SourceChannel {
+  shopee
+  tiktok
+  instagram
+  facebook
+  website
+  csv
+}
+
+enum CustomerStatus {
+  New
+  Repeat
+  VIP
+  AtRisk
+  Lost
+}
+
+enum ImportStatus {
+  pending
+  processing
+  completed
+  failed
+}
