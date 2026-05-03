@@ -7,7 +7,7 @@ export default function SettingsPage() {
       <PageHeader
         eyebrow="Configuration"
         title="Settings"
-        description="MVP settings for customer classification thresholds and future webhook automation."
+        description="Production settings for customer classification, tenant operations, and lifecycle automation."
       />
       <SettingsClient />
     </AppShell>

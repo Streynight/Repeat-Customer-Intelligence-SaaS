@@ -1,14 +1,20 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { allowsLocalDemoMode, hasSupabaseRuntimeConfig } from '@/lib/runtime-config'
 
-const protectedPaths = ['/dashboard', '/imports', '/customers', '/settings']
+const protectedPaths = ['/dashboard', '/analytics', '/income', '/calendar', '/imports', '/customers', '/settings', '/admin']
 
 export async function middleware(request: NextRequest) {
-  const hasSupabaseConfig = Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  )
+  const hasSupabaseConfig = hasSupabaseRuntimeConfig()
+  const isProtected = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path))
 
-  if (!hasSupabaseConfig) return NextResponse.next()
+  if (!hasSupabaseConfig) {
+    if (isProtected && !allowsLocalDemoMode()) {
+      return NextResponse.redirect(new URL('/login?error=auth_required', request.url))
+    }
+
+    return NextResponse.next()
+  }
 
   let response = NextResponse.next({ request })
   const supabase = createServerClient(
@@ -29,7 +35,6 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data } = await supabase.auth.getUser()
-  const isProtected = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path))
 
   if (isProtected && !data.user) {
     return NextResponse.redirect(new URL('/login', request.url))
@@ -39,5 +44,14 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/imports/:path*', '/customers/:path*', '/settings/:path*'],
+  matcher: [
+    '/dashboard/:path*',
+    '/analytics/:path*',
+    '/income/:path*',
+    '/calendar/:path*',
+    '/imports/:path*',
+    '/customers/:path*',
+    '/settings/:path*',
+    '/admin/:path*',
+  ],
 }

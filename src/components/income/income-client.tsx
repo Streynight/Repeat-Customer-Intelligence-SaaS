@@ -53,6 +53,13 @@ export function IncomeClient() {
         setConnections(workspace.connections)
         setRuns(workspace.runs)
       })
+      .catch((error) => {
+        console.error('Failed to load finance workspace. Falling back to defaults.', error)
+        if (!alive) return
+        setSettings(defaultFinanceSettings)
+        setConnections([])
+        setRuns([])
+      })
       .finally(() => {
         if (alive) setWorkspaceLoading(false)
       })

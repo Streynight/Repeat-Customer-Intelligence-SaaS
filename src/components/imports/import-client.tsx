@@ -107,10 +107,10 @@ export function ImportClient() {
             <div>
               <CardTitle>Try sample CSVs</CardTitle>
               <CardDescription className="mt-1 max-w-2xl leading-6">
-                Use these merchant-style files to demo repeat buyer detection before connecting real shop exports.
+                Use these merchant-style files only for local validation before connecting native commerce integrations.
               </CardDescription>
             </div>
-            <Badge variant="secondary">CSV-first MVP</Badge>
+            <Badge variant="secondary">Fallback import</Badge>
           </CardHeader>
           <CardContent className="grid gap-3 lg:grid-cols-3">
             {sampleCsvTemplates.map((template) => (
@@ -261,7 +261,7 @@ export function ImportClient() {
               ))
             ) : (
               <p className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
-                No imports yet. Upload a CSV or try a sample when you want demo data.
+                No imports yet. Connect a native integration or upload a fallback CSV.
               </p>
             )}
           </div>

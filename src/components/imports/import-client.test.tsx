@@ -38,7 +38,7 @@ describe('ImportClient', () => {
     mockDataset = makeDataset([])
     render(<ImportClient />)
 
-    expect(screen.getByText('No imports yet. Upload a CSV or try a sample when you want demo data.')).toBeInTheDocument()
+    expect(screen.getByText('No imports yet. Connect a native integration or upload a fallback CSV.')).toBeInTheDocument()
   })
 
   it('imports sample rows when diagnostics are importable', async () => {
