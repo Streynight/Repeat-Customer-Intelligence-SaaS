@@ -1,3 +1,4 @@
+import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '@/generated/prisma/client'
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient }
@@ -6,7 +7,7 @@ const cachedPrisma = globalForPrisma.prisma
 
 export const prisma = cachedPrisma && hasCurrentSchemaDelegates(cachedPrisma)
   ? cachedPrisma
-  : new PrismaClient()
+  : createPrismaClient()
 
 if (cachedPrisma && cachedPrisma !== prisma) {
   void cachedPrisma.$disconnect()
@@ -24,4 +25,13 @@ function hasCurrentSchemaDelegates(client: PrismaClient) {
       delegates.membership &&
       delegates.auditLog,
   )
+}
+
+function createPrismaClient() {
+  const connectionString = process.env.DATABASE_URL
+  if (!connectionString) throw new Error('DATABASE_URL is required to initialize Prisma Client.')
+
+  return new PrismaClient({
+    adapter: new PrismaPg({ connectionString }),
+  })
 }

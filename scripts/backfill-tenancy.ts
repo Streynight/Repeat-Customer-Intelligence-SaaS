@@ -1,4 +1,5 @@
 import { loadEnvConfig } from '@next/env'
+import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../src/generated/prisma/client'
 import {
   displayNameFromEmail,
@@ -10,7 +11,12 @@ import {
 
 loadEnvConfig(process.cwd())
 
-const prisma = new PrismaClient()
+const databaseUrl = process.env.DATABASE_URL
+if (!databaseUrl) throw new Error('DATABASE_URL is required to run tenancy backfill.')
+
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: databaseUrl }),
+})
 const args = process.argv.slice(2)
 const apply = args.includes('--apply')
 const userId = readOption('--user-id')
@@ -228,7 +234,7 @@ async function backfillUser(userId: string) {
         },
       })
     }
-  })
+  }, { timeout: 30_000 })
 }
 
 type OrganizationSlugLookup = {
