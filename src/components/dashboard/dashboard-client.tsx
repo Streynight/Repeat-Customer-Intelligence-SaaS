@@ -1,13 +1,15 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowUpRight, CalendarDays, UploadCloud, Users } from 'lucide-react'
+import { ArrowUpRight, CalendarDays, LineChart as LineChartIcon, Repeat2, UploadCloud, Users } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from 'recharts'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, MetricCard } from '@/components/ui/card'
+import { InsightPanel, TreeEmptyState } from '@/components/ui/tree-surfaces'
 import { dashboardMetrics, customersByStatus, firstVsRepeatChannel, monthlyRepeatTrend, repeatRevenueByChannel } from '@/lib/services/attribution'
 import { buildCustomersHref } from '@/lib/services/customer-filters'
+import { buildIncomeSummary } from '@/lib/services/finance'
+import { buildRetentionAnalytics } from '@/lib/services/retention-analytics'
 import { useIntelligenceDataset } from '@/lib/use-intelligence-dataset'
 import { channelLabels, type SourceChannel } from '@/lib/types'
 import { money, percent } from '@/lib/utils'
@@ -30,6 +32,8 @@ export function DashboardClient() {
   const statusRows = customersByStatus(dataset.customers)
   const channelPaths = firstVsRepeatChannel(dataset.customers)
   const monthlyTrend = monthlyRepeatTrend(dataset.customers)
+  const retentionAnalytics = buildRetentionAnalytics(dataset)
+  const incomeSummary = buildIncomeSummary(dataset)
   const bestRepeatChannel = [...repeatRevenue].sort((a, b) => b.revenue - a.revenue)[0]
   const bestRepeatPath = [...channelPaths].sort((a, b) => b.customers - a.customers)[0]
   const atRiskRevenue = atRiskCustomersValue(dataset.customers)
@@ -48,36 +52,41 @@ export function DashboardClient() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 xl:grid-cols-3">
-        <InsightCallout
+        <InsightPanel
           label="Best repeat channel"
           value={bestRepeatChannel ? channelLabels[bestRepeatChannel.channel] : 'No repeats yet'}
           detail={bestRepeatChannel ? `${money(bestRepeatChannel.revenue)} in repeat revenue` : 'Import orders to see channel winners.'}
           tone="repeat"
+          icon={<Repeat2 size={17} />}
           href={bestRepeatChannel ? buildCustomersHref({ repeatChannel: bestRepeatChannel.channel, sort: 'repeatRevenue' }) : buildCustomersHref({ segment: 'repeat' })}
         />
-        <InsightCallout
+        <InsightPanel
           label="Top channel path"
           value={bestRepeatPath ? formatChannelPath(bestRepeatPath.path) : 'No path yet'}
           detail={bestRepeatPath ? `${bestRepeatPath.customers} customers repeated through this path` : 'Repeat customers reveal source-to-repeat movement.'}
           tone="vip"
+          icon={<LineChartIcon size={17} />}
           href={bestRepeatPath ? buildCustomersHref(channelPathFilters(bestRepeatPath.path)) : buildCustomersHref({ segment: 'repeat' })}
         />
-        <InsightCallout
+        <InsightPanel
           label="Remarketing urgency"
           value={money(atRiskRevenue)}
           detail="Revenue sitting in At Risk or Lost customer profiles"
           tone="risk"
+          icon={<Users size={17} />}
           href={buildCustomersHref({ segment: 'winback', sort: 'lastOrder' })}
         />
       </div>
 
-      <div className="grid gap-3 lg:grid-cols-3">
+      <div className="grid gap-3 lg:grid-cols-4">
         <ActionLink href={buildCustomersHref({ segment: 'repeat', sort: 'repeatRevenue' })} title="Review repeat buyers" detail="Open the buyers driving repeated orders." />
         <ActionLink href={buildCustomersHref({ segment: 'winback', sort: 'lastOrder' })} title="Win back stale buyers" detail="Focus At Risk and Lost profiles first." />
         <ActionLink href="/imports" title="Import latest orders" detail="Refresh the dashboard with a new CSV." />
+        <ActionLink href="/analytics" title="Open deep analytics" detail="Cohorts, RFM, product repeat, and opportunities." />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-7">
+        <MetricCard label="Total income" value={money(incomeSummary.grossIncome)} tone="income" href="/income" />
         <MetricCard label="Known buyers" value={metrics.totalCustomers.toLocaleString()} href={buildCustomersHref()} />
         <MetricCard label="Bought again" value={metrics.repeatCustomers.toLocaleString()} tone="repeat" href={buildCustomersHref({ segment: 'repeat' })} />
         <MetricCard label="Repeat rate" value={percent(metrics.repeatRate)} tone="repeat" href={buildCustomersHref({ segment: 'repeat' })} />
@@ -85,6 +94,8 @@ export function DashboardClient() {
         <MetricCard label="Need win-back" value={metrics.atRiskCustomers.toLocaleString()} tone="risk" href={buildCustomersHref({ segment: 'winback' })} />
         <MetricCard label="Repeat revenue" value={money(metrics.repeatRevenue)} tone="repeat" href={buildCustomersHref({ segment: 'repeat', sort: 'repeatRevenue' })} />
       </div>
+
+      <AnalyticsSnapshot analytics={retentionAnalytics} />
 
       <div className="grid gap-4 xl:grid-cols-2">
         <ChartCard title="Repeat Revenue by Channel">
@@ -128,7 +139,7 @@ export function DashboardClient() {
               <Link
                 key={row.path}
                 href={buildCustomersHref(channelPathFilters(row.path))}
-                className="group flex items-center justify-between rounded-lg border border-border bg-secondary/40 px-3 py-2 transition hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45"
+                className="tree-tactile group flex items-center justify-between rounded-lg border border-border bg-secondary/40 px-3 py-2 hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45"
               >
                 <span className="text-sm font-semibold text-foreground">{formatChannelPath(row.path)}</span>
                 <Badge variant="secondary" className="gap-1">{row.customers}<ArrowUpRight size={12} className="opacity-55 group-hover:opacity-100" /></Badge>
@@ -151,12 +162,17 @@ export function DashboardClient() {
               <Link
                 key={order.id}
                 href={`/customers/${order.customerProfileId}`}
-                className="group rounded-lg border border-emerald-200/70 bg-emerald-50/55 p-3 transition hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45"
+                className="tree-tactile group rounded-lg border border-emerald-200/70 bg-emerald-50/55 p-3 hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45"
               >
                 <p className="text-sm font-bold">{channelLabels[order.sourceChannel]}</p>
                 <p className="text-xs text-muted-foreground">{order.customerNameRaw} - {money(order.totalAmount)}</p>
               </Link>
             ))}
+            {recentRepeatOrders.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
+                No repeat orders yet. Import more orders to spot fresh repeat activity.
+              </p>
+            ) : null}
           </CardContent>
         </Card>
       </div>
@@ -178,27 +194,18 @@ function DashboardLoading() {
 function EmptyDashboard() {
   return (
     <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
-      <Card className="border-primary/15 bg-gradient-to-br from-card via-secondary/45 to-accent/25">
-        <CardHeader>
-          <CardTitle className="text-2xl font-black">Start with your first order import</CardTitle>
-          <CardDescription className="max-w-2xl leading-6">
-            This workspace is clean. Upload a CSV to create customer profiles, repeat revenue, channel paths, and follow-up timing from your own store data.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button asChild className="font-black">
-            <Link href="/imports">
-              <UploadCloud size={16} />
-              Import orders
-            </Link>
-          </Button>
-          <div className="mt-6 grid gap-3 md:grid-cols-3">
-            <EmptyStep icon={UploadCloud} title="Import CSV" detail="Bring in orders from Shopee, TikTok Shop, social, website, or custom exports." />
-            <EmptyStep icon={Users} title="Resolve buyers" detail="Phone, email, LINE ID, and names create unified customer profiles." />
-            <EmptyStep icon={CalendarDays} title="Track repeat timing" detail="Calendar and win-back views appear after the first import." />
-          </div>
-        </CardContent>
-      </Card>
+      <div>
+        <TreeEmptyState
+          title="Start with your first order import"
+          description="This workspace is clean. Upload a CSV to grow customer profiles, repeat revenue, channel paths, and follow-up timing from your own store data."
+          action={{ href: '/imports', label: 'Import orders', icon: <UploadCloud size={16} /> }}
+        />
+        <div className="mt-6 grid gap-3 md:grid-cols-3">
+          <EmptyStep icon={UploadCloud} title="Import CSV" detail="Bring in orders from Shopee, TikTok Shop, social, website, or custom exports." />
+          <EmptyStep icon={Users} title="Resolve buyers" detail="Phone, email, LINE ID, and names create unified customer profiles." />
+          <EmptyStep icon={CalendarDays} title="Track repeat timing" detail="Calendar and win-back views appear after the first import." />
+        </div>
+      </div>
 
       <Card>
         <CardHeader>
@@ -206,11 +213,34 @@ function EmptyDashboard() {
           <CardDescription>No customer, order, revenue, or import records yet.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3">
-          <MetricCard label="Known buyers" value="0" />
-          <MetricCard label="Repeat revenue" value={money(0)} tone="repeat" />
-          <MetricCard label="Need win-back" value="0" tone="risk" />
+          <EmptyWorkspaceStat label="Known buyers" value="0" />
+          <EmptyWorkspaceStat label="Repeat revenue" value={money(0)} tone="repeat" />
+          <EmptyWorkspaceStat label="Need win-back" value="0" tone="risk" />
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+function EmptyWorkspaceStat({
+  label,
+  value,
+  tone = 'neutral',
+}: {
+  label: string
+  value: string
+  tone?: 'neutral' | 'repeat' | 'risk'
+}) {
+  const className = {
+    neutral: 'bg-card text-foreground',
+    repeat: 'bg-emerald-50 text-emerald-900',
+    risk: 'bg-amber-50 text-amber-900',
+  }[tone]
+
+  return (
+    <div className={`rounded-lg border border-border px-3 py-2 ${className}`}>
+      <p className="text-[0.7rem] font-black uppercase opacity-70">{label}</p>
+      <strong className="mt-1 block text-xl font-black">{value}</strong>
     </div>
   )
 }
@@ -244,51 +274,52 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
   )
 }
 
-function InsightCallout({
-  label,
-  value,
-  detail,
-  href,
-  tone = 'repeat',
-}: {
-  label: string
-  value: string
-  detail: string
-  href: string
-  tone?: 'repeat' | 'vip' | 'risk'
-}) {
-  const toneClass = {
-    repeat: 'border-emerald-200/80 bg-gradient-to-br from-card via-emerald-50/75 to-accent/30',
-    vip: 'border-yellow-200/80 bg-gradient-to-br from-card via-yellow-50/75 to-secondary/50',
-    risk: 'border-amber-200/80 bg-gradient-to-br from-card via-amber-50/80 to-orange-50/55',
-  }[tone]
-  const iconClass = {
-    repeat: 'bg-emerald-100 text-emerald-800',
-    vip: 'bg-yellow-100 text-yellow-800',
-    risk: 'bg-amber-100 text-amber-800',
-  }[tone]
+function AnalyticsSnapshot({ analytics }: { analytics: ReturnType<typeof buildRetentionAnalytics> }) {
+  const topProduct = analytics.productInsights[0]
+  const topSegment = analytics.summary.topRfmSegment
 
   return (
-    <Link href={href} className="group block rounded-xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45">
-      <Card className={`${toneClass} transition group-hover:-translate-y-0.5 group-hover:shadow-md`}>
-      <div className="flex items-start justify-between gap-4">
+    <Card className="border-primary/15 bg-gradient-to-r from-card via-secondary/45 to-accent/20">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p className="text-xs font-black uppercase text-primary">{label}</p>
-          <strong className="mt-3 block text-xl font-black text-foreground">{value}</strong>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">{detail}</p>
+          <div className="flex items-center gap-2">
+            <LineChartIcon className="size-5 text-primary" />
+            <h2 className="font-black">Deep analytics snapshot</h2>
+          </div>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+            Cohorts, RFM, product repeat paths, and opportunity lists are ready for deeper decisions.
+          </p>
         </div>
-        <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${iconClass}`}>
-          <ArrowUpRight size={17} />
-        </span>
+        <div className="grid gap-2 md:grid-cols-3 lg:min-w-[620px]">
+          <SnapshotLink href={topSegment ? buildCustomersHref({ rfmSegment: topSegment, sort: 'totalSpent' }) : '/analytics'} label="Top RFM segment" value={topSegment ?? 'No segment'} />
+          <SnapshotLink href={topProduct ? buildCustomersHref({ product: topProduct.productName, sort: 'repeatRevenue' }) : '/analytics?tab=products'} label="Top repeat product" value={topProduct?.productName ?? 'No product data'} />
+          <SnapshotLink href="/analytics?tab=cohorts" label="Avg days to repeat" value={analytics.summary.averageDaysToSecondOrder === null ? '-' : `${Math.round(analytics.summary.averageDaysToSecondOrder)}d`} />
+        </div>
       </div>
-      </Card>
+    </Card>
+  )
+}
+
+function SnapshotLink({ href, label, value }: { href: string; label: string; value: string }) {
+  return (
+    <Link
+      href={href}
+      className="tree-tactile group rounded-lg border border-border bg-card/75 p-3 hover:bg-card hover:shadow-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-[0.68rem] font-black uppercase text-muted-foreground">{label}</p>
+          <strong className="mt-1 block truncate text-sm">{value}</strong>
+        </div>
+        <ArrowUpRight className="size-4 text-muted-foreground group-hover:text-primary" />
+      </div>
     </Link>
   )
 }
 
 function ActionLink({ href, title, detail }: { href: string; title: string; detail: string }) {
   return (
-    <Link href={href} className="group rounded-xl border border-border bg-card/85 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45">
+    <Link href={href} className="tree-tactile group rounded-xl border border-border bg-card/85 p-4 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-black">{title}</p>
@@ -320,7 +351,7 @@ function CustomerMiniTable({
       </CardHeader>
       <CardContent className="grid gap-3">
         {customers.map((customer) => (
-          <Link key={customer.id} href={`/customers/${customer.id}`} className={`group rounded-lg border p-3 ${rowClass}`}>
+          <Link key={customer.id} href={`/customers/${customer.id}`} className={`tree-tactile group rounded-lg border p-3 ${rowClass}`}>
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-bold">{customer.fullName}</p>
@@ -330,6 +361,11 @@ function CustomerMiniTable({
             </div>
           </Link>
         ))}
+        {customers.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
+            Nothing to show yet.
+          </p>
+        ) : null}
       </CardContent>
     </Card>
   )

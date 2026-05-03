@@ -63,6 +63,11 @@ export function csvRow(overrides: Record<string, string> = {}) {
     product_name: 'Serum',
     quantity: '1',
     unit_price: '1500',
+    tax_amount: '',
+    discount_amount: '',
+    shipping_amount: '',
+    platform_fee_amount: '',
+    refund_amount: '',
     ...overrides,
   }
 }

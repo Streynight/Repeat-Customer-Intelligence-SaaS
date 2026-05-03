@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { TreeSprout } from '@/components/ui/tree-surfaces'
 import { useIntelligenceDataset } from '@/lib/use-intelligence-dataset'
 
 export function SettingsClient() {
@@ -26,15 +27,18 @@ export function SettingsClient() {
 
   return (
     <Tabs defaultValue="rules" className="w-full">
-      <TabsList>
+      <TabsList className="bg-secondary/55">
         <TabsTrigger value="rules">Rules</TabsTrigger>
         <TabsTrigger value="workflow">Workflow</TabsTrigger>
       </TabsList>
       <TabsContent value="rules" className="mt-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Classification rules</CardTitle>
-            <CardDescription>Simple MVP rules that keep repeat intelligence easy to explain.</CardDescription>
+        <Card className="border-primary/10 bg-gradient-to-br from-card to-secondary/30">
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start">
+            <TreeSprout className="size-9 rounded-lg" />
+            <div>
+              <CardTitle>Classification rules</CardTitle>
+              <CardDescription>Simple MVP rules that keep repeat intelligence easy to explain.</CardDescription>
+            </div>
           </CardHeader>
           <CardContent>
             <p className="text-sm leading-6 text-muted-foreground">New: 1 order. Repeat: 2+ orders. VIP: 3+ orders and spend above threshold. At Risk: no purchase in 30 days. Lost: no purchase in 90 days.</p>
@@ -47,10 +51,13 @@ export function SettingsClient() {
         </Card>
       </TabsContent>
       <TabsContent value="workflow" className="mt-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Automation-ready webhook architecture</CardTitle>
-            <CardDescription>Boundaries are ready without building messaging automation yet.</CardDescription>
+        <Card className="border-primary/10 bg-gradient-to-br from-card to-accent/15">
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start">
+            <TreeSprout className="size-9 rounded-lg" />
+            <div>
+              <CardTitle>Automation-ready webhook architecture</CardTitle>
+              <CardDescription>Boundaries are ready without building messaging automation yet.</CardDescription>
+            </div>
           </CardHeader>
           <CardContent>
             <p className="text-sm leading-6 text-muted-foreground">Future n8n workflows can subscribe to completed imports, VIP creation, and at-risk customer exports. This MVP keeps those boundaries clean.</p>

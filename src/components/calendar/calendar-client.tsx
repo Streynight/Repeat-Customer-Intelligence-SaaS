@@ -6,6 +6,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Repeat2, ShoppingBag, 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, MetricCard } from '@/components/ui/card'
+import { TreeEmptyState } from '@/components/ui/tree-surfaces'
 import { buildCalendarMonth, getDefaultCalendarMonth, type CalendarDayInsight } from '@/lib/services/calendar'
 import { buildCustomersHref } from '@/lib/services/customer-filters'
 import { useIntelligenceDataset } from '@/lib/use-intelligence-dataset'
@@ -20,6 +21,11 @@ export function CalendarClient() {
   const [monthOverride, setMonthOverride] = useState<string | null>(null)
   const month = monthOverride ?? defaultMonth
   const calendar = useMemo(() => buildCalendarMonth(dataset, month), [dataset, month])
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const setActiveMonth = (nextMonth: string | null) => {
+    setMonthOverride(nextMonth)
+    setSelectedDate(null)
+  }
   const firstFocusDate = useMemo(() => {
     const actionableDay = calendar.days.find(
       (day) => day.isCurrentMonth && (day.orderCount > 0 || day.reminders.length > 0),
@@ -27,7 +33,6 @@ export function CalendarClient() {
 
     return actionableDay?.date ?? `${month}-01`
   }, [calendar.days, month])
-  const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const selectedDay = calendar.days.find((day) => day.date === selectedDate) ??
     calendar.days.find((day) => day.date === firstFocusDate) ??
     calendar.days[0]
@@ -71,14 +76,25 @@ export function CalendarClient() {
               </CardTitle>
               <CardDescription>Daily repeat orders, revenue, channels, and win-back timing.</CardDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="flex h-9 items-center gap-2 rounded-lg border border-input bg-card px-2 text-xs font-black uppercase text-muted-foreground">
+                <span>Month</span>
+                <input
+                  type="month"
+                  aria-label="Month"
+                  value={month}
+                  onChange={(event) => {
+                    if (event.target.value) setActiveMonth(event.target.value)
+                  }}
+                  className="h-7 min-w-32 rounded-md border border-border bg-background px-2 text-sm font-semibold normal-case text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/45"
+                />
+              </label>
               <Button
                 variant="outline"
                 size="icon"
                 aria-label="Previous month"
                 onClick={() => {
-                  setMonthOverride(shiftMonth(month, -1))
-                  setSelectedDate(null)
+                  setActiveMonth(shiftMonth(month, -1))
                 }}
               >
                 <ChevronLeft />
@@ -87,8 +103,7 @@ export function CalendarClient() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  setMonthOverride(null)
-                  setSelectedDate(null)
+                  setActiveMonth(null)
                 }}
               >
                 Latest
@@ -98,8 +113,7 @@ export function CalendarClient() {
                 size="icon"
                 aria-label="Next month"
                 onClick={() => {
-                  setMonthOverride(shiftMonth(month, 1))
-                  setSelectedDate(null)
+                  setActiveMonth(shiftMonth(month, 1))
                 }}
               >
                 <ChevronRight />
@@ -146,6 +160,7 @@ function CalendarDayButton({
   return (
     <button
       type="button"
+      aria-label={`${dateLabel(day.date)} calendar day`}
       onClick={onSelect}
       className={cn(
         'min-h-32 border-b border-r border-border bg-card p-2 text-left transition hover:bg-accent/45 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45',
@@ -193,22 +208,14 @@ function DayDetailPanel({ day, empty }: { day: CalendarDayInsight; empty: boolea
 
   if (empty) {
     return (
-      <Card className="xl:sticky xl:top-6 xl:self-start">
-        <CardHeader>
-          <CardTitle className="text-lg font-black">No calendar activity yet</CardTitle>
-          <CardDescription>
-            Import your first order CSV to fill this calendar with repeat buyers, revenue days, channel activity, and follow-up reminders.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button asChild className="font-black">
-            <Link href="/imports">
-              <UploadCloud size={16} />
-              Import orders
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="xl:sticky xl:top-6 xl:self-start">
+        <TreeEmptyState
+          title="No calendar activity yet"
+          description="Import your first order CSV to fill this calendar with repeat buyers, revenue days, channel activity, and follow-up reminders."
+          tone="risk"
+          action={{ href: '/imports', label: 'Import orders', icon: <UploadCloud size={16} /> }}
+        />
+      </div>
     )
   }
 

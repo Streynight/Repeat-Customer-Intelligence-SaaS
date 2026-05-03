@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildCustomersHref,
+  customerMatchesProduct,
   customerMatchesRepeatChannel,
   filterCustomers,
   repeatRevenueForCustomer,
@@ -77,6 +78,14 @@ describe('customer filters', () => {
     expect(filterCustomers(customers, { repeatChannel: 'website' }).map((item) => item.id)).toEqual(['vip-web'])
   })
 
+  it('filters RFM segments and product purchase history', () => {
+    expect(filterCustomers(customers, { rfmSegment: 'Champion' }).map((item) => item.id)).toEqual(['vip-web'])
+    expect(filterCustomers(customers, { rfmSegment: 'At Risk' }).map((item) => item.id)).toEqual(['risk-buyer'])
+    expect(customerMatchesProduct(customers[0], 'Serum')).toBe(true)
+    expect(customerMatchesProduct(customers[0], 'Cream')).toBe(false)
+    expect(filterCustomers(customers, { product: 'Serum' }).map((item) => item.id)).toEqual(['repeat-shopee'])
+  })
+
   it('searches by name, email, and phone', () => {
     expect(filterCustomers(customers, { search: 'mali' }).map((item) => item.id)).toEqual(['repeat-shopee'])
     expect(filterCustomers(customers, { search: 'pim@example.com' }).map((item) => item.id)).toEqual(['vip-web'])
@@ -92,8 +101,8 @@ describe('customer filters', () => {
   })
 
   it('builds customer explorer hrefs from filters', () => {
-    expect(buildCustomersHref({ segment: 'repeat', repeatChannel: 'website', sort: 'repeatRevenue' })).toBe(
-      '/customers?segment=repeat&repeatChannel=website&sort=repeatRevenue',
+    expect(buildCustomersHref({ segment: 'repeat', repeatChannel: 'website', rfmSegment: 'Champion', product: 'Serum', sort: 'repeatRevenue' })).toBe(
+      '/customers?segment=repeat&repeatChannel=website&rfmSegment=Champion&product=Serum&sort=repeatRevenue',
     )
   })
 })
@@ -126,6 +135,8 @@ function customer(
 }
 
 function order(id: string, sourceChannel: SourceChannel, orderDate: string, totalAmount: number): OrderRecord {
+  const productName = id.startsWith('m-') ? 'Serum' : 'Product'
+
   return {
     id,
     customerProfileId: '',
@@ -138,6 +149,6 @@ function order(id: string, sourceChannel: SourceChannel, orderDate: string, tota
     provinceRaw: undefined,
     orderDate: `${orderDate}T00:00:00.000Z`,
     totalAmount,
-    items: [{ productName: 'Product', quantity: 1, unitPrice: totalAmount }],
+    items: [{ productName, quantity: 1, unitPrice: totalAmount }],
   }
 }

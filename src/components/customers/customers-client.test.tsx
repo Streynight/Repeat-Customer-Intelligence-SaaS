@@ -51,7 +51,7 @@ describe('CustomersClient', () => {
 
   it('shows active filters from the URL and clears them', async () => {
     const user = userEvent.setup()
-    mockSearchParams = new URLSearchParams('status=VIP')
+    mockSearchParams = new URLSearchParams('status=VIP&rfmSegment=Champion&product=Serum')
     mockDataset = makeDataset([
       makeCustomer({ id: 'vip-customer', fullName: 'Mali Wong', customerStatus: 'VIP' }),
       makeCustomer({ id: 'repeat-customer', fullName: 'Niran Cha', customerStatus: 'Repeat' }),
@@ -61,6 +61,8 @@ describe('CustomersClient', () => {
 
     expect(screen.getByText('Mali Wong')).toBeInTheDocument()
     expect(screen.queryByText('Niran Cha')).not.toBeInTheDocument()
+    expect(screen.getByText('RFM: Champion')).toBeInTheDocument()
+    expect(screen.getByText('Product: Serum')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /^clear$/i }))
 
@@ -69,10 +71,20 @@ describe('CustomersClient', () => {
 
   it('exports only filtered customers', async () => {
     const user = userEvent.setup()
-    mockSearchParams = new URLSearchParams('status=VIP')
+    mockSearchParams = new URLSearchParams('product=Serum')
     mockDataset = makeDataset([
       makeCustomer({ id: 'vip-customer', fullName: 'Mali Wong', customerStatus: 'VIP' }),
-      makeCustomer({ id: 'repeat-customer', fullName: 'Niran Cha', customerStatus: 'Repeat' }),
+      makeCustomer({
+        id: 'repeat-customer',
+        fullName: 'Niran Cha',
+        customerStatus: 'Repeat',
+        orders: makeCustomer().orders.map((order) => ({
+          ...order,
+          id: 'toner-order',
+          customerProfileId: 'repeat-customer',
+          items: [{ productName: 'Toner', quantity: 1, unitPrice: 1200 }],
+        })),
+      }),
     ])
 
     render(<CustomersClient />)

@@ -18,6 +18,13 @@ export type OrderInput = {
   provinceRaw?: string
   orderDate: string
   totalAmount: number
+  taxAmount?: number
+  discountAmount?: number
+  shippingAmount?: number
+  platformFeeAmount?: number
+  refundAmount?: number
+  taxRate?: number
+  taxIncluded?: boolean
   items: OrderItemInput[]
 }
 
@@ -58,6 +65,69 @@ export type IntelligenceDataset = {
   orders: OrderRecord[]
   imports: ImportRecord[]
   vipThreshold: number
+}
+
+export type FinanceSettings = {
+  taxCountry: string
+  taxLabel: string
+  taxRate: number
+  taxIncluded: boolean
+}
+
+export type IncomeSummary = {
+  grossIncome: number
+  netIncome: number
+  taxAmount: number
+  explicitTaxAmount: number
+  estimatedTaxAmount: number
+  discountAmount: number
+  shippingAmount: number
+  platformFeeAmount: number
+  refundAmount: number
+  orderCount: number
+  averageOrderValue: number
+}
+
+export type MonthlyIncomeRow = IncomeSummary & {
+  month: string
+}
+
+export type VatSummaryRow = {
+  month: string
+  grossIncome: number
+  explicitVat: number
+  estimatedVat: number
+  totalVat: number
+  netBeforeVat: number
+  orderCount: number
+}
+
+export type ChannelIncomeRow = IncomeSummary & {
+  channel: SourceChannel
+}
+
+export type CsvSyncConnectionState = {
+  id: string
+  name: string
+  csvUrl: string
+  sourceChannel: SourceChannel
+  columnMapping: Record<string, string>
+  enabled: boolean
+  intervalMinutes: number
+  lastSyncStatus?: 'success' | 'failed' | 'skipped'
+  lastSyncError?: string
+  lastSyncedAt?: string
+  createdAt: string
+}
+
+export type CsvSyncRunResult = {
+  connectionId: string
+  status: 'success' | 'failed' | 'skipped'
+  totalRows: number
+  importedRows: number
+  errorMessage?: string
+  startedAt: string
+  finishedAt?: string
 }
 
 export const sourceChannels: SourceChannel[] = [

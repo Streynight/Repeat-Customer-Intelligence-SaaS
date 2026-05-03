@@ -1,4 +1,5 @@
 import { channelLabels, sourceChannels, type CustomerProfile, type CustomerStatus, type SourceChannel } from '@/lib/types'
+import { buildCustomerRfmScores, rfmSegments, type RfmSegment } from '@/lib/services/retention-analytics'
 
 export type CustomerSegment = 'repeat' | 'winback'
 export type CustomerSort = 'totalSpent' | 'lastOrder' | 'totalOrders' | 'repeatRevenue' | 'name'
@@ -9,6 +10,8 @@ export type CustomerFilterState = {
   firstChannel?: SourceChannel
   lastChannel?: SourceChannel
   repeatChannel?: SourceChannel
+  rfmSegment?: RfmSegment
+  product?: string
   search?: string
   sort?: CustomerSort
 }
@@ -24,6 +27,8 @@ export function parseCustomerFilters(searchParams: URLSearchParams): CustomerFil
   const firstChannel = searchParams.get('firstChannel')
   const lastChannel = searchParams.get('lastChannel')
   const repeatChannel = searchParams.get('repeatChannel')
+  const rfmSegment = searchParams.get('rfmSegment')
+  const product = searchParams.get('product')?.trim()
   const sort = searchParams.get('sort')
   const search = searchParams.get('search')?.trim()
 
@@ -32,6 +37,8 @@ export function parseCustomerFilters(searchParams: URLSearchParams): CustomerFil
   if (isSourceChannel(firstChannel)) filters.firstChannel = firstChannel
   if (isSourceChannel(lastChannel)) filters.lastChannel = lastChannel
   if (isSourceChannel(repeatChannel)) filters.repeatChannel = repeatChannel
+  if (isRfmSegment(rfmSegment)) filters.rfmSegment = rfmSegment
+  if (product) filters.product = product
   if (isCustomerSort(sort)) filters.sort = sort
   if (search) filters.search = search
 
@@ -39,6 +46,8 @@ export function parseCustomerFilters(searchParams: URLSearchParams): CustomerFil
 }
 
 export function filterCustomers(customers: CustomerProfile[], filters: CustomerFilterState) {
+  const rfmScores = filters.rfmSegment ? new Map(buildCustomerRfmScores(customers).map((score) => [score.customerId, score])) : null
+
   return customers.filter((customer) => {
     if (filters.segment === 'repeat' && customer.totalOrders < 2) return false
     if (filters.segment === 'winback' && customer.customerStatus !== 'AtRisk' && customer.customerStatus !== 'Lost') return false
@@ -46,6 +55,8 @@ export function filterCustomers(customers: CustomerProfile[], filters: CustomerF
     if (filters.firstChannel && customer.firstChannel !== filters.firstChannel) return false
     if (filters.lastChannel && customer.lastChannel !== filters.lastChannel) return false
     if (filters.repeatChannel && !customerMatchesRepeatChannel(customer, filters.repeatChannel)) return false
+    if (filters.rfmSegment && rfmScores?.get(customer.id)?.segment !== filters.rfmSegment) return false
+    if (filters.product && !customerMatchesProduct(customer, filters.product)) return false
     if (filters.search && !customerMatchesSearch(customer, filters.search)) return false
 
     return true
@@ -77,6 +88,8 @@ export function buildCustomersHref(filters: CustomerFilterState = {}) {
   if (filters.firstChannel) params.set('firstChannel', filters.firstChannel)
   if (filters.lastChannel) params.set('lastChannel', filters.lastChannel)
   if (filters.repeatChannel) params.set('repeatChannel', filters.repeatChannel)
+  if (filters.rfmSegment) params.set('rfmSegment', filters.rfmSegment)
+  if (filters.product?.trim()) params.set('product', filters.product.trim())
   if (filters.search?.trim()) params.set('search', filters.search.trim())
   if (filters.sort) params.set('sort', filters.sort)
 
@@ -87,6 +100,15 @@ export function buildCustomersHref(filters: CustomerFilterState = {}) {
 export function customerMatchesRepeatChannel(customer: CustomerProfile, channel: SourceChannel) {
   const [, ...repeatOrders] = sortedOrders(customer)
   return repeatOrders.some((order) => order.sourceChannel === channel)
+}
+
+export function customerMatchesProduct(customer: CustomerProfile, productName: string) {
+  const normalized = productName.trim().toLowerCase()
+  if (!normalized) return true
+
+  return customer.orders.some((order) => {
+    return order.items.some((item) => item.productName.toLowerCase().includes(normalized))
+  })
 }
 
 export function repeatRevenueForCustomer(customer: CustomerProfile) {
@@ -100,6 +122,8 @@ export function describeCustomerFilter(key: keyof CustomerFilterState, value: st
   if (key === 'firstChannel') return `First: ${channelLabels[value as SourceChannel]}`
   if (key === 'lastChannel') return `Last: ${channelLabels[value as SourceChannel]}`
   if (key === 'repeatChannel') return `Repeat channel: ${channelLabels[value as SourceChannel]}`
+  if (key === 'rfmSegment') return `RFM: ${value}`
+  if (key === 'product') return `Product: ${value}`
   if (key === 'sort') return `Sort: ${sortLabels[value as CustomerSort]}`
   return `Search: ${value}`
 }
@@ -140,4 +164,8 @@ function isCustomerSegment(value: string | null): value is CustomerSegment {
 
 function isCustomerSort(value: string | null): value is CustomerSort {
   return Boolean(value && customerSorts.includes(value as CustomerSort))
+}
+
+function isRfmSegment(value: string | null): value is RfmSegment {
+  return Boolean(value && rfmSegments.includes(value as RfmSegment))
 }

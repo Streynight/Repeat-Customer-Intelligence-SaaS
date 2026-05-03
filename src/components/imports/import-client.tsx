@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { TreeSprout } from '@/components/ui/tree-surfaces'
 import {
   analyzeImportRows,
   defaultMapping,
@@ -75,9 +76,9 @@ export function ImportClient() {
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
       <div className="space-y-6">
-        <Card className="border-primary/15 bg-gradient-to-br from-card to-secondary/65">
+        <Card className="border-primary/15 bg-gradient-to-br from-card via-secondary/40 to-accent/25">
           <label
-            className="flex min-h-56 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-primary/20 bg-card/70 p-8 text-center transition hover:bg-card focus-within:ring-3 focus-within:ring-ring/45"
+            className="tree-tactile flex min-h-56 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-primary/20 bg-card/70 p-8 text-center hover:border-primary/35 hover:bg-card hover:shadow-md focus-within:ring-3 focus-within:ring-ring/45"
             onDragOver={(event) => event.preventDefault()}
             onDrop={(event) => {
               event.preventDefault()
@@ -91,9 +92,9 @@ export function ImportClient() {
               accept=".csv,text/csv"
               onChange={(event) => event.target.files?.[0] && void readFile(event.target.files[0])}
             />
-            <UploadCloud size={36} className="text-primary" />
-            <h2 className="mt-4 text-xl font-black">Drop order CSV here</h2>
-            <p className="mt-2 max-w-lg text-sm leading-6 text-muted-foreground">CSV-first MVP for marketplace and social commerce exports. APIs and automation can plug into this same pipeline later.</p>
+            <TreeSprout className="size-12" />
+            <h2 className="mt-4 text-xl font-black">Plant your order CSV here</h2>
+            <p className="mt-2 max-w-lg text-sm leading-6 text-muted-foreground">Drop one real shop export and RepeatTree grows profiles, repeat paths, income, and calendar timing from it.</p>
             <span className="mt-5 inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-primary px-2.5 text-sm font-bold text-primary-foreground">
               <UploadCloud size={15} />
               Choose CSV
@@ -113,7 +114,7 @@ export function ImportClient() {
           </CardHeader>
           <CardContent className="grid gap-3 lg:grid-cols-3">
             {sampleCsvTemplates.map((template) => (
-              <article key={template.id} className="rounded-xl border border-border bg-secondary/35 p-4">
+              <article key={template.id} className="rounded-xl border border-primary/10 bg-gradient-to-br from-card to-secondary/35 p-4 shadow-sm shadow-stone-200/50">
                 <h3 className="font-black">{template.label}</h3>
                 <p className="mt-2 min-h-12 text-sm leading-6 text-muted-foreground">{template.description}</p>
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -188,7 +189,7 @@ export function ImportClient() {
             </div>
             <Table>
                 <TableHeader>
-                  <TableRow><TableHead>Order</TableHead><TableHead>Customer</TableHead><TableHead>Phone</TableHead><TableHead>Date</TableHead><TableHead>Amount</TableHead><TableHead>Channel</TableHead></TableRow>
+                  <TableRow><TableHead>Order</TableHead><TableHead>Customer</TableHead><TableHead>Phone</TableHead><TableHead>Date</TableHead><TableHead>Amount</TableHead><TableHead>Tax</TableHead><TableHead>Fees</TableHead><TableHead>Refund</TableHead><TableHead>Channel</TableHead></TableRow>
                 </TableHeader>
                 <TableBody>
                   {previewOrders.length > 0 ? (
@@ -199,12 +200,15 @@ export function ImportClient() {
                         <TableCell>{order.phoneRaw}</TableCell>
                         <TableCell>{order.orderDate.slice(0, 10)}</TableCell>
                         <TableCell>{order.totalAmount.toLocaleString()}</TableCell>
+                        <TableCell>{order.taxAmount?.toLocaleString() ?? '-'}</TableCell>
+                        <TableCell>{order.platformFeeAmount?.toLocaleString() ?? '-'}</TableCell>
+                        <TableCell>{order.refundAmount?.toLocaleString() ?? '-'}</TableCell>
                         <TableCell>{channelLabels[order.sourceChannel]}</TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell className="py-4 text-muted-foreground" colSpan={6}>
+                      <TableCell className="py-4 text-muted-foreground" colSpan={9}>
                         No valid rows to preview yet. Fix required mappings or row errors.
                       </TableCell>
                     </TableRow>
@@ -216,7 +220,7 @@ export function ImportClient() {
       </div>
 
       <div className="space-y-6">
-        <Card>
+        <Card className="border-primary/10 bg-gradient-to-br from-card to-secondary/30">
           <h2 className="font-black">Real data readiness</h2>
           <div className="mt-3 space-y-3 text-sm leading-6 text-muted-foreground">
             <p>
@@ -233,15 +237,15 @@ export function ImportClient() {
           </div>
         </Card>
 
-        <Card>
+        <Card className="border-primary/10 bg-gradient-to-br from-card to-accent/15">
           <h2 className="font-black">Import status</h2>
           <p className="mt-2 text-sm text-muted-foreground">{status}</p>
           <div className="mt-4 rounded-lg bg-secondary/45 p-3 text-xs leading-5 text-muted-foreground">
-            Good CSV headers: <strong>order_id</strong>, <strong>customer_name</strong>, <strong>phone</strong>, <strong>email</strong>, <strong>order_date</strong>, <strong>total_amount</strong>, <strong>product_name</strong>.
+            Good CSV headers: <strong>order_id</strong>, <strong>customer_name</strong>, <strong>phone</strong>, <strong>email</strong>, <strong>order_date</strong>, <strong>total_amount</strong>, <strong>product_name</strong>, <strong>tax_amount</strong>, <strong>platform_fee_amount</strong>, <strong>refund_amount</strong>.
           </div>
           {errors.length > 0 && <ul className="mt-3 list-disc pl-5 text-sm text-red-700">{errors.map((error) => <li key={error}>{error}</li>)}</ul>}
         </Card>
-        <Card>
+        <Card className="border-primary/10 bg-gradient-to-br from-card to-secondary/25">
           <h2 className="font-black">Import history</h2>
           <div className="mt-4 grid gap-3">
             {loading ? (

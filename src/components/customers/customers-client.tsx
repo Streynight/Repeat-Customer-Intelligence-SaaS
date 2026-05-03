@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { FormEvent, useMemo } from 'react'
-import { ArrowUpRight, Download, Search, X } from 'lucide-react'
+import { ArrowUpRight, Download, Search, UploadCloud, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { TreeEmptyState } from '@/components/ui/tree-surfaces'
 import {
   applyCustomerFilters,
   buildCustomersHref,
@@ -21,6 +22,7 @@ import {
   type CustomerSort,
 } from '@/lib/services/customer-filters'
 import { downloadCsv, exportCustomersCsv } from '@/lib/services/export'
+import { rfmSegments, type RfmSegment } from '@/lib/services/retention-analytics'
 import { useIntelligenceDataset } from '@/lib/use-intelligence-dataset'
 import { channelLabels, sourceChannels, type CustomerStatus, type SourceChannel } from '@/lib/types'
 import { money } from '@/lib/utils'
@@ -42,7 +44,8 @@ export function CustomersClient() {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     const search = String(formData.get('search') ?? '').trim()
-    updateFilters({ search: search || undefined })
+    const product = String(formData.get('product') ?? '').trim()
+    updateFilters({ search: search || undefined, product: product || undefined })
   }
 
   if (loading) {
@@ -203,10 +206,17 @@ function CustomerExplorerControls({
               placeholder="Search name, email, or phone"
             />
           </div>
-          <Button type="submit" variant="outline">Search</Button>
+          <Input
+            key={filters.product ?? 'empty-product'}
+            name="product"
+            defaultValue={filters.product ?? ''}
+            placeholder="Product bought"
+            className="md:max-w-56"
+          />
+          <Button type="submit" variant="outline">Apply</Button>
         </form>
 
-        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-6">
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-7">
           <FilterSelect
             label="Segment"
             value={filters.segment ?? 'all'}
@@ -234,6 +244,15 @@ function CustomerExplorerControls({
           <ChannelSelect label="Last channel" value={filters.lastChannel} onChange={(value) => onUpdateFilters({ lastChannel: value })} />
           <ChannelSelect label="Repeat channel" value={filters.repeatChannel} onChange={(value) => onUpdateFilters({ repeatChannel: value })} />
           <FilterSelect
+            label="RFM"
+            value={filters.rfmSegment ?? 'all'}
+            onValueChange={(value) => onUpdateFilters({ rfmSegment: value === 'all' ? undefined : value as RfmSegment })}
+            options={[
+              ['all', 'All RFM'],
+              ...rfmSegments.map((segment) => [segment, segment] as [string, string]),
+            ]}
+          />
+          <FilterSelect
             label="Sort"
             value={filters.sort ?? 'totalSpent'}
             onValueChange={(value) => onUpdateFilters({ sort: value as CustomerSort })}
@@ -247,7 +266,7 @@ function CustomerExplorerControls({
             <button
               key={key}
               type="button"
-              className="inline-flex items-center gap-1 rounded-lg border border-border bg-secondary px-2.5 py-1 text-xs font-bold text-secondary-foreground hover:bg-secondary/80"
+              className="inline-flex items-center gap-1 rounded-lg border border-border bg-secondary px-2.5 py-1 text-xs font-bold text-secondary-foreground hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45"
               onClick={() => onRemoveFilter(key)}
             >
               {describeCustomerFilter(key, value)}
@@ -412,19 +431,11 @@ export function CustomerDetailClient({ id }: { id: string }) {
 
 function EmptyCustomers() {
   return (
-    <Card className="border-primary/15 bg-gradient-to-br from-card via-secondary/45 to-accent/25">
-      <CardHeader>
-        <CardTitle className="text-2xl font-black">No customers yet</CardTitle>
-        <CardDescription className="max-w-2xl leading-6">
-          Your account starts clean. Import orders to create merged customer profiles, repeat segments, VIP buyers, and win-back lists.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Button asChild className="font-black">
-          <Link href="/imports">Import orders</Link>
-        </Button>
-      </CardContent>
-    </Card>
+    <TreeEmptyState
+      title="No customers yet"
+      description="Your account starts clean. Import orders to create merged customer profiles, repeat segments, VIP buyers, and win-back lists."
+      action={{ href: '/imports', label: 'Import orders', icon: <UploadCloud size={16} /> }}
+    />
   )
 }
 
@@ -477,7 +488,7 @@ function SegmentTile({
   }[tone]
 
   return (
-    <Link href={href} className={`group rounded-xl border p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45 ${className}`}>
+    <Link href={href} className={`tree-tactile group rounded-xl border p-4 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45 ${className}`}>
       <p className="text-xs font-black uppercase opacity-75">{label}</p>
       <span className="mt-2 flex items-end justify-between gap-3">
         <strong className="block text-3xl font-black tracking-tight">{value}</strong>
@@ -495,7 +506,7 @@ function statusRowClass(status: CustomerStatus) {
 }
 
 function activeFilters(filters: CustomerFilterState) {
-  return (['segment', 'status', 'firstChannel', 'lastChannel', 'repeatChannel', 'search', 'sort'] as const)
+  return (['segment', 'status', 'firstChannel', 'lastChannel', 'repeatChannel', 'rfmSegment', 'product', 'search', 'sort'] as const)
     .flatMap((key) => filters[key] ? [[key, String(filters[key])]] as Array<[keyof CustomerFilterState, string]> : [])
 }
 

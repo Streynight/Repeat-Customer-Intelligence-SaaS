@@ -16,8 +16,14 @@ Use this checklist before showing the app to a merchant or testing their CSV.
 - Click “Confirm import”.
 - Return to `/dashboard`.
 - Confirm KPIs and charts update.
+- Open `/analytics`.
+- Confirm Retention, Cohorts, Products, and Opportunities tabs show useful drill-downs.
+- Open `/income`.
+- Confirm gross income, net snapshot, VAT estimate, channel income, and monthly rows are readable.
+- Open `/income?tab=sync`.
+- Confirm the CSV sync form only asks for an HTTPS CSV URL, source channel, and connection name.
 - Open `/customers`.
-- Export Repeat, VIP, and At Risk customers.
+- Export Repeat, VIP, RFM, product, and At Risk customers.
 - Open a customer detail page.
 - Confirm merged identity and channel journey are visible.
 
@@ -30,12 +36,16 @@ Use this checklist before showing the app to a merchant or testing their CSV.
 - Review diagnostics for missing mappings, bad dates, bad amounts, missing phone/email, duplicate order IDs, and likely merges.
 - Check whether known repeat customers merge correctly.
 - Check whether repeat revenue by channel matches the merchant’s intuition.
+- Check whether cohort, RFM, product repeat, and opportunity views match the imported order history.
+- Check whether gross income, estimated VAT, refunds, and platform fees match the merchant CSV columns or sensible estimates.
 - Export Repeat/VIP/At Risk customers and inspect the CSV.
 
 ## Pass Criteria
 
 - Merchant understands the dashboard value in under 10 seconds.
 - At least one channel winner is obvious.
+- At least one analytics tab creates a clear next action.
+- Income gives a useful gross/net/VAT snapshot without pretending to be tax filing software.
 - At least one repeat customer profile shows multiple orders.
 - Duplicate buyers merge by phone or email.
 - Export files are usable for remarketing workflows.
