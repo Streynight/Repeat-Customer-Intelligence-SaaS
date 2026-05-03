@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { AlertTriangle, CheckCircle2, Download, GitMerge, PlayCircle, UploadCloud } from 'lucide-react'
+import { ActivationCommandCenter } from '@/components/activation/activation-command-center'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -220,6 +221,8 @@ export function ImportClient() {
       </div>
 
       <div className="space-y-6">
+        <ActivationCommandCenter dataset={dataset} compact layout="rail" />
+
         <Card className="border-primary/10 bg-card">
           <h2 className="font-semibold">Real data readiness</h2>
           <div className="mt-3 space-y-3 text-sm leading-6 text-muted-foreground">

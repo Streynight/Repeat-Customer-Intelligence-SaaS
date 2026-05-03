@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { ArrowUpRight, CalendarDays, LineChart as LineChartIcon, Repeat2, UploadCloud, Users } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from 'recharts'
+import { ActivationCommandCenter } from '@/components/activation/activation-command-center'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, MetricCard } from '@/components/ui/card'
 import { InsightPanel, TreeEmptyState } from '@/components/ui/tree-surfaces'
@@ -24,7 +25,7 @@ export function DashboardClient() {
   }
 
   if (dataset.customers.length === 0 && dataset.orders.length === 0) {
-    return <EmptyDashboard />
+    return <EmptyDashboard dataset={dataset} />
   }
 
   const metrics = dashboardMetrics(dataset)
@@ -51,6 +52,8 @@ export function DashboardClient() {
 
   return (
     <div className="space-y-6">
+      <ActivationCommandCenter dataset={dataset} compact />
+
       <div className="grid gap-4 xl:grid-cols-3">
         <InsightPanel
           label="Best repeat channel"
@@ -191,33 +194,37 @@ function DashboardLoading() {
   )
 }
 
-function EmptyDashboard() {
+function EmptyDashboard({ dataset }: { dataset: ReturnType<typeof useIntelligenceDataset>['dataset'] }) {
   return (
-    <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
-      <div>
-        <TreeEmptyState
-          title="Start with your first order import"
-          description="This workspace is clean. Upload a CSV to grow customer profiles, repeat revenue, channel paths, and follow-up timing from your own store data."
-          action={{ href: '/imports', label: 'Import orders', icon: <UploadCloud size={16} /> }}
-        />
-        <div className="mt-6 grid gap-3 md:grid-cols-3">
-          <EmptyStep icon={UploadCloud} title="Import CSV" detail="Bring in orders from Shopee, TikTok Shop, social, website, or custom exports." />
-          <EmptyStep icon={Users} title="Resolve buyers" detail="Phone, email, LINE ID, and names create unified customer profiles." />
-          <EmptyStep icon={CalendarDays} title="Track repeat timing" detail="Calendar and win-back views appear after the first import." />
-        </div>
-      </div>
+    <div className="space-y-6">
+      <ActivationCommandCenter dataset={dataset} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Current workspace</CardTitle>
-          <CardDescription>No customer, order, revenue, or import records yet.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3">
-          <EmptyWorkspaceStat label="Known buyers" value="0" />
-          <EmptyWorkspaceStat label="Repeat revenue" value={money(0)} tone="repeat" />
-          <EmptyWorkspaceStat label="Need win-back" value="0" tone="risk" />
-        </CardContent>
-      </Card>
+      <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
+        <div>
+          <TreeEmptyState
+            title="Start with your first order import"
+            description="This workspace is clean. Upload a CSV to grow customer profiles, repeat revenue, channel paths, and follow-up timing from your own store data."
+            action={{ href: '/imports', label: 'Import orders', icon: <UploadCloud size={16} /> }}
+          />
+          <div className="mt-6 grid gap-3 md:grid-cols-3">
+            <EmptyStep icon={UploadCloud} title="Import CSV" detail="Bring in orders from Shopee, TikTok Shop, social, website, or custom exports." />
+            <EmptyStep icon={Users} title="Resolve buyers" detail="Phone, email, LINE ID, and names create unified customer profiles." />
+            <EmptyStep icon={CalendarDays} title="Track repeat timing" detail="Calendar and win-back views appear after the first import." />
+          </div>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Current workspace</CardTitle>
+            <CardDescription>No customer, order, revenue, or import records yet.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3">
+            <EmptyWorkspaceStat label="Known buyers" value="0" />
+            <EmptyWorkspaceStat label="Repeat revenue" value={money(0)} tone="repeat" />
+            <EmptyWorkspaceStat label="Need win-back" value="0" tone="risk" />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

@@ -25,7 +25,7 @@ describe('DashboardClient', () => {
     render(<DashboardClient />)
 
     expect(screen.getByText('Start with your first order import')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /import orders/i })).toHaveAttribute('href', '/imports')
+    expect(screen.getAllByRole('link', { name: /import orders/i })[0]).toHaveAttribute('href', '/imports')
     expect(screen.getByText('No customer, order, revenue, or import records yet.')).toBeInTheDocument()
   })
 
@@ -57,7 +57,7 @@ describe('DashboardClient', () => {
 
     expect(screen.getByText('Total income').closest('a')).toHaveAttribute('href', '/income')
     expect(screen.getByText('Bought again').closest('a')).toHaveAttribute('href', '/customers?segment=repeat')
-    expect(screen.getByText('Repeat revenue').closest('a')).toHaveAttribute('href', '/customers?segment=repeat&sort=repeatRevenue')
+    expect(linkByHref('/customers?segment=repeat&sort=repeatRevenue')).toBeInTheDocument()
     expect(screen.getByText('Open deep analytics').closest('a')).toHaveAttribute('href', '/analytics')
     expect(linkByHref('/customers?repeatChannel=tiktok&sort=repeatRevenue')).toBeInTheDocument()
   })
