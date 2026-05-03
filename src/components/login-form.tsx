@@ -2,16 +2,15 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { Database, ShieldCheck } from 'lucide-react'
 import { signInWithGoogle, signInWithPassword } from '@/app/actions/auth'
 import { BrandLogo } from '@/components/brand-logo'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { TreeSprout } from '@/components/ui/tree-surfaces'
 
 export function LoginForm() {
   const [identifier, setIdentifier] = useState('')
@@ -39,22 +38,31 @@ export function LoginForm() {
   }
 
   return (
-    <main className="grid min-h-screen place-items-center bg-[linear-gradient(180deg,var(--background)_0%,var(--muted)_100%)] px-5 py-8">
+    <main className="grid min-h-screen place-items-center bg-background px-5 py-8">
       <div className="grid w-full max-w-5xl gap-5 lg:grid-cols-[1fr_430px] lg:items-center">
-        <section className="hidden rounded-3xl border border-primary/10 bg-gradient-to-br from-card via-secondary/50 to-accent/25 p-8 shadow-xl shadow-stone-200/60 lg:block">
-          <TreeSprout />
-          <Badge className="mt-5" variant="secondary">Clean workspace</Badge>
-          <h1 className="mt-4 text-4xl font-black tracking-tight">Welcome back to the grove.</h1>
+        <section className="hidden rounded-lg border border-border bg-card p-8 shadow-lg lg:block">
+          <div className="grid size-11 place-items-center rounded-lg bg-primary/10 text-primary">
+            <ShieldCheck size={22} />
+          </div>
+          <h1 className="mt-5 text-4xl font-semibold tracking-tight">Return to your operating workspace.</h1>
           <p className="mt-4 max-w-md text-sm leading-6 text-muted-foreground">
-            Your repeat buyers, channel paths, income snapshots, and calendar reminders are ready when your order data is.
+            Access tenant-scoped imports, repeat revenue views, customer risk queues, and production health checks from the same workspace.
           </p>
+          <div className="mt-6 grid gap-3">
+            {['Tenant context is enforced', 'Health checks run against live services', 'Workspace data stays empty until imported'].map((item) => (
+              <div key={item} className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium">
+                <Database className="size-4 text-primary" />
+                {item}
+              </div>
+            ))}
+          </div>
         </section>
-      <Card className="w-full border-primary/10">
+      <Card className="w-full border-border">
         <CardHeader>
           <Link href="/" aria-label="RepeatTree home">
             <BrandLogo />
           </Link>
-          <CardTitle className="mt-4 text-2xl font-black">Sign in</CardTitle>
+          <CardTitle className="mt-4 text-2xl font-semibold">Sign in</CardTitle>
           <CardDescription className="leading-6">
             Use your username or email and password, or continue with Google.
           </CardDescription>
@@ -88,7 +96,7 @@ export function LoginForm() {
           </div>
 
           <Button
-            className="w-full font-black"
+            className="w-full font-semibold"
             disabled={sending || !identifier || !password}
             type="submit"
           >
@@ -104,7 +112,7 @@ export function LoginForm() {
 
         <Button
           variant="outline"
-          className="w-full font-black"
+          className="w-full font-semibold"
           disabled={connectingGoogle}
           onClick={() => void continueWithGoogle()}
           type="button"

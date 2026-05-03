@@ -443,8 +443,8 @@ function StatusPill({ status }: { status: CustomerStatus }) {
   const className = {
     New: 'border-border bg-secondary text-secondary-foreground',
     Repeat: 'border-emerald-300 bg-emerald-100 text-emerald-900',
-    VIP: 'border-yellow-300 bg-yellow-100 text-yellow-900',
-    AtRisk: 'border-amber-300 bg-amber-100 text-amber-900',
+    VIP: 'border-violet-300 bg-violet-100 text-violet-900',
+    AtRisk: 'border-rose-300 bg-rose-100 text-rose-900',
     Lost: 'border-red-300 bg-red-100 text-red-900',
   }[status] ?? 'border-border bg-secondary text-secondary-foreground'
 
@@ -483,12 +483,12 @@ function SegmentTile({
 }) {
   const className = {
     repeat: 'border-emerald-200 bg-emerald-50/75 text-emerald-950',
-    vip: 'border-yellow-200 bg-yellow-50/80 text-yellow-950',
-    risk: 'border-amber-200 bg-amber-50/80 text-amber-950',
+    vip: 'border-violet-200 bg-violet-50/80 text-violet-950',
+    risk: 'border-rose-200 bg-rose-50/80 text-rose-950',
   }[tone]
 
   return (
-    <Link href={href} className={`tree-tactile group rounded-xl border p-4 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45 ${className}`}>
+    <Link href={href} className={`tree-tactile group rounded-lg border p-4 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45 ${className}`}>
       <p className="text-xs font-black uppercase opacity-75">{label}</p>
       <span className="mt-2 flex items-end justify-between gap-3">
         <strong className="block text-3xl font-black tracking-tight">{value}</strong>
@@ -500,8 +500,8 @@ function SegmentTile({
 
 function statusRowClass(status: CustomerStatus) {
   if (status === 'Repeat') return 'bg-emerald-50/35'
-  if (status === 'VIP') return 'bg-yellow-50/35'
-  if (status === 'AtRisk' || status === 'Lost') return 'bg-amber-50/35'
+  if (status === 'VIP') return 'bg-violet-50/35'
+  if (status === 'AtRisk' || status === 'Lost') return 'bg-rose-50/35'
   return ''
 }
 
@@ -512,8 +512,8 @@ function activeFilters(filters: CustomerFilterState) {
 
 function statusReasonClass(status: CustomerStatus) {
   if (status === 'Repeat') return 'bg-emerald-50 text-emerald-900'
-  if (status === 'VIP') return 'bg-yellow-50 text-yellow-900'
-  if (status === 'AtRisk' || status === 'Lost') return 'bg-amber-50 text-amber-900'
+  if (status === 'VIP') return 'bg-violet-50 text-violet-900'
+  if (status === 'AtRisk' || status === 'Lost') return 'bg-rose-50 text-rose-900'
   return 'bg-secondary text-secondary-foreground'
 }
 

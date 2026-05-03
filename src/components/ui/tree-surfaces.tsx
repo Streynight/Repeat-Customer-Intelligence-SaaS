@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type React from 'react'
-import { ArrowUpRight, Sprout } from 'lucide-react'
+import { ArrowUpRight, Radar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
@@ -14,34 +14,34 @@ const toneClasses: Record<AccentTone, {
   strip: string
 }> = {
   neutral: {
-    panel: 'border-primary/15 bg-gradient-to-br from-card via-secondary/45 to-accent/18',
+    panel: 'border-primary/20 bg-card',
     icon: 'bg-primary/10 text-primary',
     text: 'text-primary',
     strip: 'bg-primary',
   },
   repeat: {
-    panel: 'border-emerald-200/80 bg-gradient-to-br from-card via-emerald-50/70 to-accent/25',
+    panel: 'border-emerald-200/80 bg-emerald-50/70',
     icon: 'bg-emerald-100 text-emerald-800',
     text: 'text-emerald-800',
     strip: 'bg-emerald-600',
   },
   vip: {
-    panel: 'border-yellow-200/80 bg-gradient-to-br from-card via-yellow-50/75 to-secondary/50',
-    icon: 'bg-yellow-100 text-yellow-800',
-    text: 'text-yellow-800',
-    strip: 'bg-yellow-600',
+    panel: 'border-violet-200/80 bg-violet-50/70',
+    icon: 'bg-violet-100 text-violet-800',
+    text: 'text-violet-800',
+    strip: 'bg-violet-600',
   },
   risk: {
-    panel: 'border-amber-200/80 bg-gradient-to-br from-card via-amber-50/75 to-orange-50/55',
-    icon: 'bg-amber-100 text-amber-800',
-    text: 'text-amber-800',
-    strip: 'bg-amber-600',
+    panel: 'border-rose-200/80 bg-rose-50/70',
+    icon: 'bg-rose-100 text-rose-800',
+    text: 'text-rose-800',
+    strip: 'bg-rose-600',
   },
   income: {
-    panel: 'border-orange-200/70 bg-gradient-to-br from-card via-orange-50/65 to-accent/20',
-    icon: 'bg-orange-100 text-orange-800',
-    text: 'text-orange-800',
-    strip: 'bg-orange-600',
+    panel: 'border-cyan-200/80 bg-cyan-50/70',
+    icon: 'bg-cyan-100 text-cyan-800',
+    text: 'text-cyan-800',
+    strip: 'bg-cyan-600',
   },
 }
 
@@ -53,12 +53,12 @@ export function TreeSprout({ className }: { className?: string }) {
   return (
     <span
       aria-hidden="true"
-      className={cn(
-        'grid size-10 shrink-0 place-items-center rounded-xl border border-primary/15 bg-gradient-to-br from-accent/55 via-secondary/55 to-card text-primary shadow-sm shadow-stone-200/70',
+        className={cn(
+        'grid size-10 shrink-0 place-items-center rounded-lg border border-primary/20 bg-primary/10 text-primary shadow-sm',
         className,
       )}
     >
-      <Sprout className="size-5" />
+      <Radar className="size-5" />
     </span>
   )
 }
@@ -84,7 +84,7 @@ export function TreeEmptyState({
       <CardHeader className="flex flex-col gap-4 md:flex-row md:items-start">
         <TreeSprout />
         <div>
-          <CardTitle className="text-2xl font-black">{title}</CardTitle>
+          <CardTitle className="text-2xl font-semibold">{title}</CardTitle>
           <CardDescription className="mt-2 max-w-2xl leading-6">{description}</CardDescription>
         </div>
       </CardHeader>
@@ -129,7 +129,7 @@ export function InsightPanel({
       className={cn(
         'relative overflow-hidden',
         toneStyle.panel,
-        href && 'transition group-hover/panel:-translate-y-0.5 group-hover/panel:shadow-lg group-hover/panel:shadow-stone-200/75',
+        href && 'transition group-hover/panel:-translate-y-0.5 group-hover/panel:shadow-md',
       )}
     >
       <span className={cn('absolute inset-x-0 top-0 h-1', toneStyle.strip)} aria-hidden="true" />
@@ -147,7 +147,7 @@ export function InsightPanel({
   )
 
   return href ? (
-    <Link href={href} className="group/panel block rounded-xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45">
+    <Link href={href} className="group/panel block rounded-lg focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45">
       {content}
     </Link>
   ) : content

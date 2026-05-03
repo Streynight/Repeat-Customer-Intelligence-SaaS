@@ -32,7 +32,7 @@ export function SettingsClient() {
         <TabsTrigger value="workflow">Workflow</TabsTrigger>
       </TabsList>
       <TabsContent value="rules" className="mt-4">
-        <Card className="border-primary/10 bg-gradient-to-br from-card to-secondary/30">
+        <Card className="border-primary/10 bg-card">
           <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start">
             <TreeSprout className="size-9 rounded-lg" />
             <div>
@@ -51,7 +51,7 @@ export function SettingsClient() {
         </Card>
       </TabsContent>
       <TabsContent value="workflow" className="mt-4">
-        <Card className="border-primary/10 bg-gradient-to-br from-card to-accent/15">
+        <Card className="border-primary/10 bg-card">
           <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start">
             <TreeSprout className="size-9 rounded-lg" />
             <div>

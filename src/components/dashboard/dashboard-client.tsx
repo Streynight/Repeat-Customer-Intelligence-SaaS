@@ -234,7 +234,7 @@ function EmptyWorkspaceStat({
   const className = {
     neutral: 'bg-card text-foreground',
     repeat: 'bg-emerald-50 text-emerald-900',
-    risk: 'bg-amber-50 text-amber-900',
+    risk: 'bg-rose-50 text-rose-900',
   }[tone]
 
   return (
@@ -279,7 +279,7 @@ function AnalyticsSnapshot({ analytics }: { analytics: ReturnType<typeof buildRe
   const topSegment = analytics.summary.topRfmSegment
 
   return (
-    <Card className="border-primary/15 bg-gradient-to-r from-card via-secondary/45 to-accent/20">
+    <Card className="border-primary/15 bg-card">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div className="flex items-center gap-2">
@@ -319,7 +319,7 @@ function SnapshotLink({ href, label, value }: { href: string; label: string; val
 
 function ActionLink({ href, title, detail }: { href: string; title: string; detail: string }) {
   return (
-    <Link href={href} className="tree-tactile group rounded-xl border border-border bg-card/85 p-4 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45">
+    <Link href={href} className="tree-tactile group rounded-lg border border-border bg-card/85 p-4 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-black">{title}</p>
@@ -342,7 +342,7 @@ function CustomerMiniTable({
 }) {
   const rowClass = tone === 'repeat'
     ? 'border-emerald-200/70 bg-emerald-50/55 hover:bg-emerald-50'
-    : 'border-amber-200/70 bg-amber-50/55 hover:bg-amber-50'
+    : 'border-rose-200/70 bg-rose-50/55 hover:bg-rose-50'
 
   return (
     <Card>

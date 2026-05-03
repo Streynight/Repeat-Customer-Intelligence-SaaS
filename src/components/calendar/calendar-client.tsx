@@ -165,7 +165,7 @@ function CalendarDayButton({
       className={cn(
         'min-h-32 border-b border-r border-border bg-card p-2 text-left transition hover:bg-accent/45 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45',
         day.repeatCustomers.length > 0 && 'border-emerald-200/80 bg-emerald-50/45',
-        day.reminders.length > 0 && day.repeatCustomers.length === 0 && 'border-amber-200/80 bg-amber-50/45',
+        day.reminders.length > 0 && day.repeatCustomers.length === 0 && 'border-rose-200/80 bg-rose-50/45',
         !day.isCurrentMonth && 'bg-muted/25 text-muted-foreground',
         selected && 'bg-primary/10 ring-2 ring-primary/35',
       )}
@@ -182,7 +182,7 @@ function CalendarDayButton({
         {day.orderCount > 0 ? <span>{day.orderCount} orders</span> : <span className="opacity-60">No orders</span>}
         {day.repeatOrderCount > 0 ? <span className="font-bold text-emerald-800">{day.repeatOrderCount} repeat</span> : null}
         {day.repeatRevenue > 0 ? <span>{money(day.repeatRevenue)}</span> : null}
-        {day.reminders.length > 0 ? <span className="font-bold text-amber-700">{day.reminders.length} follow-up</span> : null}
+        {day.reminders.length > 0 ? <span className="font-bold text-rose-700">{day.reminders.length} follow-up</span> : null}
       </div>
       {repeatPreview.length > 0 ? (
         <div className="mt-2 grid gap-1">
@@ -337,7 +337,7 @@ function DayDetailPanel({ day, empty }: { day: CalendarDayInsight; empty: boolea
             <h3 className="text-sm font-black">Follow-up focus</h3>
           </div>
           {winBackReminders.length > 0 ? (
-            <p className="mb-2 rounded-lg bg-amber-50 p-3 text-xs font-semibold leading-5 text-amber-900">
+            <p className="mb-2 rounded-lg bg-rose-50 p-3 text-xs font-semibold leading-5 text-rose-900">
               {winBackReminders.length} at-risk or lost customers are due for attention.
             </p>
           ) : null}

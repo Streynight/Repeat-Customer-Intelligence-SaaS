@@ -2,16 +2,15 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { CheckCircle2, ShieldCheck } from 'lucide-react'
 import { signInWithGoogle, signUpWithPassword } from '@/app/actions/auth'
 import { BrandLogo } from '@/components/brand-logo'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { TreeSprout } from '@/components/ui/tree-surfaces'
 
 export function SignupForm() {
   const [username, setUsername] = useState('')
@@ -50,22 +49,31 @@ export function SignupForm() {
   }
 
   return (
-    <main className="grid min-h-screen place-items-center bg-[linear-gradient(180deg,var(--background)_0%,var(--muted)_100%)] px-5 py-8">
+    <main className="grid min-h-screen place-items-center bg-background px-5 py-8">
       <div className="grid w-full max-w-5xl gap-5 lg:grid-cols-[1fr_430px] lg:items-center">
-        <section className="hidden rounded-3xl border border-primary/10 bg-gradient-to-br from-card via-secondary/50 to-accent/25 p-8 shadow-xl shadow-stone-200/60 lg:block">
-          <TreeSprout />
-          <Badge className="mt-5" variant="secondary">Starts clean</Badge>
-          <h1 className="mt-4 text-4xl font-black tracking-tight">Plant real orders first.</h1>
+        <section className="hidden rounded-lg border border-border bg-card p-8 shadow-lg lg:block">
+          <div className="grid size-11 place-items-center rounded-lg bg-primary/10 text-primary">
+            <ShieldCheck size={22} />
+          </div>
+          <h1 className="mt-5 text-4xl font-semibold tracking-tight">Create a clean revenue workspace.</h1>
           <p className="mt-4 max-w-md text-sm leading-6 text-muted-foreground">
-            New accounts begin with no fake revenue, no fake buyers, and no demo numbers. Import when you are ready.
+            New accounts start without demo revenue. Your dashboard, customer profiles, and automation queues appear after you import real orders.
           </p>
+          <div className="mt-6 grid gap-3">
+            {['No fake customer records', 'Tenant-scoped workspace by default', 'Production services checked before use'].map((item) => (
+              <div key={item} className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium">
+                <CheckCircle2 className="size-4 text-primary" />
+                {item}
+              </div>
+            ))}
+          </div>
         </section>
-      <Card className="w-full border-primary/10">
+      <Card className="w-full border-border">
         <CardHeader>
           <Link href="/" aria-label="RepeatTree home">
             <BrandLogo />
           </Link>
-          <CardTitle className="mt-4 text-2xl font-black">Create your RepeatTree account</CardTitle>
+          <CardTitle className="mt-4 text-2xl font-semibold">Create your RepeatTree account</CardTitle>
           <CardDescription className="leading-6">
             Sign up with a username and password, or continue with Google.
           </CardDescription>
@@ -123,7 +131,7 @@ export function SignupForm() {
           </div>
 
           <Button
-            className="w-full font-black"
+            className="w-full font-semibold"
             disabled={sending || !username || !email || !password || !confirmPassword}
             type="submit"
           >
@@ -139,7 +147,7 @@ export function SignupForm() {
 
         <Button
           variant="outline"
-          className="w-full font-black"
+          className="w-full font-semibold"
           disabled={connectingGoogle}
           onClick={() => void continueWithGoogle()}
           type="button"
@@ -161,7 +169,7 @@ export function SignupForm() {
         </p>
 
         <Link href="/dashboard" className="mt-4 block text-center text-sm font-bold text-muted-foreground hover:text-foreground">
-          Continue to clean dashboard
+          Preview empty workspace
         </Link>
         </CardContent>
       </Card>

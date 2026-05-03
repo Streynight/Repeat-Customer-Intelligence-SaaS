@@ -76,9 +76,9 @@ export function ImportClient() {
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
       <div className="space-y-6">
-        <Card className="border-primary/15 bg-gradient-to-br from-card via-secondary/40 to-accent/25">
+        <Card className="border-primary/20 bg-card">
           <label
-            className="tree-tactile flex min-h-56 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-primary/20 bg-card/70 p-8 text-center hover:border-primary/35 hover:bg-card hover:shadow-md focus-within:ring-3 focus-within:ring-ring/45"
+            className="tree-tactile flex min-h-56 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-primary/25 bg-secondary/25 p-8 text-center hover:border-primary/45 hover:bg-secondary/40 hover:shadow-md focus-within:ring-3 focus-within:ring-ring/45"
             onDragOver={(event) => event.preventDefault()}
             onDrop={(event) => {
               event.preventDefault()
@@ -93,8 +93,8 @@ export function ImportClient() {
               onChange={(event) => event.target.files?.[0] && void readFile(event.target.files[0])}
             />
             <TreeSprout className="size-12" />
-            <h2 className="mt-4 text-xl font-black">Plant your order CSV here</h2>
-            <p className="mt-2 max-w-lg text-sm leading-6 text-muted-foreground">Drop one real shop export and RepeatTree grows profiles, repeat paths, income, and calendar timing from it.</p>
+            <h2 className="mt-4 text-xl font-semibold">Upload order CSV</h2>
+            <p className="mt-2 max-w-lg text-sm leading-6 text-muted-foreground">Drop one real shop export to build profiles, repeat paths, income, and calendar timing.</p>
             <span className="mt-5 inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-primary px-2.5 text-sm font-bold text-primary-foreground">
               <UploadCloud size={15} />
               Choose CSV
@@ -114,8 +114,8 @@ export function ImportClient() {
           </CardHeader>
           <CardContent className="grid gap-3 lg:grid-cols-3">
             {sampleCsvTemplates.map((template) => (
-              <article key={template.id} className="rounded-xl border border-primary/10 bg-gradient-to-br from-card to-secondary/35 p-4 shadow-sm shadow-stone-200/50">
-                <h3 className="font-black">{template.label}</h3>
+              <article key={template.id} className="rounded-lg border border-border bg-card p-4 shadow-sm">
+                <h3 className="font-semibold">{template.label}</h3>
                 <p className="mt-2 min-h-12 text-sm leading-6 text-muted-foreground">{template.description}</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Button onClick={() => trySample(template)}>
@@ -161,9 +161,9 @@ export function ImportClient() {
                 </Label>
               ))}
             </div>
-            <Alert className="mt-4 border-amber-200 bg-amber-50 text-amber-950">
+            <Alert className="mt-4 border-cyan-200 bg-cyan-50 text-cyan-950">
               <AlertTriangle size={16} />
-              <AlertTitle>Friendly matching reminder</AlertTitle>
+              <AlertTitle>Identity matching reminder</AlertTitle>
               <AlertDescription>Phone or email repeats across channels merge into one profile. If both are missing, fuzzy name matching is used as a weaker fallback.</AlertDescription>
             </Alert>
           </Card>
@@ -220,8 +220,8 @@ export function ImportClient() {
       </div>
 
       <div className="space-y-6">
-        <Card className="border-primary/10 bg-gradient-to-br from-card to-secondary/30">
-          <h2 className="font-black">Real data readiness</h2>
+        <Card className="border-primary/10 bg-card">
+          <h2 className="font-semibold">Real data readiness</h2>
           <div className="mt-3 space-y-3 text-sm leading-6 text-muted-foreground">
             <p>
               Best test file: 20-50 orders with repeat buyers, phone or email columns, order dates,
@@ -237,16 +237,16 @@ export function ImportClient() {
           </div>
         </Card>
 
-        <Card className="border-primary/10 bg-gradient-to-br from-card to-accent/15">
-          <h2 className="font-black">Import status</h2>
+        <Card className="border-primary/10 bg-card">
+          <h2 className="font-semibold">Import status</h2>
           <p className="mt-2 text-sm text-muted-foreground">{status}</p>
           <div className="mt-4 rounded-lg bg-secondary/45 p-3 text-xs leading-5 text-muted-foreground">
             Good CSV headers: <strong>order_id</strong>, <strong>customer_name</strong>, <strong>phone</strong>, <strong>email</strong>, <strong>order_date</strong>, <strong>total_amount</strong>, <strong>product_name</strong>, <strong>tax_amount</strong>, <strong>platform_fee_amount</strong>, <strong>refund_amount</strong>.
           </div>
           {errors.length > 0 && <ul className="mt-3 list-disc pl-5 text-sm text-red-700">{errors.map((error) => <li key={error}>{error}</li>)}</ul>}
         </Card>
-        <Card className="border-primary/10 bg-gradient-to-br from-card to-secondary/25">
-          <h2 className="font-black">Import history</h2>
+        <Card className="border-primary/10 bg-card">
+          <h2 className="font-semibold">Import history</h2>
           <div className="mt-4 grid gap-3">
             {loading ? (
               <p className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
@@ -307,7 +307,7 @@ function ImportDiagnosticsPanel({ diagnostics }: { diagnostics: ImportDiagnostic
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
-        <div className="rounded-xl border border-border bg-secondary/35 p-4">
+        <div className="rounded-lg border border-border bg-secondary/35 p-4">
           <div className="flex items-center gap-2">
             <GitMerge size={17} className="text-primary" />
             <h3 className="font-black">Likely merges</h3>
@@ -329,12 +329,12 @@ function ImportDiagnosticsPanel({ diagnostics }: { diagnostics: ImportDiagnostic
           )}
         </div>
 
-        <div className="rounded-xl border border-border bg-secondary/35 p-4">
+        <div className="rounded-lg border border-border bg-secondary/35 p-4">
           <h3 className="font-black">First row issues</h3>
           {topIssues.length > 0 ? (
             <ul className="mt-3 space-y-2 text-sm">
               {topIssues.map((issue) => (
-                <li key={`${issue.rowNumber}-${issue.message}`} className={issue.severity === 'error' ? 'text-red-700' : 'text-amber-700'}>
+                <li key={`${issue.rowNumber}-${issue.message}`} className={issue.severity === 'error' ? 'text-red-700' : 'text-rose-700'}>
                   {issue.rowNumber ? `Row ${issue.rowNumber}: ` : ''}{issue.message}
                 </li>
               ))}
@@ -360,12 +360,12 @@ function DiagnosticStat({
   const toneClass = {
     neutral: 'text-foreground bg-card',
     good: 'text-accent-foreground bg-accent/55',
-    warn: 'text-amber-700 bg-amber-50',
+    warn: 'text-rose-700 bg-rose-50',
     bad: 'text-red-700 bg-red-50',
   }[tone]
 
   return (
-    <div className={`rounded-xl border border-border p-3 ${toneClass}`}>
+    <div className={`rounded-lg border border-border p-3 ${toneClass}`}>
       <p className="text-xs font-black uppercase opacity-70">{label}</p>
       <strong className="mt-2 block text-2xl">{value}</strong>
     </div>

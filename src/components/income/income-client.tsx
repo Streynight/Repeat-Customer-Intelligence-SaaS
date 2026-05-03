@@ -431,7 +431,7 @@ function SyncTab({
           </CardHeader>
           <CardContent className="grid gap-3">
             {connections.length > 0 ? connections.map((connection) => (
-              <div key={connection.id} className="rounded-xl border border-border bg-secondary/25 p-4">
+              <div key={connection.id} className="rounded-lg border border-border bg-secondary/25 p-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -504,8 +504,8 @@ function BreakdownRow({ label, value, tone = 'neutral' }: { label: string; value
   const toneClass = {
     neutral: 'bg-card text-foreground',
     repeat: 'bg-emerald-50 text-emerald-900',
-    vip: 'bg-yellow-50 text-yellow-900',
-    risk: 'bg-amber-50 text-amber-900',
+    vip: 'bg-violet-50 text-violet-900',
+    risk: 'bg-rose-50 text-rose-900',
   }[tone]
 
   return (

@@ -14,7 +14,7 @@ function Card({
       data-slot="card"
       data-size={size}
       className={cn(
-        "group/card relative flex flex-col gap-4 overflow-hidden rounded-xl border border-border/80 bg-card/95 p-5 text-sm text-card-foreground shadow-sm shadow-stone-200/80 ring-1 ring-foreground/5 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:p-4 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        "group/card relative flex flex-col gap-4 overflow-hidden rounded-lg border border-border bg-card/95 p-5 text-sm text-card-foreground shadow-sm ring-1 ring-foreground/5 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:p-4 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-lg *:[img:last-child]:rounded-b-lg",
         className
       )}
       {...props}
@@ -27,7 +27,7 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-header"
       className={cn(
-        "group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl group-data-[size=sm]/card:px-0 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-4 group-data-[size=sm]/card:[.border-b]:pb-3",
+        "group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-lg group-data-[size=sm]/card:px-0 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-4 group-data-[size=sm]/card:[.border-b]:pb-3",
         className
       )}
       {...props}
@@ -86,7 +86,7 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-footer"
       className={cn(
-        "flex items-center rounded-b-xl border-t bg-muted/50 p-4 group-data-[size=sm]/card:p-3",
+        "flex items-center rounded-b-lg border-t bg-muted/50 p-4 group-data-[size=sm]/card:p-3",
         className
       )}
       {...props}
@@ -121,23 +121,23 @@ function MetricCard({
   const toneClass = {
     neutral: "",
     repeat: "border-emerald-200/80 bg-emerald-50/70 shadow-emerald-100/40",
-    vip: "border-yellow-200/80 bg-yellow-50/75 shadow-yellow-100/40",
-    risk: "border-amber-200/80 bg-amber-50/75 shadow-amber-100/40",
-    income: "border-orange-200/80 bg-orange-50/70 shadow-orange-100/40",
+    vip: "border-violet-200/80 bg-violet-50/70 shadow-violet-100/40",
+    risk: "border-rose-200/80 bg-rose-50/70 shadow-rose-100/40",
+    income: "border-cyan-200/80 bg-cyan-50/70 shadow-cyan-100/40",
   }[tone]
   const labelClass = {
     neutral: "text-muted-foreground",
     repeat: "text-emerald-800",
-    vip: "text-yellow-800",
-    risk: "text-amber-800",
-    income: "text-orange-800",
+    vip: "text-violet-800",
+    risk: "text-rose-800",
+    income: "text-cyan-800",
   }[tone]
   const stripClass = {
     neutral: "bg-primary/50",
     repeat: "bg-emerald-600",
-    vip: "bg-yellow-600",
-    risk: "bg-amber-600",
-    income: "bg-orange-600",
+    vip: "bg-violet-600",
+    risk: "bg-rose-600",
+    income: "bg-cyan-600",
   }[tone]
 
   const content = (
@@ -145,7 +145,7 @@ function MetricCard({
       size="sm"
       className={cn(
         toneClass,
-        href && "tree-tactile group-hover/metric:shadow-md group-hover/metric:shadow-stone-200/70",
+        href && "tree-tactile group-hover/metric:shadow-md",
       )}
     >
       <span className={cn("absolute inset-x-0 top-0 h-1", stripClass)} aria-hidden="true" />
@@ -161,7 +161,7 @@ function MetricCard({
   )
 
   return href ? (
-    <Link href={href} className="group/metric block rounded-xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45">
+    <Link href={href} className="group/metric block rounded-lg focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45">
       {content}
     </Link>
   ) : (

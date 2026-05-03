@@ -58,13 +58,13 @@ function UserMenu() {
   }
 
   return (
-    <div className="absolute bottom-4 left-3 right-3 rounded-lg border border-border bg-card/80 p-3 shadow-sm">
-      <p className="truncate text-xs font-semibold text-muted-foreground">{email}</p>
+    <div className="absolute bottom-4 left-3 right-3 rounded-lg border border-sidebar-border bg-sidebar-accent/70 p-3">
+      <p className="truncate text-xs font-semibold text-sidebar-foreground/70">{email}</p>
       <Button
         variant="ghost"
         size="sm"
         onClick={() => void signOut()}
-        className="mt-2 h-7 justify-start px-0 text-xs font-semibold text-muted-foreground hover:text-foreground"
+        className="mt-2 h-7 justify-start px-0 text-xs font-semibold text-sidebar-foreground/70 hover:bg-transparent hover:text-sidebar-foreground"
       >
         <LogOut size={13} />
         Sign out
@@ -75,8 +75,8 @@ function UserMenu() {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,var(--background)_0%,var(--muted)_100%)] text-foreground">
-      <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-sidebar-border bg-sidebar/95 shadow-lg shadow-stone-200/60 lg:block">
+    <div className="min-h-screen bg-background text-foreground">
+      <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:block">
         <BrandBlock />
         <DesktopNav />
         <UserMenu />
@@ -120,13 +120,13 @@ export function PageHeader({
   action?: React.ReactNode
 }) {
   return (
-    <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-border/75 bg-card/55 p-5 shadow-sm shadow-stone-200/60 lg:flex-row lg:items-end lg:justify-between">
+    <div className="mb-6 flex flex-col gap-4 border-b border-border pb-5 lg:flex-row lg:items-end lg:justify-between">
       <div>
-        <p className="inline-flex rounded-full border border-primary/15 bg-primary/10 px-2.5 py-1 text-xs font-black uppercase text-primary">
-          <span className="mr-1.5 inline-block size-1.5 rounded-full bg-accent" aria-hidden="true" />
+        <p className="inline-flex rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-black uppercase text-primary">
+          <span className="mr-1.5 inline-block size-1.5 rounded-full bg-primary" aria-hidden="true" />
           {eyebrow}
         </p>
-        <h1 className="mt-3 text-3xl font-black tracking-tight text-foreground">{title}</h1>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">{title}</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>
       </div>
       {action}
@@ -136,11 +136,11 @@ export function PageHeader({
 
 function BrandBlock() {
   return (
-    <div className="border-b border-sidebar-border bg-gradient-to-br from-sidebar via-secondary/55 to-accent/35 px-6 py-5">
+    <div className="border-b border-sidebar-border px-6 py-5">
       <Link href="/" aria-label="RepeatTree home">
-        <BrandLogo />
+        <BrandLogo textClassName="text-sidebar-foreground" />
       </Link>
-      <p className="mt-2 text-xs leading-5 text-muted-foreground">Repeat Customer Intelligence</p>
+      <p className="mt-2 text-xs leading-5 text-sidebar-foreground/65">Repeat Customer Intelligence</p>
     </div>
   )
 }
@@ -158,12 +158,12 @@ function DesktopNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              'relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-muted-foreground transition',
-              'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-sm',
-              active && 'bg-sidebar-accent text-sidebar-accent-foreground shadow-sm shadow-stone-200/60 ring-1 ring-sidebar-border',
+              'relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-sidebar-foreground/68 transition',
+              'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+              active && 'bg-sidebar-accent text-sidebar-accent-foreground ring-1 ring-sidebar-border',
             )}
           >
-            {active ? <span className="absolute left-0 top-2 h-5 w-1 rounded-r-full bg-accent" /> : null}
+            {active ? <span className="absolute left-0 top-2 h-5 w-1 rounded-r-full bg-sidebar-primary" /> : null}
             <item.icon size={17} />
             {item.label}
           </Link>

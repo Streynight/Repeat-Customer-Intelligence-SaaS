@@ -107,7 +107,7 @@ function RetentionTab({ analytics }: { analytics: ReturnType<typeof buildRetenti
             <Link
               key={row.segment}
               href={buildCustomersHref({ rfmSegment: row.segment, sort: 'totalSpent' })}
-              className="tree-tactile group rounded-xl border border-border bg-secondary/30 p-4 hover:bg-secondary/55 hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45"
+              className="tree-tactile group rounded-lg border border-border bg-secondary/30 p-4 hover:bg-secondary/55 hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -304,7 +304,7 @@ function OpportunitiesTab({ opportunities }: { opportunities: CustomerOpportunit
         <Link
           key={opportunity.id}
           href={`/customers/${opportunity.customerId}`}
-          className={`tree-tactile group rounded-xl border p-4 hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45 ${opportunityClass(opportunity)}`}
+          className={`tree-tactile group rounded-lg border p-4 hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45 ${opportunityClass(opportunity)}`}
         >
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -354,13 +354,13 @@ function formatDays(days: number | null) {
 function heatClass(retentionRate: number) {
   if (retentionRate >= 0.75) return 'bg-emerald-100 text-emerald-950'
   if (retentionRate >= 0.5) return 'bg-emerald-50 text-emerald-900'
-  if (retentionRate >= 0.25) return 'bg-amber-50 text-amber-900'
+  if (retentionRate >= 0.25) return 'bg-cyan-50 text-cyan-900'
   return 'bg-secondary text-muted-foreground'
 }
 
 function opportunityClass(opportunity: CustomerOpportunity) {
-  if (opportunity.type === 'win-back') return 'border-amber-200 bg-amber-50/70'
-  if (opportunity.type === 'vip-protect') return 'border-yellow-200 bg-yellow-50/75'
+  if (opportunity.type === 'win-back') return 'border-rose-200 bg-rose-50/70'
+  if (opportunity.type === 'vip-protect') return 'border-violet-200 bg-violet-50/75'
   if (opportunity.type === 'cross-sell') return 'border-emerald-200 bg-emerald-50/60'
   return 'border-border bg-card'
 }
