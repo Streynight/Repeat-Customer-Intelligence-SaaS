@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import type { Prisma } from '@/generated/prisma/client'
+import { requireClearWorkspaceConfirmation } from '@/lib/data-safety'
 import type {
   CustomerProfile,
   CustomerStatus,
@@ -8,6 +9,13 @@ import type {
   OrderRecord,
   SourceChannel,
 } from '@/lib/types'
+
+export type DatasetClearCounts = {
+  orderItems: number
+  orders: number
+  customers: number
+  imports: number
+}
 
 export async function loadDatasetForStore(
   storeId: string,
@@ -147,13 +155,25 @@ export async function persistImportForStore(storeId: string, dataset: Intelligen
   })
 }
 
-export async function clearDatasetForStore(storeId: string): Promise<void> {
-  await prisma.$transaction([
-    prisma.orderItem.deleteMany({ where: { order: { storeId } } }),
-    prisma.order.deleteMany({ where: { storeId } }),
-    prisma.customerProfile.deleteMany({ where: { storeId } }),
-    prisma.import.deleteMany({ where: { storeId } }),
-  ])
+export async function clearDatasetForStore(
+  storeId: string,
+  command: { confirmation?: unknown },
+): Promise<DatasetClearCounts> {
+  requireClearWorkspaceConfirmation(command.confirmation)
+
+  return prisma.$transaction(async (tx) => {
+    const orderItems = await tx.orderItem.deleteMany({ where: { order: { storeId } } })
+    const orders = await tx.order.deleteMany({ where: { storeId } })
+    const customers = await tx.customerProfile.deleteMany({ where: { storeId } })
+    const imports = await tx.import.deleteMany({ where: { storeId } })
+
+    return {
+      orderItems: orderItems.count,
+      orders: orders.count,
+      customers: customers.count,
+      imports: imports.count,
+    }
+  })
 }
 
 async function writeInBatches<T>(

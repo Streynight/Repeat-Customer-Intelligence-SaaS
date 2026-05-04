@@ -15,7 +15,6 @@ import { TreeEmptyState } from '@/components/ui/tree-surfaces'
 import {
   applyCustomerFilters,
   buildCustomersHref,
-  describeCustomerFilter,
   parseCustomerFilters,
   sortLabels,
   type CustomerFilterState,
@@ -25,10 +24,12 @@ import { downloadCsv, exportCustomersCsv } from '@/lib/services/export'
 import { rfmSegments, type RfmSegment } from '@/lib/services/retention-analytics'
 import { useIntelligenceDataset } from '@/components/hooks/use-intelligence-dataset'
 import { channelLabels, sourceChannels, type CustomerStatus, type SourceChannel } from '@/lib/types'
+import { useText } from '@/lib/i18n'
 import { money } from '@/lib/utils'
 
 export function CustomersClient() {
   const { dataset, loading } = useIntelligenceDataset()
+  const t = useText()
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -51,9 +52,9 @@ export function CustomersClient() {
   if (loading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Loading customers</CardTitle>
-          <CardDescription>Checking your workspace before showing customer profiles.</CardDescription>
+          <CardHeader>
+          <CardTitle>{t('Loading customers')}</CardTitle>
+          <CardDescription>{t('Checking your workspace before showing customer profiles.')}</CardDescription>
         </CardHeader>
       </Card>
     )
@@ -94,9 +95,9 @@ export function CustomersClient() {
       <Card>
         <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <CardTitle>Unified customer profiles</CardTitle>
+            <CardTitle>{t('Unified customer profiles')}</CardTitle>
             <CardDescription>
-              Showing {filteredCustomers.length} of {dataset.customers.length} customers from the active explorer filters.
+              {t('Showing')} {filteredCustomers.length} {t('of')} {dataset.customers.length} {t('customers from the active explorer filters.')}
             </CardDescription>
           </div>
         </CardHeader>
@@ -104,14 +105,14 @@ export function CustomersClient() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Customer</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Orders</TableHead>
-                <TableHead>Total spent</TableHead>
-                <TableHead>First channel</TableHead>
-                <TableHead>Last channel</TableHead>
-                <TableHead>Repeat path</TableHead>
-                <TableHead>Last order</TableHead>
+                <TableHead>{t('Customer')}</TableHead>
+                <TableHead>{t('Status')}</TableHead>
+                <TableHead>{t('Orders')}</TableHead>
+                <TableHead>{t('Total spent')}</TableHead>
+                <TableHead>{t('First channel')}</TableHead>
+                <TableHead>{t('Last channel')}</TableHead>
+                <TableHead>{t('Repeat path')}</TableHead>
+                <TableHead>{t('Last order')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -125,14 +126,14 @@ export function CustomersClient() {
                     <TableCell><StatusPill status={customer.customerStatus} /></TableCell>
                     <TableCell>{customer.totalOrders}</TableCell>
                     <TableCell>{money(customer.totalSpent)}</TableCell>
-                    <TableCell>{channelLabels[customer.firstChannel]}</TableCell>
-                    <TableCell>{channelLabels[customer.lastChannel]}</TableCell>
+                    <TableCell>{t(channelLabels[customer.firstChannel])}</TableCell>
+                    <TableCell>{t(channelLabels[customer.lastChannel])}</TableCell>
                     <TableCell>
                       <Link
                         href={buildCustomersHref({ firstChannel: customer.firstChannel, lastChannel: customer.lastChannel })}
                         className="font-semibold text-muted-foreground hover:text-primary hover:underline"
                       >
-                        {channelLabels[customer.firstChannel]} {'->'} {channelLabels[customer.lastChannel]}
+                        {t(channelLabels[customer.firstChannel])} {'->'} {t(channelLabels[customer.lastChannel])}
                       </Link>
                     </TableCell>
                     <TableCell>{customer.lastOrderDate.slice(0, 10)}</TableCell>
@@ -141,7 +142,7 @@ export function CustomersClient() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={8} className="py-6 text-muted-foreground">
-                    No customers match these filters. Clear filters or import more orders.
+                    {t('No customers match these filters. Clear filters or import more orders.')}
                   </TableCell>
                 </TableRow>
               )}
@@ -174,22 +175,24 @@ function CustomerExplorerControls({
   onSubmitSearch: (event: FormEvent<HTMLFormElement>) => void
   onUpdateFilters: (patch: CustomerFilterState) => void
 }) {
+  const t = useText()
+
   return (
     <Card>
       <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <CardTitle>Customer explorer</CardTitle>
-          <CardDescription>Search, filter, and export the exact buyer group behind each dashboard insight.</CardDescription>
+          <CardTitle>{t('Customer explorer')}</CardTitle>
+          <CardDescription>{t('Search, filter, and export the exact buyer group behind each dashboard insight.')}</CardDescription>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={onExport}>
             <Download size={15} />
-            Export filtered
+            {t('Export filtered')}
           </Button>
           {activeFilterEntries.length > 0 ? (
             <Button variant="ghost" onClick={onClearAll}>
               <X size={15} />
-              Clear
+              {t('Clear')}
             </Button>
           ) : null}
         </div>
@@ -203,17 +206,17 @@ function CustomerExplorerControls({
               name="search"
               className="pl-8"
               defaultValue={filters.search ?? ''}
-              placeholder="Search name, email, or phone"
+              placeholder={t('Search name, email, or phone')}
             />
           </div>
           <Input
             key={filters.product ?? 'empty-product'}
             name="product"
             defaultValue={filters.product ?? ''}
-            placeholder="Product bought"
+            placeholder={t('Product bought')}
             className="md:max-w-56"
           />
-          <Button type="submit" variant="outline">Apply</Button>
+          <Button type="submit" variant="outline">{t('Apply')}</Button>
         </form>
 
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-7">
@@ -261,7 +264,7 @@ function CustomerExplorerControls({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">{resultCount}/{totalCount} customers</Badge>
+          <Badge variant="secondary">{resultCount}/{totalCount} {t('customers')}</Badge>
           {activeFilterEntries.map(([key, value]) => (
             <button
               key={key}
@@ -269,7 +272,7 @@ function CustomerExplorerControls({
               className="inline-flex items-center gap-1 rounded-lg border border-border bg-secondary px-2.5 py-1 text-xs font-bold text-secondary-foreground hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45"
               onClick={() => onRemoveFilter(key)}
             >
-              {describeCustomerFilter(key, value)}
+              {describeTranslatedCustomerFilter(key, value, t)}
               <X size={12} />
             </button>
           ))}
@@ -290,16 +293,18 @@ function FilterSelect({
   options: Array<[string, string]>
   onValueChange: (value: string) => void
 }) {
+  const t = useText()
+
   return (
     <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
-      {label}
+      {t(label)}
       <Select value={value} onValueChange={onValueChange}>
         <SelectTrigger className="w-full bg-card">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           {options.map(([optionValue, optionLabel]) => (
-            <SelectItem key={optionValue} value={optionValue}>{optionLabel}</SelectItem>
+            <SelectItem key={optionValue} value={optionValue}>{t(optionLabel)}</SelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -331,13 +336,14 @@ function ChannelSelect({
 
 export function CustomerDetailClient({ id }: { id: string }) {
   const { dataset, loading } = useIntelligenceDataset()
+  const t = useText()
 
   if (loading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Loading customer profile</CardTitle>
-          <CardDescription>Checking the latest store data.</CardDescription>
+          <CardTitle>{t('Loading customer profile')}</CardTitle>
+          <CardDescription>{t('Checking the latest store data.')}</CardDescription>
         </CardHeader>
       </Card>
     )
@@ -345,11 +351,11 @@ export function CustomerDetailClient({ id }: { id: string }) {
 
   const customer = dataset.customers.find((item) => item.id === id)
 
-  if (!customer) return <Card>No customer found.</Card>
+  if (!customer) return <Card>{t('No customer found.')}</Card>
 
   const channels = Array.from(new Set(customer.orders.map((order) => order.sourceChannel)))
-  const identitySignals = identitySignal(customer)
-  const statusReason = customerStatusReason(customer, dataset.vipThreshold)
+  const identitySignals = identitySignal(customer, t)
+  const statusReason = customerStatusReason(customer, dataset.vipThreshold, t)
 
   return (
     <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
@@ -359,7 +365,7 @@ export function CustomerDetailClient({ id }: { id: string }) {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <CardTitle className="text-xl font-black">{customer.fullName}</CardTitle>
-                <CardDescription>{customer.email || customer.phone || 'Merged ecommerce buyer'}</CardDescription>
+                <CardDescription>{customer.email || customer.phone || t('Merged ecommerce buyer')}</CardDescription>
               </div>
               <StatusPill status={customer.customerStatus} />
             </div>
@@ -367,12 +373,12 @@ export function CustomerDetailClient({ id }: { id: string }) {
           <CardContent>
           <p className={`rounded-lg p-3 text-sm font-semibold leading-6 ${statusReasonClass(customer.customerStatus)}`}>{statusReason}</p>
           <div className="mt-4 space-y-3 text-sm">
-            <Field label="Status" value={customer.customerStatus} />
+            <Field label="Status" value={t(customer.customerStatus)} />
             <Field label="Email" value={customer.email || '-'} />
             <Field label="Phone" value={customer.phone || '-'} />
             <Field label="Province" value={customer.province || '-'} />
-            <Field label="First channel" value={channelLabels[customer.firstChannel]} />
-            <Field label="Last channel" value={channelLabels[customer.lastChannel]} />
+            <Field label="First channel" value={t(channelLabels[customer.firstChannel])} />
+            <Field label="Last channel" value={t(channelLabels[customer.lastChannel])} />
             <Field label="Total orders" value={String(customer.totalOrders)} />
             <Field label="Total spent" value={money(customer.totalSpent)} />
           </div>
@@ -380,37 +386,37 @@ export function CustomerDetailClient({ id }: { id: string }) {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Merged identity</CardTitle>
+            <CardTitle>{t('Merged identity')}</CardTitle>
             <CardDescription>{identitySignals}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             {channels.map((channel) => (
-              <Badge key={channel} variant="secondary">{channelLabels[channel]}</Badge>
+              <Badge key={channel} variant="secondary">{t(channelLabels[channel])}</Badge>
             ))}
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Channel journey</CardTitle>
+            <CardTitle>{t('Channel journey')}</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3">
-            <JourneyStep label="First purchase" value={channelLabels[customer.firstChannel]} />
-            <JourneyStep label="Latest repeat" value={channelLabels[customer.lastChannel]} />
+            <JourneyStep label="First purchase" value={t(channelLabels[customer.firstChannel])} />
+            <JourneyStep label="Latest repeat" value={t(channelLabels[customer.lastChannel])} />
           </CardContent>
         </Card>
       </div>
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Order timeline</CardTitle>
-            <CardDescription>Every known purchase tied to this profile.</CardDescription>
+            <CardTitle>{t('Order timeline')}</CardTitle>
+            <CardDescription>{t('Every known purchase tied to this profile.')}</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
             {customer.orders.map((order) => (
               <div key={order.id} className="rounded-lg border border-border bg-card p-4 shadow-sm">
                 <div className="flex justify-between gap-4">
                   <div>
-                    <p className="font-bold">{channelLabels[order.sourceChannel]} - {order.externalOrderId}</p>
+                    <p className="font-bold">{t(channelLabels[order.sourceChannel])} - {order.externalOrderId}</p>
                     <p className="text-sm text-muted-foreground">{order.orderDate.slice(0, 10)}</p>
                   </div>
                   <strong>{money(order.totalAmount)}</strong>
@@ -430,16 +436,19 @@ export function CustomerDetailClient({ id }: { id: string }) {
 }
 
 function EmptyCustomers() {
+  const t = useText()
+
   return (
     <TreeEmptyState
-      title="No customers yet"
-      description="Your account starts clean. Import orders to create merged customer profiles, repeat segments, VIP buyers, and win-back lists."
-      action={{ href: '/imports', label: 'Import orders', icon: <UploadCloud size={16} /> }}
+      title={t('No customers yet')}
+      description={t('Your account starts clean. Import orders to create merged customer profiles, repeat segments, VIP buyers, and win-back lists.')}
+      action={{ href: '/imports', label: t('Import orders'), icon: <UploadCloud size={16} /> }}
     />
   )
 }
 
 function StatusPill({ status }: { status: CustomerStatus }) {
+  const t = useText()
   const className = {
     New: 'border-border bg-secondary text-secondary-foreground',
     Repeat: 'border-emerald-300 bg-emerald-100 text-emerald-900',
@@ -448,22 +457,26 @@ function StatusPill({ status }: { status: CustomerStatus }) {
     Lost: 'border-red-300 bg-red-100 text-red-900',
   }[status] ?? 'border-border bg-secondary text-secondary-foreground'
 
-  return <Badge variant="outline" className={className}>{status}</Badge>
+  return <Badge variant="outline" className={className}>{t(status)}</Badge>
 }
 
 function Field({ label, value }: { label: string; value: string }) {
+  const t = useText()
+
   return (
     <div className="flex justify-between gap-4 border-b border-border pb-2">
-      <span className="text-muted-foreground">{label}</span>
+      <span className="text-muted-foreground">{t(label)}</span>
       <strong className="text-right">{value}</strong>
     </div>
   )
 }
 
 function JourneyStep({ label, value }: { label: string; value: string }) {
+  const t = useText()
+
   return (
     <div className="rounded-lg border border-border bg-secondary/25 p-3">
-      <p className="text-xs font-black uppercase text-muted-foreground">{label}</p>
+      <p className="text-xs font-black uppercase text-muted-foreground">{t(label)}</p>
       <Separator className="my-2" />
       <strong className="mt-1 block">{value}</strong>
     </div>
@@ -481,6 +494,7 @@ function SegmentTile({
   tone: 'repeat' | 'vip' | 'risk'
   href: string
 }) {
+  const t = useText()
   const className = {
     repeat: 'border-emerald-200 bg-emerald-50/75 text-emerald-950',
     vip: 'border-violet-200 bg-violet-50/80 text-violet-950',
@@ -489,7 +503,7 @@ function SegmentTile({
 
   return (
     <Link href={href} className={`tree-tactile group rounded-lg border p-4 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45 ${className}`}>
-      <p className="text-xs font-black uppercase opacity-75">{label}</p>
+      <p className="text-xs font-black uppercase opacity-75">{t(label)}</p>
       <span className="mt-2 flex items-end justify-between gap-3">
         <strong className="block text-3xl font-black tracking-tight">{value}</strong>
         <ArrowUpRight className="size-4 opacity-55 group-hover:opacity-100" />
@@ -517,42 +531,55 @@ function statusReasonClass(status: CustomerStatus) {
   return 'bg-secondary text-secondary-foreground'
 }
 
-function identitySignal(customer: ReturnType<typeof useIntelligenceDataset>['dataset']['customers'][number]) {
+function describeTranslatedCustomerFilter(key: keyof CustomerFilterState, value: string, t: (text: string) => string) {
+  if (key === 'segment') return value === 'winback' ? t('Win-back') : t('Repeat buyers')
+  if (key === 'status') return t(value)
+  if (key === 'firstChannel') return `${t('First')}: ${t(channelLabels[value as SourceChannel])}`
+  if (key === 'lastChannel') return `${t('Last')}: ${t(channelLabels[value as SourceChannel])}`
+  if (key === 'repeatChannel') return `${t('Repeat channel')}: ${t(channelLabels[value as SourceChannel])}`
+  if (key === 'rfmSegment') return `${t('RFM')}: ${t(value)}`
+  if (key === 'product') return `${t('Product')}: ${value}`
+  if (key === 'sort') return `${t('Sort')}: ${t(sortLabels[value as CustomerSort])}`
+  return `${t('Search')}: ${value}`
+}
+
+function identitySignal(customer: ReturnType<typeof useIntelligenceDataset>['dataset']['customers'][number], t: (text: string) => string) {
   const signals = []
-  if (customer.phone) signals.push('phone exact match')
-  if (customer.email) signals.push('email exact match')
-  if (customer.lineId) signals.push('LINE ID exact match')
+  if (customer.phone) signals.push(t('phone exact match'))
+  if (customer.email) signals.push(t('email exact match'))
+  if (customer.lineId) signals.push(t('LINE ID exact match'))
 
   const channelCount = new Set(customer.orders.map((order) => order.sourceChannel)).size
 
   if (channelCount > 1) {
-    return `Orders from ${channelCount} channels were unified using ${signals.join(', ') || 'fuzzy name matching'}.`
+    return `${t('Orders from')} ${channelCount} ${t('channels were unified using')} ${signals.join(', ') || t('fuzzy name matching')}.`
   }
 
-  return `Single-channel profile. Future imports will merge into this buyer when ${signals.join(' or ') || 'name similarity'} matches.`
+  return `${t('Single-channel profile. Future imports will merge into this buyer when')} ${signals.join(` ${t('or')} `) || t('name similarity')} ${t('matches.')}`
 }
 
 function customerStatusReason(
   customer: ReturnType<typeof useIntelligenceDataset>['dataset']['customers'][number],
   vipThreshold: number,
+  t: (text: string) => string,
 ) {
   const daysSinceLastOrder = Math.floor((Date.now() - new Date(customer.lastOrderDate).getTime()) / 86_400_000)
 
   if (customer.customerStatus === 'VIP') {
-    return `VIP because they placed ${customer.totalOrders} orders and spent ${money(customer.totalSpent)}, above the ${money(vipThreshold)} VIP threshold.`
+    return `${t('VIP because they placed')} ${customer.totalOrders} ${t('orders and spent')} ${money(customer.totalSpent)}, ${t('above the')} ${money(vipThreshold)} ${t('VIP threshold.')}`
   }
 
   if (customer.customerStatus === 'AtRisk') {
-    return `At Risk because their last purchase was ${daysSinceLastOrder} days ago. Export them for a win-back campaign.`
+    return `${t('At Risk because their last purchase was')} ${daysSinceLastOrder} ${t('days ago. Export them for a win-back campaign.')}`
   }
 
   if (customer.customerStatus === 'Lost') {
-    return `Lost because their last purchase was ${daysSinceLastOrder} days ago. Use this profile for reactivation targeting.`
+    return `${t('Lost because their last purchase was')} ${daysSinceLastOrder} ${t('days ago. Use this profile for reactivation targeting.')}`
   }
 
   if (customer.customerStatus === 'Repeat') {
-    return `Repeat buyer because they purchased ${customer.totalOrders} times across ${new Set(customer.orders.map((order) => order.sourceChannel)).size} channel(s).`
+    return `${t('Repeat buyer because they purchased')} ${customer.totalOrders} ${t('times across')} ${new Set(customer.orders.map((order) => order.sourceChannel)).size} ${t('channel(s).')}`
   }
 
-  return 'New buyer with one known order. Watch whether they return through the same or a different channel.'
+  return t('New buyer with one known order. Watch whether they return through the same or a different channel.')
 }

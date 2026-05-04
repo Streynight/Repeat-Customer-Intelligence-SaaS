@@ -11,9 +11,9 @@ describe('automation event idempotency', () => {
     expect(lifecycleAutomationIdempotencyKey(null)).toBeNull()
   })
 
-  it('normalizes unsupported automation types to the safest alert type', () => {
+  it('rejects unsupported automation types explicitly', () => {
     expect(normalizeAutomationType('winBack')).toBe('winBack')
-    expect(normalizeAutomationType('unsupported')).toBe('churnAlert')
+    expect(() => normalizeAutomationType('unsupported')).toThrow('Unsupported lifecycle automation type')
   })
 
   it('upserts automation events when an event id is available', async () => {
@@ -26,6 +26,7 @@ describe('automation event idempotency', () => {
       workspaceId: 'workspace_123',
       eventId: 'evt_123',
       type: 'vipDetected',
+      customerProfileId: 'customer_123',
       payload: { customerProfileId: 'customer_123' },
     })
 
@@ -36,6 +37,7 @@ describe('automation event idempotency', () => {
       create: expect.objectContaining({
         workspaceId: 'workspace_123',
         type: 'vipDetected',
+        customerProfileId: 'customer_123',
         idempotencyKey: 'automation:evt_123',
         payload: {
           customerProfileId: 'customer_123',

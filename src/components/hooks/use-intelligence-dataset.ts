@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { clearCurrentDataset, ensureUserStore, importCurrentOrders, loadCurrentDataset } from '@/app/actions/dataset'
+import { requireClearWorkspaceConfirmation } from '@/lib/data-safety'
 import { createEmptyDataset, defaultVipThreshold } from '@/lib/empty-dataset'
 import { allowsLocalDemoMode, hasSupabaseRuntimeConfig } from '@/lib/runtime-config'
 import { processOrders } from '@/lib/services/import-pipeline'
@@ -77,14 +78,16 @@ export function useIntelligenceDataset() {
         const newDataset = processOrders(current.dataset, orders, fileName, sourceChannel)
         updateSessionState((state) => ({ ...state, dataset: newDataset }))
       },
-      clearDataset: async () => {
+      clearDataset: async (confirmation: string) => {
+        const clearConfirmation = requireClearWorkspaceConfirmation(confirmation)
         const current = currentState()
         if (current.storeId) {
           try {
-            await clearCurrentDataset()
+            await clearCurrentDataset({ confirmation: clearConfirmation })
             updateSessionState((state) => ({ ...state, dataset: createEmptyDataset(current.dataset.vipThreshold) }))
           } catch (error) {
             console.error('Failed to clear production dataset. Keeping database as source of truth.', error)
+            throw error
           }
           return
         }
@@ -92,7 +95,10 @@ export function useIntelligenceDataset() {
         if (current.localFallback) {
           window.localStorage.removeItem(storageKey)
           updateSessionState((state) => ({ ...state, dataset: createEmptyDataset(current.dataset.vipThreshold) }))
+          return
         }
+
+        throw new Error('No workspace data source is connected.')
       },
       updateVipThreshold: (vipThreshold: number) => {
         if (typeof window !== 'undefined' && canUseLocalDemo) {

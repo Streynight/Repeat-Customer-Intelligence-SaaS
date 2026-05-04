@@ -9,17 +9,28 @@ import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TreeSprout } from '@/components/ui/tree-surfaces'
 import { useIntelligenceDataset } from '@/components/hooks/use-intelligence-dataset'
+import { clearWorkspaceConfirmationText } from '@/lib/data-safety'
+import { useText } from '@/lib/i18n'
 
 export function SettingsClient() {
+  const t = useText()
   const { dataset, updateVipThreshold, clearDataset } = useIntelligenceDataset()
   const [clearing, setClearing] = useState(false)
+  const [clearConfirmation, setClearConfirmation] = useState('')
+  const [clearError, setClearError] = useState<string | null>(null)
+  const hasWorkspaceData = dataset.customers.length > 0 || dataset.orders.length > 0 || dataset.imports.length > 0
+  const canClearWorkspace = hasWorkspaceData && clearConfirmation === clearWorkspaceConfirmationText && !clearing
 
   const clearWorkspace = async () => {
-    if (!window.confirm('Clear all customers, orders, and import history from this workspace?')) return
+    if (!canClearWorkspace) return
 
     setClearing(true)
+    setClearError(null)
     try {
-      await clearDataset()
+      await clearDataset(clearConfirmation)
+      setClearConfirmation('')
+    } catch {
+      setClearError(t('Workspace data was not cleared. Check the confirmation text and try again.'))
     } finally {
       setClearing(false)
     }
@@ -28,23 +39,23 @@ export function SettingsClient() {
   return (
     <Tabs defaultValue="rules" className="w-full">
       <TabsList className="bg-secondary/55">
-        <TabsTrigger value="rules">Rules</TabsTrigger>
-        <TabsTrigger value="workflow">Workflow</TabsTrigger>
+        <TabsTrigger value="rules">{t('Rules')}</TabsTrigger>
+        <TabsTrigger value="workflow">{t('Workflow')}</TabsTrigger>
       </TabsList>
       <TabsContent value="rules" className="mt-4">
         <Card className="border-primary/10 bg-card">
           <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start">
             <TreeSprout className="size-9 rounded-lg" />
             <div>
-              <CardTitle>Classification rules</CardTitle>
-              <CardDescription>Operational rules used by retention scoring, segmentation, and lifecycle automation.</CardDescription>
+              <CardTitle>{t('Classification rules')}</CardTitle>
+              <CardDescription>{t('Operational rules used by retention scoring, segmentation, and lifecycle automation.')}</CardDescription>
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-sm leading-6 text-muted-foreground">New: 1 order. Repeat: 2+ orders. VIP: 3+ orders and spend above threshold. At Risk: no purchase in 30 days. Lost: no purchase in 90 days.</p>
+            <p className="text-sm leading-6 text-muted-foreground">{t('New: 1 order. Repeat: 2+ orders. VIP: 3+ orders and spend above threshold. At Risk: no purchase in 30 days. Lost: no purchase in 90 days.')}</p>
             <Separator className="my-5" />
             <div className="grid max-w-sm gap-2">
-              <Label htmlFor="vip-threshold">VIP spend threshold</Label>
+              <Label htmlFor="vip-threshold">{t('VIP spend threshold')}</Label>
               <Input id="vip-threshold" type="number" value={dataset.vipThreshold} onChange={(event) => updateVipThreshold(Number(event.target.value))} />
             </div>
           </CardContent>
@@ -55,15 +66,29 @@ export function SettingsClient() {
           <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start">
             <TreeSprout className="size-9 rounded-lg" />
             <div>
-              <CardTitle>Automation-ready webhook architecture</CardTitle>
-              <CardDescription>Lifecycle triggers are backed by jobs, audit logs, and tenant permissions.</CardDescription>
+              <CardTitle>{t('Automation-ready webhook architecture')}</CardTitle>
+              <CardDescription>{t('Lifecycle triggers are backed by jobs, audit logs, and tenant permissions.')}</CardDescription>
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-sm leading-6 text-muted-foreground">Automation events support churn alerts, VIP detection, repeat reminders, win-back triggers, and revenue anomaly workflows.</p>
-            <Button variant="outline" className="mt-5 font-black" disabled={clearing} onClick={() => void clearWorkspace()}>
-              {clearing ? 'Clearing...' : 'Clear workspace data'}
-            </Button>
+            <p className="text-sm leading-6 text-muted-foreground">{t('Automation events support churn alerts, VIP detection, repeat reminders, win-back triggers, and revenue anomaly workflows.')}</p>
+            <Separator className="my-5" />
+            <div className="grid max-w-md gap-3">
+              <div className="grid gap-2">
+                <Label htmlFor="clear-confirmation">{t('Data reset confirmation')}</Label>
+                <Input
+                  id="clear-confirmation"
+                  value={clearConfirmation}
+                  placeholder={clearWorkspaceConfirmationText}
+                  disabled={!hasWorkspaceData || clearing}
+                  onChange={(event) => setClearConfirmation(event.target.value)}
+                />
+              </div>
+              {clearError ? <p role="alert" className="text-sm font-semibold text-destructive">{clearError}</p> : null}
+              <Button variant="outline" className="font-black" disabled={!canClearWorkspace} onClick={() => void clearWorkspace()}>
+                {clearing ? t('Clearing...') : hasWorkspaceData ? t('Clear workspace data') : t('No workspace data to clear')}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </TabsContent>

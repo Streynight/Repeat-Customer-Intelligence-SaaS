@@ -5,14 +5,17 @@ import Link from 'next/link'
 import { Database, ShieldCheck } from 'lucide-react'
 import { signInWithGoogle, signInWithPassword } from '@/app/actions/auth'
 import { BrandLogo } from '@/components/brand-logo'
+import { LanguageSwitcher } from '@/components/language-switcher'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
+import { useText } from '@/lib/i18n'
 
 export function LoginForm() {
+  const t = useText()
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [sending, setSending] = useState(false)
@@ -44,34 +47,37 @@ export function LoginForm() {
           <div className="grid size-11 place-items-center rounded-lg bg-primary/10 text-primary">
             <ShieldCheck size={22} />
           </div>
-          <h1 className="mt-5 text-4xl font-semibold tracking-tight">Return to your operating workspace.</h1>
+          <h1 className="mt-5 text-4xl font-semibold tracking-tight">{t('Return to your operating workspace.')}</h1>
           <p className="mt-4 max-w-md text-sm leading-6 text-muted-foreground">
-            Access tenant-scoped imports, repeat revenue views, customer risk queues, and production health checks from the same workspace.
+            {t('Access tenant-scoped imports, repeat revenue views, customer risk queues, and production health checks from the same workspace.')}
           </p>
           <div className="mt-6 grid gap-3">
             {['Tenant context is enforced', 'Health checks run against live services', 'Workspace data stays empty until imported'].map((item) => (
               <div key={item} className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium">
                 <Database className="size-4 text-primary" />
-                {item}
+                {t(item)}
               </div>
             ))}
           </div>
         </section>
       <Card className="w-full border-border">
         <CardHeader>
-          <Link href="/" aria-label="RepeatTree home">
-            <BrandLogo />
-          </Link>
-          <CardTitle className="mt-4 text-2xl font-semibold">Sign in</CardTitle>
+          <div className="flex items-center justify-between gap-3">
+            <Link href="/" aria-label={t('RepeatTree home')}>
+              <BrandLogo />
+            </Link>
+            <LanguageSwitcher />
+          </div>
+          <CardTitle className="mt-4 text-2xl font-semibold">{t('Sign in')}</CardTitle>
           <CardDescription className="leading-6">
-            Use your username or email and password, or continue with Google.
+            {t('Use your username or email and password, or continue with Google.')}
           </CardDescription>
         </CardHeader>
 
         <CardContent>
         <form className="grid gap-4" onSubmit={(event) => void login(event)}>
           <div className="grid gap-2">
-            <Label htmlFor="identifier">Username or email</Label>
+            <Label htmlFor="identifier">{t('Username or email')}</Label>
             <Input
               id="identifier"
               type="text"
@@ -84,13 +90,13 @@ export function LoginForm() {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t('Password')}</Label>
             <Input
               id="password"
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="Your password"
+              placeholder={t('Your password')}
               autoComplete="current-password"
             />
           </div>
@@ -100,13 +106,13 @@ export function LoginForm() {
             disabled={sending || !identifier || !password}
             type="submit"
           >
-            {sending ? 'Signing in...' : 'Sign in'}
+            {sending ? t('Signing in...') : t('Sign in')}
           </Button>
         </form>
 
         <div className="my-5 flex items-center gap-3 text-xs font-bold uppercase text-muted-foreground">
           <Separator className="flex-1" />
-          or
+          {t('or')}
           <Separator className="flex-1" />
         </div>
 
@@ -117,7 +123,7 @@ export function LoginForm() {
           onClick={() => void continueWithGoogle()}
           type="button"
         >
-          {connectingGoogle ? 'Connecting...' : 'Continue with Google'}
+          {connectingGoogle ? t('Connecting...') : t('Continue with Google')}
         </Button>
 
         {error && (
@@ -127,9 +133,9 @@ export function LoginForm() {
         )}
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          New to RepeatTree?{' '}
+          {t('New to RepeatTree?')}{' '}
           <Link href="/signup" className="font-bold text-primary underline underline-offset-2">
-            Create account
+            {t('Create account')}
           </Link>
         </p>
         </CardContent>

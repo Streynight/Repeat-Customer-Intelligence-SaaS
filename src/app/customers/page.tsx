@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { CustomersClient } from '@/components/customers/customers-client'
+import { LocalizedText } from '@/components/localized-text'
 import { AppShell, PageHeader } from '@/components/ui/app-shell'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -22,8 +23,8 @@ function CustomersFallback() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Loading customer explorer</CardTitle>
-        <CardDescription>Preparing filters and unified customer profiles.</CardDescription>
+        <CardTitle><LocalizedText text="Loading customer explorer" /></CardTitle>
+        <CardDescription><LocalizedText text="Preparing filters and unified customer profiles." /></CardDescription>
       </CardHeader>
     </Card>
   )

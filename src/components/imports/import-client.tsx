@@ -22,9 +22,11 @@ import {
 import { downloadSampleCsv, sampleCsvTemplates, type SampleCsvTemplate } from '@/lib/sample-csv'
 import { useIntelligenceDataset } from '@/components/hooks/use-intelligence-dataset'
 import { channelLabels, sourceChannels, type SourceChannel } from '@/lib/types'
+import { useText } from '@/lib/i18n'
 
 export function ImportClient() {
   const { dataset, importOrders, loading } = useIntelligenceDataset()
+  const t = useText()
   const [fileName, setFileName] = useState('')
   const [sourceChannel, setSourceChannel] = useState<SourceChannel>('shopee')
   const [fields, setFields] = useState<string[]>([])
@@ -94,11 +96,11 @@ export function ImportClient() {
               onChange={(event) => event.target.files?.[0] && void readFile(event.target.files[0])}
             />
             <TreeSprout className="size-12" />
-            <h2 className="mt-4 text-xl font-semibold">Upload order CSV</h2>
-            <p className="mt-2 max-w-lg text-sm leading-6 text-muted-foreground">Drop one real shop export to build profiles, repeat paths, income, and calendar timing.</p>
+            <h2 className="mt-4 text-xl font-semibold">{t('Upload order CSV')}</h2>
+            <p className="mt-2 max-w-lg text-sm leading-6 text-muted-foreground">{t('Drop one real shop export to build profiles, repeat paths, income, and calendar timing.')}</p>
             <span className="mt-5 inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-primary px-2.5 text-sm font-bold text-primary-foreground">
               <UploadCloud size={15} />
-              Choose CSV
+              {t('Choose CSV')}
             </span>
           </label>
         </Card>
@@ -106,26 +108,26 @@ export function ImportClient() {
         <Card>
           <CardHeader className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
-              <CardTitle>Try sample CSVs</CardTitle>
+              <CardTitle>{t('Try sample CSVs')}</CardTitle>
               <CardDescription className="mt-1 max-w-2xl leading-6">
-                Use these merchant-style files only for local validation before connecting native commerce integrations.
+                {t('Use these merchant-style files only for local validation before connecting native commerce integrations.')}
               </CardDescription>
             </div>
-            <Badge variant="secondary">Fallback import</Badge>
+            <Badge variant="secondary">{t('Fallback import')}</Badge>
           </CardHeader>
           <CardContent className="grid gap-3 lg:grid-cols-3">
             {sampleCsvTemplates.map((template) => (
               <article key={template.id} className="rounded-lg border border-border bg-card p-4 shadow-sm">
-                <h3 className="font-semibold">{template.label}</h3>
-                <p className="mt-2 min-h-12 text-sm leading-6 text-muted-foreground">{template.description}</p>
+                <h3 className="font-semibold">{t(template.label)}</h3>
+                <p className="mt-2 min-h-12 text-sm leading-6 text-muted-foreground">{t(template.description)}</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Button onClick={() => trySample(template)}>
                     <PlayCircle size={15} />
-                    Try sample
+                    {t('Try sample')}
                   </Button>
                   <Button variant="outline" onClick={() => downloadSampleCsv(template)}>
                     <Download size={15} />
-                    Download
+                    {t('Download')}
                   </Button>
                 </div>
               </article>
@@ -137,16 +139,16 @@ export function ImportClient() {
           <Card>
             <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <h2 className="text-lg font-black">Column mapping</h2>
-                <p className="text-sm text-muted-foreground">Map your CSV columns before confirming import. Required: order ID, customer name, order date, and total amount.</p>
+                <h2 className="text-lg font-black">{t('Column mapping')}</h2>
+                <p className="text-sm text-muted-foreground">{t('Map your CSV columns before confirming import. Required: order ID, customer name, order date, and total amount.')}</p>
               </div>
               <Select value={sourceChannel} onValueChange={(value) => setSourceChannel(value as SourceChannel)}>
-                <SelectTrigger aria-label="Source channel" className="bg-card">
+                <SelectTrigger aria-label={t('Source channel')} className="bg-card">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {sourceChannels.map((channel) => (
-                    <SelectItem key={channel} value={channel}>{channelLabels[channel]}</SelectItem>
+                    <SelectItem key={channel} value={channel}>{t(channelLabels[channel])}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -156,7 +158,7 @@ export function ImportClient() {
                 <Label key={key} className="grid gap-1 text-sm font-semibold text-foreground">
                   {key}
                   <select className="h-8 rounded-lg border border-input bg-card px-3 font-normal focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40" value={mapping[key]} onChange={(event) => setMapping({ ...mapping, [key]: event.target.value })}>
-                    <option value="">Not mapped</option>
+                    <option value="">{t('Not mapped')}</option>
                     {fields.map((field) => <option key={field}>{field}</option>)}
                   </select>
                 </Label>
@@ -164,8 +166,8 @@ export function ImportClient() {
             </div>
             <Alert className="mt-4 border-cyan-200 bg-cyan-50 text-cyan-950">
               <AlertTriangle size={16} />
-              <AlertTitle>Identity matching reminder</AlertTitle>
-              <AlertDescription>Phone or email repeats across channels merge into one profile. If both are missing, fuzzy name matching is used as a weaker fallback.</AlertDescription>
+              <AlertTitle>{t('Identity matching reminder')}</AlertTitle>
+              <AlertDescription>{t('Phone or email repeats across channels merge into one profile. If both are missing, fuzzy name matching is used as a weaker fallback.')}</AlertDescription>
             </Alert>
           </Card>
         )}
@@ -178,19 +180,19 @@ export function ImportClient() {
           <Card>
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-black">Import preview</h2>
-                <p className="text-sm text-muted-foreground">Showing the first valid rows that will be imported.</p>
+                <h2 className="text-lg font-black">{t('Import preview')}</h2>
+                <p className="text-sm text-muted-foreground">{t('Showing the first valid rows that will be imported.')}</p>
               </div>
               <Button
                 disabled={!diagnostics?.canImport}
                 onClick={() => void confirmImport()}
               >
-                Confirm import
+                {t('Confirm import')}
               </Button>
             </div>
             <Table>
                 <TableHeader>
-                  <TableRow><TableHead>Order</TableHead><TableHead>Customer</TableHead><TableHead>Phone</TableHead><TableHead>Date</TableHead><TableHead>Amount</TableHead><TableHead>Tax</TableHead><TableHead>Fees</TableHead><TableHead>Refund</TableHead><TableHead>Channel</TableHead></TableRow>
+                  <TableRow><TableHead>{t('Order')}</TableHead><TableHead>{t('Customer')}</TableHead><TableHead>{t('Phone')}</TableHead><TableHead>{t('Date')}</TableHead><TableHead>{t('Amount')}</TableHead><TableHead>{t('Tax')}</TableHead><TableHead>{t('Fees')}</TableHead><TableHead>{t('Refund')}</TableHead><TableHead>{t('Channel')}</TableHead></TableRow>
                 </TableHeader>
                 <TableBody>
                   {previewOrders.length > 0 ? (
@@ -204,13 +206,13 @@ export function ImportClient() {
                         <TableCell>{order.taxAmount?.toLocaleString() ?? '-'}</TableCell>
                         <TableCell>{order.platformFeeAmount?.toLocaleString() ?? '-'}</TableCell>
                         <TableCell>{order.refundAmount?.toLocaleString() ?? '-'}</TableCell>
-                        <TableCell>{channelLabels[order.sourceChannel]}</TableCell>
+                        <TableCell>{t(channelLabels[order.sourceChannel])}</TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
                       <TableCell className="py-4 text-muted-foreground" colSpan={9}>
-                        No valid rows to preview yet. Fix required mappings or row errors.
+                        {t('No valid rows to preview yet. Fix required mappings or row errors.')}
                       </TableCell>
                     </TableRow>
                   )}
@@ -224,47 +226,45 @@ export function ImportClient() {
         <ActivationCommandCenter dataset={dataset} compact layout="rail" />
 
         <Card className="border-primary/10 bg-card">
-          <h2 className="font-semibold">Real data readiness</h2>
+          <h2 className="font-semibold">{t('Real data readiness')}</h2>
           <div className="mt-3 space-y-3 text-sm leading-6 text-muted-foreground">
             <p>
-              Best test file: 20-50 orders with repeat buyers, phone or email columns, order dates,
-              total amounts, and product names.
+              {t('Best test file: 20-50 orders with repeat buyers, phone or email columns, order dates, total amounts, and product names.')}
             </p>
             <p>
-              Supported source labels: Shopee, TikTok Shop, Instagram, Facebook, Website, and Custom CSV.
+              {t('Supported source labels: Shopee, TikTok Shop, Instagram, Facebook, Website, and Custom CSV.')}
             </p>
             <p className="rounded-lg bg-primary/10 p-3 text-primary">
-              Privacy note: imported order data is saved to your Supabase Postgres database and
-              persists across sessions. New accounts stay empty until you import or intentionally try a sample CSV.
+              {t('Privacy note: imported order data is saved to your Supabase Postgres database and persists across sessions. New accounts stay empty until you import or intentionally try a sample CSV.')}
             </p>
           </div>
         </Card>
 
         <Card className="border-primary/10 bg-card">
-          <h2 className="font-semibold">Import status</h2>
-          <p className="mt-2 text-sm text-muted-foreground">{status}</p>
+          <h2 className="font-semibold">{t('Import status')}</h2>
+          <p className="mt-2 text-sm text-muted-foreground">{formatImportStatus(status, t)}</p>
           <div className="mt-4 rounded-lg bg-secondary/45 p-3 text-xs leading-5 text-muted-foreground">
-            Good CSV headers: <strong>order_id</strong>, <strong>customer_name</strong>, <strong>phone</strong>, <strong>email</strong>, <strong>order_date</strong>, <strong>total_amount</strong>, <strong>product_name</strong>, <strong>tax_amount</strong>, <strong>platform_fee_amount</strong>, <strong>refund_amount</strong>.
+            {t('Good CSV headers:')} <strong>order_id</strong>, <strong>customer_name</strong>, <strong>phone</strong>, <strong>email</strong>, <strong>order_date</strong>, <strong>total_amount</strong>, <strong>product_name</strong>, <strong>tax_amount</strong>, <strong>platform_fee_amount</strong>, <strong>refund_amount</strong>.
           </div>
           {errors.length > 0 && <ul className="mt-3 list-disc pl-5 text-sm text-red-700">{errors.map((error) => <li key={error}>{error}</li>)}</ul>}
         </Card>
         <Card className="border-primary/10 bg-card">
-          <h2 className="font-semibold">Import history</h2>
+          <h2 className="font-semibold">{t('Import history')}</h2>
           <div className="mt-4 grid gap-3">
             {loading ? (
               <p className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
-                Loading import history.
+                {t('Loading import history.')}
               </p>
             ) : dataset.imports.length > 0 ? (
               dataset.imports.map((item) => (
                 <div key={item.id} className="rounded-lg border border-border bg-secondary/25 p-3">
                   <p className="text-sm font-bold">{item.fileName}</p>
-                  <p className="text-xs text-muted-foreground">{channelLabels[item.sourceChannel]} - {item.importedRows}/{item.totalRows} rows</p>
+                  <p className="text-xs text-muted-foreground">{t(channelLabels[item.sourceChannel])} - {item.importedRows}/{item.totalRows} {t('rows')}</p>
                 </div>
               ))
             ) : (
               <p className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
-                No imports yet. Connect a native integration or upload a fallback CSV.
+                {t('No imports yet. Connect a native integration or upload a fallback CSV.')}
               </p>
             )}
           </div>
@@ -275,6 +275,7 @@ export function ImportClient() {
 }
 
 function ImportDiagnosticsPanel({ diagnostics }: { diagnostics: ImportDiagnostics }) {
+  const t = useText()
   const topIssues = diagnostics.issues.slice(0, 5)
   const warningCount = diagnostics.issues.filter((issue) => issue.severity === 'warning').length
   const errorCount = diagnostics.issues.filter((issue) => issue.severity === 'error').length
@@ -283,14 +284,14 @@ function ImportDiagnosticsPanel({ diagnostics }: { diagnostics: ImportDiagnostic
     <Card>
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
-          <h2 className="text-lg font-black">Pre-import diagnostics</h2>
+          <h2 className="text-lg font-black">{t('Pre-import diagnostics')}</h2>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            Nothing is saved yet. Review row quality and likely merges before confirming import.
+            {t('Nothing is saved yet. Review row quality and likely merges before confirming import.')}
           </p>
         </div>
         <Badge variant={diagnostics.canImport ? 'secondary' : 'destructive'} className="gap-2">
           {diagnostics.canImport ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}
-          {diagnostics.canImport ? 'Importable' : 'Blocked'}
+          {diagnostics.canImport ? t('Importable') : t('Blocked')}
         </Badge>
       </div>
 
@@ -313,7 +314,7 @@ function ImportDiagnosticsPanel({ diagnostics }: { diagnostics: ImportDiagnostic
         <div className="rounded-lg border border-border bg-secondary/35 p-4">
           <div className="flex items-center gap-2">
             <GitMerge size={17} className="text-primary" />
-            <h3 className="font-black">Likely merges</h3>
+            <h3 className="font-black">{t('Likely merges')}</h3>
           </div>
           <div className="mt-3 grid gap-2 text-sm">
             <MergeCount label="Phone exact" value={diagnostics.likelyMergeCounts.phone} />
@@ -325,7 +326,7 @@ function ImportDiagnosticsPanel({ diagnostics }: { diagnostics: ImportDiagnostic
             <div className="mt-4 space-y-2">
               {diagnostics.likelyMerges.slice(0, 5).map((merge) => (
                 <div key={`${merge.rowNumber}-${merge.customerName}-${merge.strategy}`} className="rounded-lg bg-card p-3 text-xs leading-5 text-muted-foreground">
-                  Row {merge.rowNumber}: <strong>{merge.customerName}</strong> may merge with <strong>{merge.matchedCustomer}</strong> via {merge.strategy}.
+                  {t('Row')} {merge.rowNumber}: <strong>{merge.customerName}</strong> {t('may merge with')} <strong>{merge.matchedCustomer}</strong> {t('via')} {t(merge.strategy)}.
                 </div>
               ))}
             </div>
@@ -333,17 +334,17 @@ function ImportDiagnosticsPanel({ diagnostics }: { diagnostics: ImportDiagnostic
         </div>
 
         <div className="rounded-lg border border-border bg-secondary/35 p-4">
-          <h3 className="font-black">First row issues</h3>
+          <h3 className="font-black">{t('First row issues')}</h3>
           {topIssues.length > 0 ? (
             <ul className="mt-3 space-y-2 text-sm">
               {topIssues.map((issue) => (
                 <li key={`${issue.rowNumber}-${issue.message}`} className={issue.severity === 'error' ? 'text-red-700' : 'text-rose-700'}>
-                  {issue.rowNumber ? `Row ${issue.rowNumber}: ` : ''}{issue.message}
+                  {issue.rowNumber ? `${t('Row')} ${issue.rowNumber}: ` : ''}{issue.message}
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="mt-3 text-sm text-muted-foreground">No row issues found in the current mapping.</p>
+            <p className="mt-3 text-sm text-muted-foreground">{t('No row issues found in the current mapping.')}</p>
           )}
         </div>
       </div>
@@ -360,6 +361,7 @@ function DiagnosticStat({
   value: number
   tone?: 'neutral' | 'good' | 'warn' | 'bad'
 }) {
+  const t = useText()
   const toneClass = {
     neutral: 'text-foreground bg-card',
     good: 'text-accent-foreground bg-accent/55',
@@ -369,17 +371,32 @@ function DiagnosticStat({
 
   return (
     <div className={`rounded-lg border border-border p-3 ${toneClass}`}>
-      <p className="text-xs font-black uppercase opacity-70">{label}</p>
+      <p className="text-xs font-black uppercase opacity-70">{t(label)}</p>
       <strong className="mt-2 block text-2xl">{value}</strong>
     </div>
   )
 }
 
 function MergeCount({ label, value }: { label: string; value: number }) {
+  const t = useText()
+
   return (
     <div className="flex items-center justify-between rounded-lg bg-card px-3 py-2">
-      <span className="text-muted-foreground">{label}</span>
+      <span className="text-muted-foreground">{t(label)}</span>
       <strong>{value}</strong>
     </div>
   )
+}
+
+function formatImportStatus(status: string, t: (text: string) => string) {
+  const loadedMatch = /^Loaded (.+)\. Review the preview, then confirm import\.$/.exec(status)
+  if (loadedMatch) return `${t('Loaded')} ${t(loadedMatch[1])}. ${t('Review the preview, then confirm import.')}`
+
+  const savingMatch = /^Saving (\d+) rows…$/.exec(status)
+  if (savingMatch) return `${t('Saving')} ${savingMatch[1]} ${t('rows')}…`
+
+  const importedMatch = /^Imported (\d+) rows$/.exec(status)
+  if (importedMatch) return `${t('Imported')} ${importedMatch[1]} ${t('rows')}`
+
+  return t(status)
 }

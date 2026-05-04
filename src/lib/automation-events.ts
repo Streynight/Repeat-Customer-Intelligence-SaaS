@@ -5,6 +5,7 @@ type LifecycleAutomationEventData = {
   type: LifecycleAutomationType
   status: 'queued'
   idempotencyKey?: string
+  customerProfileId?: string
   payload: Record<string, unknown>
 }
 
@@ -33,7 +34,7 @@ export function normalizeAutomationType(value: unknown): LifecycleAutomationType
     return value
   }
 
-  return 'churnAlert'
+  throw new Error(`Unsupported lifecycle automation type: ${String(value)}`)
 }
 
 export async function recordLifecycleAutomationEvent(
@@ -42,6 +43,7 @@ export async function recordLifecycleAutomationEvent(
     workspaceId: string
     eventId?: string | null
     type: unknown
+    customerProfileId?: string | null
     payload: Record<string, unknown>
   },
 ) {
@@ -50,6 +52,7 @@ export async function recordLifecycleAutomationEvent(
     workspaceId: input.workspaceId,
     type: normalizeAutomationType(input.type),
     status: 'queued',
+    ...(input.customerProfileId ? { customerProfileId: input.customerProfileId } : {}),
     payload: {
       ...input.payload,
       ...(input.eventId ? { inngestEventId: input.eventId } : {}),

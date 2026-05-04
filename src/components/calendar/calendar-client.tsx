@@ -11,12 +11,15 @@ import { buildCalendarMonth, getDefaultCalendarMonth, type CalendarDayInsight } 
 import { buildCustomersHref } from '@/lib/services/customer-filters'
 import { useIntelligenceDataset } from '@/components/hooks/use-intelligence-dataset'
 import { channelLabels } from '@/lib/types'
-import { cn, dateLabel, money } from '@/lib/utils'
+import { useLanguage, useText, type Language } from '@/lib/i18n'
+import { cn, money } from '@/lib/utils'
 
 const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 export function CalendarClient() {
   const { dataset, loading } = useIntelligenceDataset()
+  const { language } = useLanguage()
+  const t = useText()
   const defaultMonth = useMemo(() => getDefaultCalendarMonth(dataset), [dataset])
   const [monthOverride, setMonthOverride] = useState<string | null>(null)
   const month = monthOverride ?? defaultMonth
@@ -50,9 +53,9 @@ export function CalendarClient() {
   if (loading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Loading calendar</CardTitle>
-          <CardDescription>Checking your order history and follow-up timing.</CardDescription>
+          <CardHeader>
+          <CardTitle>{t('Loading calendar')}</CardTitle>
+          <CardDescription>{t('Checking your order history and follow-up timing.')}</CardDescription>
         </CardHeader>
       </Card>
     )
@@ -61,9 +64,9 @@ export function CalendarClient() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
-        <MetricCard label="Orders this month" value={monthOrders.toLocaleString()} href={buildCustomersHref()} />
-        <MetricCard label="Repeat revenue" value={money(monthRepeatRevenue)} tone="repeat" href={buildCustomersHref({ segment: 'repeat', sort: 'repeatRevenue' })} />
-        <MetricCard label="Follow-up focus" value={monthReminders.toLocaleString()} tone="risk" href={buildCustomersHref({ segment: 'winback', sort: 'lastOrder' })} />
+        <MetricCard label={t('Orders this month')} value={monthOrders.toLocaleString()} href={buildCustomersHref()} />
+        <MetricCard label={t('Repeat revenue')} value={money(monthRepeatRevenue)} tone="repeat" href={buildCustomersHref({ segment: 'repeat', sort: 'repeatRevenue' })} />
+        <MetricCard label={t('Follow-up focus')} value={monthReminders.toLocaleString()} tone="risk" href={buildCustomersHref({ segment: 'winback', sort: 'lastOrder' })} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
@@ -72,16 +75,16 @@ export function CalendarClient() {
             <div>
               <CardTitle className="flex items-center gap-2 text-lg font-black">
                 <CalendarDays className="size-5 text-primary" />
-                {formatMonthLabel(month)}
+                {formatMonthLabel(month, language)}
               </CardTitle>
-              <CardDescription>Daily repeat orders, revenue, channels, and win-back timing.</CardDescription>
+              <CardDescription>{t('Daily repeat orders, revenue, channels, and win-back timing.')}</CardDescription>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <label className="flex h-9 items-center gap-2 rounded-lg border border-input bg-card px-2 text-xs font-black uppercase text-muted-foreground">
-                <span>Month</span>
+                <span>{t('Month')}</span>
                 <input
                   type="month"
-                  aria-label="Month"
+                  aria-label={t('Month')}
                   value={month}
                   onChange={(event) => {
                     if (event.target.value) setActiveMonth(event.target.value)
@@ -92,7 +95,7 @@ export function CalendarClient() {
               <Button
                 variant="outline"
                 size="icon"
-                aria-label="Previous month"
+                aria-label={t('Previous month')}
                 onClick={() => {
                   setActiveMonth(shiftMonth(month, -1))
                 }}
@@ -106,12 +109,12 @@ export function CalendarClient() {
                   setActiveMonth(null)
                 }}
               >
-                Latest
+                {t('Latest')}
               </Button>
               <Button
                 variant="outline"
                 size="icon"
-                aria-label="Next month"
+                aria-label={t('Next month')}
                 onClick={() => {
                   setActiveMonth(shiftMonth(month, 1))
                 }}
@@ -123,7 +126,7 @@ export function CalendarClient() {
           <CardContent>
             <div className="grid grid-cols-7 border-y border-border bg-muted/45 text-center text-xs font-black uppercase text-muted-foreground">
               {weekdays.map((weekday) => (
-                <div key={weekday} className="px-2 py-2">{weekday}</div>
+                <div key={weekday} className="px-2 py-2">{t(weekday)}</div>
               ))}
             </div>
             <div className="grid grid-cols-7 border-l border-border">
@@ -154,13 +157,15 @@ function CalendarDayButton({
   selected: boolean
   onSelect: () => void
 }) {
+  const { language } = useLanguage()
+  const t = useText()
   const repeatPreview = day.repeatCustomers.slice(0, 2)
   const hiddenRepeatCustomers = day.repeatCustomers.length - repeatPreview.length
 
   return (
     <button
       type="button"
-      aria-label={`${dateLabel(day.date)} calendar day`}
+      aria-label={`${localizedDateLabel(day.date, language)} ${t('calendar day')}`}
       onClick={onSelect}
       className={cn(
         'min-h-32 border-b border-r border-border bg-card p-2 text-left transition hover:bg-accent/45 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45',
@@ -174,15 +179,15 @@ function CalendarDayButton({
         <span className="text-sm font-black">{day.dayOfMonth}</span>
         {day.topChannel ? (
           <span className="truncate rounded-md bg-secondary px-1.5 py-0.5 text-[0.65rem] font-bold text-secondary-foreground">
-            {channelLabels[day.topChannel]}
+            {t(channelLabels[day.topChannel])}
           </span>
         ) : null}
       </div>
       <div className="mt-3 grid gap-1 text-[0.72rem] leading-4 text-muted-foreground">
-        {day.orderCount > 0 ? <span>{day.orderCount} orders</span> : <span className="opacity-60">No orders</span>}
-        {day.repeatOrderCount > 0 ? <span className="font-bold text-emerald-800">{day.repeatOrderCount} repeat</span> : null}
+        {day.orderCount > 0 ? <span>{day.orderCount} {t('orders')}</span> : <span className="opacity-60">{t('No orders')}</span>}
+        {day.repeatOrderCount > 0 ? <span className="font-bold text-emerald-800">{day.repeatOrderCount} {t('repeat')}</span> : null}
         {day.repeatRevenue > 0 ? <span>{money(day.repeatRevenue)}</span> : null}
-        {day.reminders.length > 0 ? <span className="font-bold text-rose-700">{day.reminders.length} follow-up</span> : null}
+        {day.reminders.length > 0 ? <span className="font-bold text-rose-700">{day.reminders.length} {t('follow-up')}</span> : null}
       </div>
       {repeatPreview.length > 0 ? (
         <div className="mt-2 grid gap-1">
@@ -195,7 +200,7 @@ function CalendarDayButton({
             </span>
           ))}
           {hiddenRepeatCustomers > 0 ? (
-            <span className="text-[0.68rem] font-semibold text-emerald-800">+{hiddenRepeatCustomers} more</span>
+            <span className="text-[0.68rem] font-semibold text-emerald-800">+{hiddenRepeatCustomers} {t('more')}</span>
           ) : null}
         </div>
       ) : null}
@@ -204,16 +209,18 @@ function CalendarDayButton({
 }
 
 function DayDetailPanel({ day, empty }: { day: CalendarDayInsight; empty: boolean }) {
+  const { language } = useLanguage()
+  const t = useText()
   const winBackReminders = day.reminders.filter((reminder) => reminder.priority === 'win-back')
 
   if (empty) {
     return (
       <div className="xl:sticky xl:top-6 xl:self-start">
         <TreeEmptyState
-          title="No calendar activity yet"
-          description="Import your first order CSV to fill this calendar with repeat buyers, revenue days, channel activity, and follow-up reminders."
+          title={t('No calendar activity yet')}
+          description={t('Import your first order CSV to fill this calendar with repeat buyers, revenue days, channel activity, and follow-up reminders.')}
           tone="risk"
-          action={{ href: '/imports', label: 'Import orders', icon: <UploadCloud size={16} /> }}
+          action={{ href: '/imports', label: t('Import orders'), icon: <UploadCloud size={16} /> }}
         />
       </div>
     )
@@ -222,17 +229,17 @@ function DayDetailPanel({ day, empty }: { day: CalendarDayInsight; empty: boolea
   return (
     <Card className="xl:sticky xl:top-6 xl:self-start">
       <CardHeader>
-        <CardTitle className="text-lg font-black">{dateLabel(day.date)}</CardTitle>
+        <CardTitle className="text-lg font-black">{localizedDateLabel(day.date, language)}</CardTitle>
         <CardDescription>
-          {day.orderCount} orders, {day.repeatOrderCount} repeat orders, {money(day.repeatRevenue)} repeat revenue
+          {day.orderCount} {t('orders')}, {day.repeatOrderCount} {t('repeat orders')}, {money(day.repeatRevenue)} {t('repeat revenue')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-black">Channel breakdown</h3>
+            <h3 className="text-sm font-black">{t('Channel breakdown')}</h3>
             <Badge variant={day.channelBreakdown.length ? 'secondary' : 'outline'}>
-              {day.channelBreakdown.length || 'None'}
+              {day.channelBreakdown.length || t('None')}
             </Badge>
           </div>
           <div className="grid gap-2">
@@ -244,17 +251,17 @@ function DayDetailPanel({ day, empty }: { day: CalendarDayInsight; empty: boolea
                   className="block rounded-lg border border-border bg-secondary/25 p-3 transition hover:bg-secondary/55 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <span className="font-bold">{channelLabels[row.channel]}</span>
+                    <span className="font-bold">{t(channelLabels[row.channel])}</span>
                     <span className="text-sm text-muted-foreground">{money(row.repeatRevenue)}</span>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {row.orders} orders, {row.repeatOrders} repeat, {money(row.revenue)} total
+                    {row.orders} {t('orders')}, {row.repeatOrders} {t('repeat')}, {money(row.revenue)} {t('total')}
                   </p>
                 </Link>
               ))
             ) : (
               <p className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
-                No channel activity for this day.
+                {t('No channel activity for this day.')}
               </p>
             )}
           </div>
@@ -263,7 +270,7 @@ function DayDetailPanel({ day, empty }: { day: CalendarDayInsight; empty: boolea
         <section>
           <div className="mb-3 flex items-center gap-2">
             <Repeat2 className="size-4 text-emerald-700" />
-            <h3 className="text-sm font-black">Repeat buyers</h3>
+            <h3 className="text-sm font-black">{t('Repeat buyers')}</h3>
           </div>
           <div className="grid gap-2">
             {day.repeatCustomers.length > 0 ? (
@@ -277,7 +284,7 @@ function DayDetailPanel({ day, empty }: { day: CalendarDayInsight; empty: boolea
                     <div>
                       <p className="text-sm font-bold text-emerald-950">{customer.customerName}</p>
                       <p className="text-xs text-emerald-800">
-                        {customer.repeatOrders} repeat {customer.repeatOrders === 1 ? 'order' : 'orders'} via {formatChannels(customer.sourceChannels)}
+                        {customer.repeatOrders} {t('repeat')} {customer.repeatOrders === 1 ? t('order') : t('orders')} {t('via')} {formatChannels(customer.sourceChannels, t)}
                       </p>
                     </div>
                     <Badge variant="outline" className="border-emerald-300 bg-emerald-100 text-emerald-900">
@@ -288,7 +295,7 @@ function DayDetailPanel({ day, empty }: { day: CalendarDayInsight; empty: boolea
               ))
             ) : (
               <p className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
-                No repeat buyers on this date.
+                {t('No repeat buyers on this date.')}
               </p>
             )}
           </div>
@@ -297,7 +304,7 @@ function DayDetailPanel({ day, empty }: { day: CalendarDayInsight; empty: boolea
         <section>
           <div className="mb-3 flex items-center gap-2">
             <ShoppingBag className="size-4 text-primary" />
-            <h3 className="text-sm font-black">Orders</h3>
+            <h3 className="text-sm font-black">{t('Orders')}</h3>
           </div>
           <div className="grid gap-2">
             {day.orders.length > 0 ? (
@@ -310,13 +317,13 @@ function DayDetailPanel({ day, empty }: { day: CalendarDayInsight; empty: boolea
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-bold">{order.customerName}</p>
-                      <p className="text-xs text-muted-foreground">{channelLabels[order.sourceChannel]}</p>
+                      <p className="text-xs text-muted-foreground">{t(channelLabels[order.sourceChannel])}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-black">{money(order.totalAmount)}</p>
                       {order.isRepeatOrder ? (
                         <Badge variant="outline" className="border-emerald-300 bg-emerald-100 text-emerald-900">
-                          Repeat
+                          {t('Repeat')}
                         </Badge>
                       ) : null}
                     </div>
@@ -325,7 +332,7 @@ function DayDetailPanel({ day, empty }: { day: CalendarDayInsight; empty: boolea
               ))
             ) : (
               <p className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
-                No orders on this date.
+                {t('No orders on this date.')}
               </p>
             )}
           </div>
@@ -334,11 +341,11 @@ function DayDetailPanel({ day, empty }: { day: CalendarDayInsight; empty: boolea
         <section>
           <div className="mb-3 flex items-center gap-2">
             <Clock3 className="size-4 text-primary" />
-            <h3 className="text-sm font-black">Follow-up focus</h3>
+            <h3 className="text-sm font-black">{t('Follow-up focus')}</h3>
           </div>
           {winBackReminders.length > 0 ? (
             <p className="mb-2 rounded-lg bg-rose-50 p-3 text-xs font-semibold leading-5 text-rose-900">
-              {winBackReminders.length} at-risk or lost customers are due for attention.
+              {winBackReminders.length} {t('at-risk or lost customers are due for attention.')}
             </p>
           ) : null}
           <div className="grid gap-2">
@@ -353,21 +360,21 @@ function DayDetailPanel({ day, empty }: { day: CalendarDayInsight; empty: boolea
                     <div>
                       <p className="text-sm font-bold">{reminder.customerName}</p>
                       <p className="text-xs text-muted-foreground">
-                        Last bought {dateLabel(reminder.lastOrderDate)}
+                        {t('Last bought')} {localizedDateLabel(reminder.lastOrderDate, language)}
                       </p>
                     </div>
                     <Badge variant={reminder.priority === 'win-back' ? 'destructive' : 'outline'}>
-                      {reminder.customerStatus}
+                      {t(reminder.customerStatus)}
                     </Badge>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    {reminder.totalOrders} orders, {money(reminder.totalSpent)} lifetime value
+                    {reminder.totalOrders} {t('orders')}, {money(reminder.totalSpent)} {t('lifetime value')}
                   </p>
                 </Link>
               ))
             ) : (
               <p className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
-                No follow-up reminders due.
+                {t('No follow-up reminders due.')}
               </p>
             )}
           </div>
@@ -384,16 +391,25 @@ function shiftMonth(month: string, delta: number) {
   return date.toISOString().slice(0, 7)
 }
 
-function formatMonthLabel(month: string) {
+function formatMonthLabel(month: string, language: Language) {
   const [year, monthNumber] = month.split('-').map(Number)
 
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(language === 'th' ? 'th-TH' : 'en-US', {
     month: 'long',
     year: 'numeric',
     timeZone: 'UTC',
   }).format(new Date(Date.UTC(year, monthNumber - 1, 1)))
 }
 
-function formatChannels(channels: Array<keyof typeof channelLabels>) {
-  return channels.map((channel) => channelLabels[channel]).join(', ')
+function localizedDateLabel(date: string, language: Language) {
+  return new Intl.DateTimeFormat(language === 'th' ? 'th-TH' : 'en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(date))
+}
+
+function formatChannels(channels: Array<keyof typeof channelLabels>, t: (text: string) => string) {
+  return channels.map((channel) => t(channelLabels[channel])).join(', ')
 }

@@ -59,22 +59,29 @@ export async function importCurrentOrders(command: ImportOrdersCommand): Promise
   }
 }
 
-export async function clearCurrentDataset(): Promise<void> {
+export type ClearDatasetCommand = {
+  confirmation: string
+}
+
+export async function clearCurrentDataset(command: Partial<ClearDatasetCommand> = {}): Promise<void> {
+  let context: Awaited<ReturnType<typeof requireTenantContext>> | null = null
+
   try {
-    const context = await requireTenantContext({ permission: 'manageImports' })
-    await clearDatasetForStore(context.storeId)
+    context = await requireTenantContext({ permission: 'manageImports' })
+    const deleted = await clearDatasetForStore(context.storeId, command)
     await writeAuditLog(context, {
       action: 'dataset.cleared',
       resourceType: 'store',
       resourceId: context.storeId,
+      metadata: { deleted },
     })
     recordTenantEvent({
       event: 'dataset_cleared',
       tenant: context,
-      properties: { storeId: context.storeId },
+      properties: { storeId: context.storeId, ...deleted },
     })
   } catch (error) {
-    captureOperationalError(error, { operation: 'dataset.clear' })
+    captureOperationalError(error, { operation: 'dataset.clear', tenant: context ?? undefined })
     throw normalizeDatabaseError(error)
   }
 }

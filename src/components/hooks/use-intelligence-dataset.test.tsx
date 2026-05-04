@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { clearWorkspaceConfirmationText } from '@/lib/data-safety'
 import { makeDataset, makeOrder } from '@/test/fixtures'
 import type { IntelligenceDataset, OrderInput, SourceChannel } from '@/lib/types'
 
@@ -7,7 +8,7 @@ type UseDatasetResult = {
   dataset: IntelligenceDataset
   loading: boolean
   importOrders: (orders: OrderInput[], fileName: string, sourceChannel: SourceChannel) => Promise<void>
-  clearDataset: () => Promise<void>
+  clearDataset: (confirmation: string) => Promise<void>
   updateVipThreshold: (vipThreshold: number) => void
 }
 
@@ -35,7 +36,7 @@ function ActionsProbe({ useDataset }: { useDataset: () => UseDatasetResult }) {
       <button type="button" onClick={() => updateVipThreshold(9000)}>
         vip
       </button>
-      <button type="button" onClick={() => void clearDataset()}>
+      <button type="button" onClick={() => void clearDataset(clearWorkspaceConfirmationText)}>
         clear
       </button>
     </div>
@@ -52,6 +53,7 @@ describe('useIntelligenceDataset clean workspace defaults', () => {
 
   it('starts local fallback workspaces empty when no saved dataset exists', async () => {
     installLocalStorageMock()
+    vi.stubEnv('NEXT_PUBLIC_APP_URL', 'http://localhost:3000')
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://example.supabase.co')
     vi.stubEnv('NEXT_PUBLIC_ALLOW_LOCAL_DEMO_MODE', 'true')
     vi.doMock('@/app/actions/dataset', () => ({
@@ -149,6 +151,7 @@ describe('useIntelligenceDataset clean workspace defaults', () => {
 
   it('shares import, clear, and VIP updates across hook subscribers in one session', async () => {
     installLocalStorageMock()
+    vi.stubEnv('NEXT_PUBLIC_APP_URL', 'http://localhost:3000')
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://example.supabase.co')
     vi.stubEnv('NEXT_PUBLIC_ALLOW_LOCAL_DEMO_MODE', 'true')
     vi.doMock('@/app/actions/dataset', () => ({
@@ -245,6 +248,50 @@ describe('useIntelligenceDataset clean workspace defaults', () => {
     })
     expect(importCurrentOrders.mock.calls[0][0]).not.toHaveProperty('customers')
     await waitFor(() => expect(screen.getByTestId('first')).toHaveTextContent('ready:1:1:1:6500'))
+  })
+
+  it('clears production data only through an explicit confirmation command', async () => {
+    installLocalStorageMock()
+    const ensureUserStore = vi.fn().mockResolvedValue('store-1')
+    const loadedDataset = makeDataset()
+    const loadCurrentDataset = vi.fn().mockResolvedValue({
+      customers: loadedDataset.customers,
+      orders: loadedDataset.orders,
+      imports: [],
+    })
+    const clearCurrentDataset = vi.fn().mockResolvedValue(undefined)
+
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://repeat-tree.supabase.co')
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'anon-key')
+    vi.doMock('@/app/actions/dataset', () => ({
+      clearCurrentDataset,
+      ensureUserStore,
+      importCurrentOrders: vi.fn(),
+      loadCurrentDataset,
+    }))
+    vi.doMock('@/lib/supabase/client', () => ({
+      createClient: () => ({
+        auth: {
+          getUser: () => Promise.resolve({ data: { user: { id: 'user-1', email: 'owner@store.com' } } }),
+        },
+      }),
+    }))
+
+    const { useIntelligenceDataset } = await import('@/components/hooks/use-intelligence-dataset')
+
+    render(
+      <>
+        <Probe label="first" useDataset={useIntelligenceDataset} />
+        <ActionsProbe useDataset={useIntelligenceDataset} />
+      </>,
+    )
+
+    await waitFor(() => expect(screen.getByTestId('first')).toHaveTextContent('ready:1:1:0:6500'))
+    fireEvent.click(screen.getByRole('button', { name: 'clear' }))
+
+    await waitFor(() => expect(clearCurrentDataset).toHaveBeenCalledTimes(1))
+    expect(clearCurrentDataset).toHaveBeenCalledWith({ confirmation: clearWorkspaceConfirmationText })
+    await waitFor(() => expect(screen.getByTestId('first')).toHaveTextContent('ready:0:0:0:6500'))
   })
 
   it('falls back to an empty local workspace when Supabase data loading fails', async () => {

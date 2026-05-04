@@ -27,6 +27,7 @@ import {
   type ActivationStepState,
 } from '@/lib/services/activation'
 import { channelLabels, type IntelligenceDataset } from '@/lib/types'
+import { useText } from '@/lib/i18n'
 import { cn, money, percent } from '@/lib/utils'
 
 type ActivationCommandCenterProps = {
@@ -52,6 +53,7 @@ export function ActivationCommandCenter({
   layout = 'wide',
   className,
 }: ActivationCommandCenterProps) {
+  const t = useText()
   const activation = buildActivationState(dataset, { csvSyncConnectionCount })
   const { completedSteps, nextAction, progress, steps } = activation
   const currentStep = steps.find((step) => !step.done) ?? steps[steps.length - 1]
@@ -63,19 +65,19 @@ export function ActivationCommandCenter({
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary" className="gap-1">
               <Store size={12} />
-              Migration command center
+              {t('Migration command center')}
             </Badge>
             <Badge variant={completedSteps === steps.length ? 'default' : 'outline'}>
-              {completedSteps}/{steps.length} activated
+              {completedSteps}/{steps.length} {t('activated')}
             </Badge>
           </div>
-          <CardTitle className="mt-3 text-lg">Turn imported orders into repeat revenue</CardTitle>
+          <CardTitle className="mt-3 text-lg">{t('Turn imported orders into repeat revenue')}</CardTitle>
           <CardDescription className="mt-1 max-w-3xl leading-6">
-            Guide new accounts from their first marketplace export to buyer identity, repeat revenue, win-back focus, and recurring automation.
+            {t('Guide new accounts from their first marketplace export to buyer identity, repeat revenue, win-back focus, and recurring automation.')}
           </CardDescription>
         </div>
         <div className="rounded-lg border border-border bg-secondary/35 p-3 md:min-w-48">
-          <p className="text-xs font-black uppercase text-muted-foreground">Activation progress</p>
+          <p className="text-xs font-black uppercase text-muted-foreground">{t('Activation progress')}</p>
           <strong className="mt-1 block text-3xl font-black text-foreground">{progress}%</strong>
           <div className="mt-3 h-2 rounded-full bg-background">
             <div className="h-full rounded-full bg-primary" style={{ width: `${progress}%` }} />
@@ -91,13 +93,13 @@ export function ActivationCommandCenter({
           <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="text-xs font-black uppercase text-primary">Next best action</p>
-                <h3 className="mt-1 font-black text-foreground">{nextAction.title}</h3>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">{nextAction.detail}</p>
+                <p className="text-xs font-black uppercase text-primary">{t('Next best action')}</p>
+                <h3 className="mt-1 font-black text-foreground">{t(nextAction.title)}</h3>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">{t(nextAction.detail)}</p>
               </div>
               <Button asChild>
                 <Link href={nextAction.href}>
-                  {nextAction.cta}
+                  {t(nextAction.cta)}
                   <ArrowUpRight size={15} />
                 </Link>
               </Button>
@@ -113,9 +115,9 @@ export function ActivationCommandCenter({
 
         <div className="space-y-4">
           <div className={cn('grid gap-3', layout === 'wide' && 'md:grid-cols-3 xl:grid-cols-1')}>
-            <ActivationStat label="Known buyers" value={activation.totalCustomers.toLocaleString()} detail={`${activation.contactsWithIdentity.toLocaleString()} with contact identity`} Icon={Users} />
-            <ActivationStat label="Repeat revenue" value={money(activation.repeatRevenue)} detail={`${activation.repeatCustomers.toLocaleString()} repeat buyers, ${percent(activation.repeatRate)} repeat rate`} Icon={Repeat2} />
-            <ActivationStat label="Win-back value" value={money(activation.atRiskValue)} detail={`${activation.atRiskCustomerCount.toLocaleString()} at-risk or lost buyers`} Icon={ShieldCheck} />
+            <ActivationStat label="Known buyers" value={activation.totalCustomers.toLocaleString()} detail={`${activation.contactsWithIdentity.toLocaleString()} ${t('with contact identity')}`} Icon={Users} />
+            <ActivationStat label="Repeat revenue" value={money(activation.repeatRevenue)} detail={`${activation.repeatCustomers.toLocaleString()} ${t('repeat buyers,')} ${percent(activation.repeatRate)} ${t('repeat rate')}`} Icon={Repeat2} />
+            <ActivationStat label="Win-back value" value={money(activation.atRiskValue)} detail={`${activation.atRiskCustomerCount.toLocaleString()} ${t('at-risk or lost buyers')}`} Icon={ShieldCheck} />
           </div>
 
           {!compact ? (
@@ -125,13 +127,13 @@ export function ActivationCommandCenter({
               <div className="flex items-start gap-3">
                 <Database className="mt-0.5 size-4 text-primary" />
                 <div>
-                  <h3 className="font-black">Switching kit</h3>
+                  <h3 className="font-black">{t('Switching kit')}</h3>
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    Shopee, TikTok Shop, Instagram, Facebook, website, and custom CSV exports all start from the same import path.
+                    {t('Shopee, TikTok Shop, Instagram, Facebook, website, and custom CSV exports all start from the same import path.')}
                   </p>
                   <Button asChild variant="outline" className="mt-3">
                     <Link href="/imports">
-                      Open import path
+                      {t('Open import path')}
                       <ArrowUpRight size={15} />
                     </Link>
                   </Button>
@@ -146,6 +148,7 @@ export function ActivationCommandCenter({
 }
 
 function ActivationStepRow({ step, current }: { step: ActivationStepState; current: boolean }) {
+  const t = useText()
   const Icon = stepIcons[step.id]
 
   return (
@@ -165,12 +168,12 @@ function ActivationStepRow({ step, current }: { step: ActivationStepState; curre
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-2">
             <Icon className="size-4 text-muted-foreground" />
-            <span className="font-black text-foreground">{step.title}</span>
+            <span className="font-black text-foreground">{t(step.title)}</span>
           </span>
-          <span className="mt-1 block text-sm leading-6 text-muted-foreground">{step.detail}</span>
+          <span className="mt-1 block text-sm leading-6 text-muted-foreground">{t(step.detail)}</span>
         </span>
         <span className="hidden shrink-0 items-center gap-1 text-xs font-black text-primary md:flex">
-          {step.done ? 'Done' : step.cta}
+          {step.done ? t('Done') : t(step.cta)}
           <ArrowUpRight size={13} className="opacity-60 group-hover:opacity-100" />
         </span>
       </Link>
@@ -189,11 +192,13 @@ function ActivationStat({
   detail: string
   Icon: LucideIcon
 }) {
+  const t = useText()
+
   return (
     <div className="rounded-lg border border-border bg-secondary/30 p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-black uppercase text-muted-foreground">{label}</p>
+          <p className="text-xs font-black uppercase text-muted-foreground">{t(label)}</p>
           <strong className="mt-1 block text-2xl font-black text-foreground">{value}</strong>
         </div>
         <Icon className="size-5 text-primary" />
@@ -204,18 +209,20 @@ function ActivationStat({
 }
 
 function MigrationSourceList() {
+  const t = useText()
+
   return (
     <div className="rounded-lg border border-border bg-secondary/30 p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="font-black">Switching kit</h3>
+          <h3 className="font-black">{t('Switching kit')}</h3>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            Move customers from scattered selling channels into one retention workspace without waiting for native integrations.
+            {t('Move customers from scattered selling channels into one retention workspace without waiting for native integrations.')}
           </p>
         </div>
         <Button asChild variant="outline">
           <Link href="/imports">
-            Import
+            {t('Import')}
             <ArrowUpRight size={15} />
           </Link>
         </Button>
@@ -229,8 +236,8 @@ function MigrationSourceList() {
           >
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="font-black text-foreground">{channelLabels[source.channel]}</p>
-                <p className="mt-1 text-sm leading-5 text-muted-foreground">{source.detail}</p>
+                <p className="font-black text-foreground">{t(channelLabels[source.channel])}</p>
+                <p className="mt-1 text-sm leading-5 text-muted-foreground">{t(source.detail)}</p>
               </div>
               <ArrowUpRight className="size-4 text-muted-foreground group-hover:text-primary" />
             </div>

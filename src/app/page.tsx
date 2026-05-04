@@ -1,9 +1,13 @@
+'use client'
+
 import Link from 'next/link'
 import type React from 'react'
 import { ArrowRight, CalendarDays, CheckCircle2, CircleDollarSign, Database, LineChart, Repeat2, ShieldCheck, Upload, Users } from 'lucide-react'
 import { BrandLogo } from '@/components/brand-logo'
+import { LanguageSwitcher } from '@/components/language-switcher'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { useText } from '@/lib/i18n'
 
 const workflow = [
   {
@@ -29,18 +33,21 @@ const workflow = [
 const checks = ['Tenant-scoped imports', 'Billing-aware usage', 'Retry-safe jobs', 'Health checks live']
 
 export default function Home() {
+  const t = useText()
+
   return (
     <main className="min-h-screen bg-background text-foreground">
       <header className="border-b border-border bg-card/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
           <BrandLogo />
           <nav className="flex items-center gap-2">
+            <LanguageSwitcher className="hidden sm:inline-flex" />
             <Button asChild variant="ghost">
-              <Link href="/login">Login</Link>
+              <Link href="/login">{t('Login')}</Link>
             </Button>
             <Button asChild>
               <Link href="/signup">
-                Open workspace
+                {t('Open workspace')}
                 <ArrowRight size={16} />
               </Link>
             </Button>
@@ -51,30 +58,30 @@ export default function Home() {
       <section className="mx-auto grid max-w-7xl gap-8 px-5 py-10 lg:grid-cols-[1fr_520px] lg:px-8 lg:py-14">
         <div className="flex flex-col justify-center">
           <Badge variant="secondary" className="w-fit border-primary/20 bg-primary/10 text-primary">
-            Operator-grade retention SaaS
+            {t('Operator-grade retention SaaS')}
           </Badge>
           <h1 className="mt-5 max-w-3xl text-4xl font-semibold tracking-tight text-foreground md:text-6xl">
-            Repeat Customer Intelligence
+            {t('Repeat Customer Intelligence')}
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
-            A production workspace for merchants who need retained revenue, channel quality, customer risk, and automation readiness from real order data.
+            {t('A production workspace for merchants who need retained revenue, channel quality, customer risk, and automation readiness from real order data.')}
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <Button asChild size="lg">
               <Link href="/signup">
-                Start with real data
+                {t('Start with real data')}
                 <ArrowRight size={17} />
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <Link href="/login">Sign in</Link>
+              <Link href="/login">{t('Sign in')}</Link>
             </Button>
           </div>
           <div className="mt-8 grid gap-2 sm:grid-cols-2">
             {checks.map((check) => (
               <div key={check} className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                 <CheckCircle2 className="size-4 text-primary" />
-                {check}
+                {t(check)}
               </div>
             ))}
           </div>
@@ -96,8 +103,8 @@ export default function Home() {
                   <span className="grid size-9 place-items-center rounded-lg bg-primary/10 text-primary">
                     <item.icon size={18} />
                   </span>
-                  <h2 className="mt-3 font-semibold">{item.title}</h2>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.body}</p>
+                  <h2 className="mt-3 font-semibold">{t(item.title)}</h2>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">{t(item.body)}</p>
                 </div>
                 <ArrowRight className="size-4 text-muted-foreground group-hover:text-primary" />
               </div>
@@ -110,45 +117,47 @@ export default function Home() {
 }
 
 function ProductPreview() {
+  const t = useText()
+
   return (
-    <section aria-label="RepeatTree product preview" className="rounded-lg border border-border bg-card shadow-lg">
+    <section aria-label={t('RepeatTree product preview')} className="rounded-lg border border-border bg-card shadow-lg">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div>
-          <p className="text-xs font-semibold uppercase text-muted-foreground">Workspace</p>
-          <h2 className="font-semibold">Retention command center</h2>
+          <p className="text-xs font-semibold uppercase text-muted-foreground">{t('Workspace')}</p>
+          <h2 className="font-semibold">{t('Retention command center')}</h2>
         </div>
-        <Badge variant="secondary">No demo data</Badge>
+        <Badge variant="secondary">{t('No demo data')}</Badge>
       </div>
 
       <div className="grid gap-3 p-4">
         <div className="grid gap-3 sm:grid-cols-3">
-          <PreviewMetric icon={<CircleDollarSign />} label="Repeat revenue" value="0 until import" tone="text-cyan-700" />
-          <PreviewMetric icon={<Repeat2 />} label="Repeat rate" value="Calculated" tone="text-emerald-700" />
-          <PreviewMetric icon={<ShieldCheck />} label="Risk value" value="Tracked" tone="text-rose-700" />
+          <PreviewMetric icon={<CircleDollarSign />} label={t('Repeat revenue')} value={t('0 until import')} tone="text-cyan-700" />
+          <PreviewMetric icon={<Repeat2 />} label={t('Repeat rate')} value={t('Calculated')} tone="text-emerald-700" />
+          <PreviewMetric icon={<ShieldCheck />} label={t('Risk value')} value={t('Tracked')} tone="text-rose-700" />
         </div>
 
         <div className="grid gap-3 lg:grid-cols-[1fr_220px]">
           <div className="rounded-lg border border-border p-4">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase text-muted-foreground">Readiness path</p>
-                <h3 className="font-semibold">Import to action</h3>
+                <p className="text-xs font-semibold uppercase text-muted-foreground">{t('Readiness path')}</p>
+                <h3 className="font-semibold">{t('Import to action')}</h3>
               </div>
               <LineChart className="size-5 text-primary" />
             </div>
             <div className="space-y-3">
-              <PreviewBar label="CSV validation" value="Ready" width="92%" className="bg-primary" />
-              <PreviewBar label="Customer resolution" value="Scoped" width="72%" className="bg-cyan-500" />
-              <PreviewBar label="Automation events" value="Queued" width="58%" className="bg-violet-500" />
+              <PreviewBar label={t('CSV validation')} value={t('Ready')} width="92%" className="bg-primary" />
+              <PreviewBar label={t('Customer resolution')} value={t('Scoped')} width="72%" className="bg-cyan-500" />
+              <PreviewBar label={t('Automation events')} value={t('Queued')} width="58%" className="bg-violet-500" />
             </div>
           </div>
 
           <div className="rounded-lg border border-border p-4">
-            <p className="text-xs font-semibold uppercase text-muted-foreground">Automation queue</p>
+            <p className="text-xs font-semibold uppercase text-muted-foreground">{t('Automation queue')}</p>
             <div className="mt-3 space-y-3 text-sm">
-              <PreviewQueue icon={<Database />} label="CSV sync" status="Tenant" />
-              <PreviewQueue icon={<CalendarDays />} label="Win-back" status="Event" />
-              <PreviewQueue icon={<Users />} label="VIP review" status="Rule" />
+              <PreviewQueue icon={<Database />} label={t('CSV sync')} status={t('Tenant')} />
+              <PreviewQueue icon={<CalendarDays />} label={t('Win-back')} status={t('Event')} />
+              <PreviewQueue icon={<Users />} label={t('VIP review')} status={t('Rule')} />
             </div>
           </div>
         </div>

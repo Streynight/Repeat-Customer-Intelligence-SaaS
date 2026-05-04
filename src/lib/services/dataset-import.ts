@@ -1,8 +1,9 @@
 import { defaultVipThreshold } from '@/lib/empty-dataset'
 import { reserveImportOrderUsage } from '@/lib/billing/enforcement'
-import { recordTenantEvent } from '@/lib/observability'
+import { captureOperationalError, recordTenantEvent } from '@/lib/observability'
 import { loadDatasetForStore, persistImportForStore } from '@/lib/server/dataset-store'
 import { processOrders } from '@/lib/services/import-pipeline'
+import { queueLifecycleAutomationForDataset } from '@/lib/services/lifecycle-automation'
 import type { TenantContext } from '@/lib/tenancy'
 import type { IntelligenceDataset, OrderInput, SourceChannel } from '@/lib/types'
 
@@ -54,6 +55,29 @@ export async function importOrdersForTenant(
       orders: nextDataset.orders.length,
     },
   })
+
+  try {
+    await queueLifecycleAutomationForDataset(context, nextDataset, { source: 'dataset_import' })
+  } catch (error) {
+    captureOperationalError(error, {
+      operation: 'automation.lifecycle.queue',
+      tenant: context,
+      properties: {
+        storeId: context.storeId,
+        sourceChannel: normalized.sourceChannel,
+        submittedRows: command.orders.length,
+        acceptedRows: normalized.orders.length,
+      },
+    })
+    recordTenantEvent({
+      event: 'lifecycle_automation_queue_failed',
+      tenant: context,
+      properties: {
+        storeId: context.storeId,
+        sourceChannel: normalized.sourceChannel,
+      },
+    })
+  }
 
   return stripVipThreshold(nextDataset)
 }

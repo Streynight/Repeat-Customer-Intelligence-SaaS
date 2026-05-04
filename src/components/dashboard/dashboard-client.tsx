@@ -13,12 +13,14 @@ import { buildIncomeSummary } from '@/lib/services/finance'
 import { buildRetentionAnalytics } from '@/lib/services/retention-analytics'
 import { useIntelligenceDataset } from '@/components/hooks/use-intelligence-dataset'
 import { channelLabels, type SourceChannel } from '@/lib/types'
+import { useText } from '@/lib/i18n'
 import { money, percent } from '@/lib/utils'
 
 const colors = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)']
 
 export function DashboardClient() {
   const { dataset, loading } = useIntelligenceDataset()
+  const t = useText()
 
   if (loading) {
     return <DashboardLoading />
@@ -56,25 +58,25 @@ export function DashboardClient() {
 
       <div className="grid gap-4 xl:grid-cols-3">
         <InsightPanel
-          label="Best repeat channel"
-          value={bestRepeatChannel ? channelLabels[bestRepeatChannel.channel] : 'No repeats yet'}
-          detail={bestRepeatChannel ? `${money(bestRepeatChannel.revenue)} in repeat revenue` : 'Import orders to see channel winners.'}
+          label={t('Best repeat channel')}
+          value={bestRepeatChannel ? t(channelLabels[bestRepeatChannel.channel]) : t('No repeats yet')}
+          detail={bestRepeatChannel ? `${money(bestRepeatChannel.revenue)} ${t('in repeat revenue')}` : t('Import orders to see channel winners.')}
           tone="repeat"
           icon={<Repeat2 size={17} />}
           href={bestRepeatChannel ? buildCustomersHref({ repeatChannel: bestRepeatChannel.channel, sort: 'repeatRevenue' }) : buildCustomersHref({ segment: 'repeat' })}
         />
         <InsightPanel
-          label="Top channel path"
-          value={bestRepeatPath ? formatChannelPath(bestRepeatPath.path) : 'No path yet'}
-          detail={bestRepeatPath ? `${bestRepeatPath.customers} customers repeated through this path` : 'Repeat customers reveal source-to-repeat movement.'}
+          label={t('Top channel path')}
+          value={bestRepeatPath ? formatChannelPath(bestRepeatPath.path, t) : t('No path yet')}
+          detail={bestRepeatPath ? `${bestRepeatPath.customers} ${t('customers repeated through this path')}` : t('Repeat customers reveal source-to-repeat movement.')}
           tone="vip"
           icon={<LineChartIcon size={17} />}
           href={bestRepeatPath ? buildCustomersHref(channelPathFilters(bestRepeatPath.path)) : buildCustomersHref({ segment: 'repeat' })}
         />
         <InsightPanel
-          label="Remarketing urgency"
+          label={t('Remarketing urgency')}
           value={money(atRiskRevenue)}
-          detail="Revenue sitting in At Risk or Lost customer profiles"
+          detail={t('Revenue sitting in At Risk or Lost customer profiles')}
           tone="risk"
           icon={<Users size={17} />}
           href={buildCustomersHref({ segment: 'winback', sort: 'lastOrder' })}
@@ -89,13 +91,13 @@ export function DashboardClient() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-7">
-        <MetricCard label="Total income" value={money(incomeSummary.grossIncome)} tone="income" href="/income" />
-        <MetricCard label="Known buyers" value={metrics.totalCustomers.toLocaleString()} href={buildCustomersHref()} />
-        <MetricCard label="Bought again" value={metrics.repeatCustomers.toLocaleString()} tone="repeat" href={buildCustomersHref({ segment: 'repeat' })} />
-        <MetricCard label="Repeat rate" value={percent(metrics.repeatRate)} tone="repeat" href={buildCustomersHref({ segment: 'repeat' })} />
-        <MetricCard label="VIP buyers" value={metrics.vipCustomers.toLocaleString()} tone="vip" href={buildCustomersHref({ status: 'VIP' })} />
-        <MetricCard label="Need win-back" value={metrics.atRiskCustomers.toLocaleString()} tone="risk" href={buildCustomersHref({ segment: 'winback' })} />
-        <MetricCard label="Repeat revenue" value={money(metrics.repeatRevenue)} tone="repeat" href={buildCustomersHref({ segment: 'repeat', sort: 'repeatRevenue' })} />
+        <MetricCard label={t('Total income')} value={money(incomeSummary.grossIncome)} tone="income" href="/income" />
+        <MetricCard label={t('Known buyers')} value={metrics.totalCustomers.toLocaleString()} href={buildCustomersHref()} />
+        <MetricCard label={t('Bought again')} value={metrics.repeatCustomers.toLocaleString()} tone="repeat" href={buildCustomersHref({ segment: 'repeat' })} />
+        <MetricCard label={t('Repeat rate')} value={percent(metrics.repeatRate)} tone="repeat" href={buildCustomersHref({ segment: 'repeat' })} />
+        <MetricCard label={t('VIP buyers')} value={metrics.vipCustomers.toLocaleString()} tone="vip" href={buildCustomersHref({ status: 'VIP' })} />
+        <MetricCard label={t('Need win-back')} value={metrics.atRiskCustomers.toLocaleString()} tone="risk" href={buildCustomersHref({ segment: 'winback' })} />
+        <MetricCard label={t('Repeat revenue')} value={money(metrics.repeatRevenue)} tone="repeat" href={buildCustomersHref({ segment: 'repeat', sort: 'repeatRevenue' })} />
       </div>
 
       <AnalyticsSnapshot analytics={retentionAnalytics} />
@@ -105,7 +107,7 @@ export function DashboardClient() {
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={repeatRevenue}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="channel" tickFormatter={(value) => channelLabels[value as keyof typeof channelLabels]} />
+              <XAxis dataKey="channel" tickFormatter={(value) => t(channelLabels[value as keyof typeof channelLabels])} />
               <YAxis tickFormatter={(value) => money(Number(value))} />
               <RechartsTooltip formatter={(value) => money(Number(value))} />
               <Bar dataKey="revenue" radius={[6, 6, 0, 0]}>
@@ -129,7 +131,7 @@ export function DashboardClient() {
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={statusRows}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="status" />
+              <XAxis dataKey="status" tickFormatter={(value) => t(String(value))} />
               <YAxis />
               <RechartsTooltip />
               <Bar dataKey="count" fill="var(--chart-2)" radius={[6, 6, 0, 0]} />
@@ -144,7 +146,7 @@ export function DashboardClient() {
                 href={buildCustomersHref(channelPathFilters(row.path))}
                 className="tree-tactile group flex items-center justify-between rounded-lg border border-border bg-secondary/40 px-3 py-2 hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45"
               >
-                <span className="text-sm font-semibold text-foreground">{formatChannelPath(row.path)}</span>
+                <span className="text-sm font-semibold text-foreground">{formatChannelPath(row.path, t)}</span>
                 <Badge variant="secondary" className="gap-1">{row.customers}<ArrowUpRight size={12} className="opacity-55 group-hover:opacity-100" /></Badge>
               </Link>
             ))}
@@ -157,8 +159,8 @@ export function DashboardClient() {
         <CustomerMiniTable title="At Risk Customers" customers={atRiskCustomers} tone="risk" />
         <Card>
           <CardHeader>
-            <CardTitle>Recent Repeat Orders</CardTitle>
-            <CardDescription>Fresh repeat activity worth noticing.</CardDescription>
+            <CardTitle>{t('Recent Repeat Orders')}</CardTitle>
+            <CardDescription>{t('Fresh repeat activity worth noticing.')}</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
             {recentRepeatOrders.map((order) => (
@@ -167,13 +169,13 @@ export function DashboardClient() {
                 href={`/customers/${order.customerProfileId}`}
                 className="tree-tactile group rounded-lg border border-emerald-200/70 bg-emerald-50/55 p-3 hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45"
               >
-                <p className="text-sm font-bold">{channelLabels[order.sourceChannel]}</p>
+                <p className="text-sm font-bold">{t(channelLabels[order.sourceChannel])}</p>
                 <p className="text-xs text-muted-foreground">{order.customerNameRaw} - {money(order.totalAmount)}</p>
               </Link>
             ))}
             {recentRepeatOrders.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
-                No repeat orders yet. Import more orders to spot fresh repeat activity.
+                {t('No repeat orders yet. Import more orders to spot fresh repeat activity.')}
               </p>
             ) : null}
           </CardContent>
@@ -184,17 +186,21 @@ export function DashboardClient() {
 }
 
 function DashboardLoading() {
+  const t = useText()
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Loading workspace</CardTitle>
-        <CardDescription>Checking your store data before showing repeat intelligence.</CardDescription>
+        <CardTitle>{t('Loading workspace')}</CardTitle>
+        <CardDescription>{t('Checking your store data before showing repeat intelligence.')}</CardDescription>
       </CardHeader>
     </Card>
   )
 }
 
 function EmptyDashboard({ dataset }: { dataset: ReturnType<typeof useIntelligenceDataset>['dataset'] }) {
+  const t = useText()
+
   return (
     <div className="space-y-6">
       <ActivationCommandCenter dataset={dataset} />
@@ -202,10 +208,10 @@ function EmptyDashboard({ dataset }: { dataset: ReturnType<typeof useIntelligenc
       <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
         <div>
           <TreeEmptyState
-            title="Start with your first order import"
-            description="This workspace is clean. Upload a CSV to grow customer profiles, repeat revenue, channel paths, and follow-up timing from your own store data."
-            action={{ href: '/imports', label: 'Import orders', icon: <UploadCloud size={16} /> }}
-            secondaryAction={{ href: '/tutorials', label: 'Follow tutorial', icon: <BookOpenCheck size={16} /> }}
+            title={t('Start with your first order import')}
+            description={t('This workspace is clean. Upload a CSV to grow customer profiles, repeat revenue, channel paths, and follow-up timing from your own store data.')}
+            action={{ href: '/imports', label: t('Import orders'), icon: <UploadCloud size={16} /> }}
+            secondaryAction={{ href: '/tutorials', label: t('Follow tutorial'), icon: <BookOpenCheck size={16} /> }}
           />
           <div className="mt-6 grid gap-3 md:grid-cols-3">
             <EmptyStep icon={UploadCloud} title="Import CSV" detail="Bring in orders from Shopee, TikTok Shop, social, website, or custom exports." />
@@ -216,8 +222,8 @@ function EmptyDashboard({ dataset }: { dataset: ReturnType<typeof useIntelligenc
 
         <Card>
           <CardHeader>
-            <CardTitle>Current workspace</CardTitle>
-            <CardDescription>No customer, order, revenue, or import records yet.</CardDescription>
+            <CardTitle>{t('Current workspace')}</CardTitle>
+            <CardDescription>{t('No customer, order, revenue, or import records yet.')}</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
             <EmptyWorkspaceStat label="Known buyers" value="0" />
@@ -239,6 +245,7 @@ function EmptyWorkspaceStat({
   value: string
   tone?: 'neutral' | 'repeat' | 'risk'
 }) {
+  const t = useText()
   const className = {
     neutral: 'bg-card text-foreground',
     repeat: 'bg-emerald-50 text-emerald-900',
@@ -247,7 +254,7 @@ function EmptyWorkspaceStat({
 
   return (
     <div className={`rounded-lg border border-border px-3 py-2 ${className}`}>
-      <p className="text-[0.7rem] font-black uppercase opacity-70">{label}</p>
+      <p className="text-[0.7rem] font-black uppercase opacity-70">{t(label)}</p>
       <strong className="mt-1 block text-xl font-black">{value}</strong>
     </div>
   )
@@ -262,20 +269,24 @@ function EmptyStep({
   title: string
   detail: string
 }) {
+  const t = useText()
+
   return (
     <div className="rounded-lg border border-border bg-card/75 p-4">
       <Icon size={18} className="text-primary" />
-      <h3 className="mt-3 font-black">{title}</h3>
-      <p className="mt-1 text-sm leading-6 text-muted-foreground">{detail}</p>
+      <h3 className="mt-3 font-black">{t(title)}</h3>
+      <p className="mt-1 text-sm leading-6 text-muted-foreground">{t(detail)}</p>
     </div>
   )
 }
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
+  const t = useText()
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle>{t(title)}</CardTitle>
       </CardHeader>
       <CardContent>{children}</CardContent>
     </Card>
@@ -283,6 +294,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 }
 
 function AnalyticsSnapshot({ analytics }: { analytics: ReturnType<typeof buildRetentionAnalytics> }) {
+  const t = useText()
   const topProduct = analytics.productInsights[0]
   const topSegment = analytics.summary.topRfmSegment
 
@@ -292,10 +304,10 @@ function AnalyticsSnapshot({ analytics }: { analytics: ReturnType<typeof buildRe
         <div>
           <div className="flex items-center gap-2">
             <LineChartIcon className="size-5 text-primary" />
-            <h2 className="font-black">Deep analytics snapshot</h2>
+            <h2 className="font-black">{t('Deep analytics snapshot')}</h2>
           </div>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            Cohorts, RFM, product repeat paths, and opportunity lists are ready for deeper decisions.
+            {t('Cohorts, RFM, product repeat paths, and opportunity lists are ready for deeper decisions.')}
           </p>
         </div>
         <div className="grid gap-2 md:grid-cols-3 lg:min-w-[620px]">
@@ -309,6 +321,8 @@ function AnalyticsSnapshot({ analytics }: { analytics: ReturnType<typeof buildRe
 }
 
 function SnapshotLink({ href, label, value }: { href: string; label: string; value: string }) {
+  const t = useText()
+
   return (
     <Link
       href={href}
@@ -316,8 +330,8 @@ function SnapshotLink({ href, label, value }: { href: string; label: string; val
     >
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-[0.68rem] font-black uppercase text-muted-foreground">{label}</p>
-          <strong className="mt-1 block truncate text-sm">{value}</strong>
+          <p className="text-[0.68rem] font-black uppercase text-muted-foreground">{t(label)}</p>
+          <strong className="mt-1 block truncate text-sm">{t(value)}</strong>
         </div>
         <ArrowUpRight className="size-4 text-muted-foreground group-hover:text-primary" />
       </div>
@@ -326,12 +340,14 @@ function SnapshotLink({ href, label, value }: { href: string; label: string; val
 }
 
 function ActionLink({ href, title, detail }: { href: string; title: string; detail: string }) {
+  const t = useText()
+
   return (
     <Link href={href} className="tree-tactile group rounded-lg border border-border bg-card/85 p-4 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="font-black">{title}</p>
-          <p className="mt-1 text-sm leading-5 text-muted-foreground">{detail}</p>
+          <p className="font-black">{t(title)}</p>
+          <p className="mt-1 text-sm leading-5 text-muted-foreground">{t(detail)}</p>
         </div>
         <ArrowUpRight className="size-4 text-muted-foreground group-hover:text-primary" />
       </div>
@@ -348,6 +364,7 @@ function CustomerMiniTable({
   customers: ReturnType<typeof useIntelligenceDataset>['dataset']['customers']
   tone: 'repeat' | 'risk'
 }) {
+  const t = useText()
   const rowClass = tone === 'repeat'
     ? 'border-emerald-200/70 bg-emerald-50/55 hover:bg-emerald-50'
     : 'border-rose-200/70 bg-rose-50/55 hover:bg-rose-50'
@@ -355,7 +372,7 @@ function CustomerMiniTable({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle>{t(title)}</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-3">
         {customers.map((customer) => (
@@ -363,7 +380,7 @@ function CustomerMiniTable({
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-bold">{customer.fullName}</p>
-                <p className="text-xs text-muted-foreground">{customer.customerStatus} - {customer.totalOrders} orders - {money(customer.totalSpent)}</p>
+                <p className="text-xs text-muted-foreground">{t(customer.customerStatus)} - {customer.totalOrders} {t('orders')} - {money(customer.totalSpent)}</p>
               </div>
               <ArrowUpRight className="size-4 text-muted-foreground group-hover:text-primary" />
             </div>
@@ -371,7 +388,7 @@ function CustomerMiniTable({
         ))}
         {customers.length === 0 ? (
           <p className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
-            Nothing to show yet.
+            {t('Nothing to show yet.')}
           </p>
         ) : null}
       </CardContent>
@@ -379,9 +396,9 @@ function CustomerMiniTable({
   )
 }
 
-function formatChannelPath(path: string) {
+function formatChannelPath(path: string, t: (text: string) => string) {
   const [first, last] = path.split(' -> ') as Array<keyof typeof channelLabels>
-  return `${channelLabels[first] ?? first} -> ${channelLabels[last] ?? last}`
+  return `${t(channelLabels[first] ?? first)} -> ${t(channelLabels[last] ?? last)}`
 }
 
 function channelPathFilters(path: string) {
