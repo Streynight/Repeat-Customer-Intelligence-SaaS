@@ -1,6 +1,7 @@
 'use server'
 
 import { prisma } from '@/lib/prisma'
+import { appUrl } from '@/lib/app-url'
 import { stripePriceEnvForPlan, type PlanId } from '@/lib/billing/plans'
 import { requireStripe } from '@/lib/platform/stripe'
 import { requireTenantContext, writeAuditLog } from '@/lib/tenancy'
@@ -38,8 +39,8 @@ export async function createBillingCheckout(plan: Exclude<PlanId, 'enterprise'>)
       mode: 'subscription',
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/settings?billing=success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/settings?billing=cancelled`,
+      success_url: appUrl('/settings?billing=success'),
+      cancel_url: appUrl('/settings?billing=cancelled'),
       metadata: {
         organizationId: context.organizationId,
         plan,
@@ -71,7 +72,7 @@ export async function createBillingPortal(): Promise<BillingActionResult> {
 
     const session = await stripe.billingPortal.sessions.create({
       customer: subscription.stripeCustomerId,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/settings`,
+      return_url: appUrl('/settings'),
     })
 
     await writeAuditLog(context, {

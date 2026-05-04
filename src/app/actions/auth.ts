@@ -1,7 +1,7 @@
 'use server'
 
-import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { appUrl } from '@/lib/app-url'
 import { normalizeUsername, validateUsername } from '@/lib/auth-users'
 import { databaseUnavailableMessage, normalizeDatabaseError } from '@/lib/database-errors'
 import { prisma } from '@/lib/prisma'
@@ -64,11 +64,18 @@ export async function signUpWithPassword({
   if (existingUsername) return { error: 'That username is already taken.' }
 
   const supabase = await createClient()
+  let emailRedirectTo: string
+  try {
+    emailRedirectTo = appUrl('/auth/callback?next=/dashboard')
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Application URL is not configured.' }
+  }
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/auth/callback?next=/dashboard`,
+      emailRedirectTo,
     },
   })
 
@@ -131,13 +138,18 @@ export async function signInWithGoogle() {
     redirect('/login?error=auth_not_configured')
   }
 
-  const headerStore = await headers()
-  const origin = headerStore.get('origin') ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+  let redirectTo: string
+  try {
+    redirectTo = appUrl('/auth/callback?next=/dashboard')
+  } catch {
+    redirect('/login?error=app_url_not_configured')
+  }
+
   const supabase = await createClient()
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${origin}/auth/callback?next=/dashboard`,
+      redirectTo,
       scopes: 'openid email profile',
     },
   })
