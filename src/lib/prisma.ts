@@ -2,18 +2,39 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '@/generated/prisma/client'
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient }
+let modulePrisma: PrismaClient | null = null
 
-const cachedPrisma = globalForPrisma.prisma
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, property) {
+    const client = getPrismaClient()
+    const value = Reflect.get(client, property)
+    return typeof value === 'function' ? value.bind(client) : value
+  },
+})
 
-export const prisma = cachedPrisma && hasCurrentSchemaDelegates(cachedPrisma)
-  ? cachedPrisma
-  : createPrismaClient()
+export function getPrismaClient() {
+  const cachedPrisma = process.env.NODE_ENV === 'production'
+    ? modulePrisma
+    : globalForPrisma.prisma
 
-if (cachedPrisma && cachedPrisma !== prisma) {
-  void cachedPrisma.$disconnect()
+  if (cachedPrisma && hasCurrentSchemaDelegates(cachedPrisma)) {
+    return cachedPrisma
+  }
+
+  if (cachedPrisma) {
+    void cachedPrisma.$disconnect()
+  }
+
+  const nextPrisma = createPrismaClient()
+
+  if (process.env.NODE_ENV === 'production') {
+    modulePrisma = nextPrisma
+  } else {
+    globalForPrisma.prisma = nextPrisma
+  }
+
+  return nextPrisma
 }
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
 function hasCurrentSchemaDelegates(client: PrismaClient) {
   const delegates = client as unknown as Record<string, unknown>
