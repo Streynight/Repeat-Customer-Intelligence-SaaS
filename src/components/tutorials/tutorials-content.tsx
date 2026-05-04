@@ -1,9 +1,12 @@
+'use client'
+
 import Link from 'next/link'
 import { ArrowRight, CalendarDays, CheckCircle2, CircleDollarSign, FileSpreadsheet, Gauge, LifeBuoy, Repeat2, Settings, UploadCloud, Users } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { useText } from '@/lib/i18n'
 
 type TutorialStep = {
   number: string
@@ -130,20 +133,22 @@ const toneClasses: Record<TutorialStep['tone'], {
 }
 
 export function TutorialsContent() {
+  const t = useText()
+
   return (
     <div className="space-y-6">
       <Card className="border-primary/20 bg-card">
         <CardHeader className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-start">
           <div>
-            <Badge variant="secondary" className="border-primary/20 bg-primary/10 text-primary">First 15 minutes</Badge>
-            <CardTitle className="mt-3 text-2xl font-semibold">From empty workspace to action list</CardTitle>
+            <Badge variant="secondary" className="border-primary/20 bg-primary/10 text-primary">{t('First 15 minutes')}</Badge>
+            <CardTitle className="mt-3 text-2xl font-semibold">{t('From empty workspace to action list')}</CardTitle>
             <CardDescription className="mt-2 max-w-3xl leading-6">
-              RepeatTree becomes useful after real order data is imported. Start with one clean export, confirm the import diagnostics, then move from dashboard metrics into customer queues.
+              {t('RepeatTree becomes useful after real order data is imported. Start with one clean export, confirm the import diagnostics, then move from dashboard metrics into customer queues.')}
             </CardDescription>
           </div>
           <Button asChild className="w-full font-black sm:w-fit">
             <Link href="/imports">
-              Start tutorial
+              {t('Start tutorial')}
               <ArrowRight size={16} />
             </Link>
           </Button>
@@ -153,10 +158,10 @@ export function TutorialsContent() {
       <section aria-labelledby="first-run-title">
         <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 id="first-run-title" className="text-xl font-semibold tracking-tight">Step-by-step setup</h2>
-            <p className="mt-1 text-sm leading-6 text-muted-foreground">Run these in order for a new merchant workspace.</p>
+            <h2 id="first-run-title" className="text-xl font-semibold tracking-tight">{t('Step-by-step setup')}</h2>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">{t('Run these in order for a new merchant workspace.')}</p>
           </div>
-          <Badge variant="outline">Operator workflow</Badge>
+          <Badge variant="outline">{t('Operator workflow')}</Badge>
         </div>
         <div className="grid gap-4 xl:grid-cols-2">
           {firstRunSteps.map((step) => (
@@ -168,14 +173,14 @@ export function TutorialsContent() {
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         <Card>
           <CardHeader>
-            <CardTitle>CSV file checklist</CardTitle>
-            <CardDescription>Use this before uploading an export. Missing optional fields are allowed, but weak identity fields reduce matching quality.</CardDescription>
+            <CardTitle>{t('CSV file checklist')}</CardTitle>
+            <CardDescription>{t('Use this before uploading an export. Missing optional fields are allowed, but weak identity fields reduce matching quality.')}</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {csvFields.map((field) => (
               <div key={field} className="flex items-center gap-2 rounded-lg border border-border bg-secondary/35 px-3 py-2 text-sm font-semibold">
                 <CheckCircle2 className="size-4 text-primary" />
-                {field}
+                {t(field)}
               </div>
             ))}
           </CardContent>
@@ -183,9 +188,9 @@ export function TutorialsContent() {
 
         <Alert className="border-rose-200 bg-rose-50 text-rose-950">
           <LifeBuoy size={16} />
-          <AlertTitle>When the dashboard is empty</AlertTitle>
+          <AlertTitle>{t('When the dashboard is empty')}</AlertTitle>
           <AlertDescription>
-            Empty metrics usually mean no orders are imported yet. Go to Imports, try a sample only for validation, then import real orders for the customer workspace.
+            {t('Empty metrics usually mean no orders are imported yet. Go to Imports, try a sample only for validation, then import real orders for the customer workspace.')}
           </AlertDescription>
         </Alert>
       </div>
@@ -193,12 +198,12 @@ export function TutorialsContent() {
       <Card>
         <CardHeader className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-start">
           <div>
-            <CardTitle>Weekly operating rhythm</CardTitle>
-            <CardDescription>Use this after the first import so the workspace drives retention work instead of becoming a passive report.</CardDescription>
+            <CardTitle>{t('Weekly operating rhythm')}</CardTitle>
+            <CardDescription>{t('Use this after the first import so the workspace drives retention work instead of becoming a passive report.')}</CardDescription>
           </div>
           <Button asChild variant="outline" className="w-full font-black sm:w-fit">
             <Link href="/customers">
-              Open action queues
+              {t('Open action queues')}
               <ArrowRight size={16} />
             </Link>
           </Button>
@@ -210,7 +215,7 @@ export function TutorialsContent() {
                 <span className="mb-2 inline-flex size-6 items-center justify-center rounded-lg bg-primary/10 text-xs font-black text-primary">
                   {index + 1}
                 </span>
-                <p>{item}</p>
+                <p>{t(item)}</p>
               </li>
             ))}
           </ol>
@@ -227,6 +232,7 @@ export function TutorialsContent() {
 }
 
 function TutorialStepCard({ step }: { step: TutorialStep }) {
+  const t = useText()
   const tone = toneClasses[step.tone]
   const Icon = step.icon
 
@@ -242,15 +248,15 @@ function TutorialStepCard({ step }: { step: TutorialStep }) {
           </span>
           <div>
             <p className={`text-xs font-black uppercase ${tone.label}`}>{step.number}</p>
-            <CardTitle>{step.title}</CardTitle>
+            <CardTitle>{t(step.title)}</CardTitle>
           </div>
           <ArrowRight className="hidden size-4 text-muted-foreground group-hover:text-primary sm:block" />
         </CardHeader>
         <CardContent>
-          <p className="text-sm font-semibold text-foreground">{step.outcome}</p>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">{step.detail}</p>
+          <p className="text-sm font-semibold text-foreground">{t(step.outcome)}</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">{t(step.detail)}</p>
           <span className="mt-4 inline-flex text-sm font-black text-primary">
-            {step.cta}
+            {t(step.cta)}
           </span>
         </CardContent>
       </Card>
@@ -269,6 +275,8 @@ function QuickLink({
   detail: string
   icon: React.ComponentType<{ size?: number }>
 }) {
+  const t = useText()
+
   return (
     <Link href={href} className="group rounded-lg focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45">
       <Card className="h-full border-primary/10 bg-card transition group-hover:-translate-y-0.5 group-hover:shadow-md">
@@ -279,8 +287,8 @@ function QuickLink({
           <ArrowRight className="size-4 text-muted-foreground group-hover:text-primary" />
         </div>
         <div>
-          <h3 className="font-semibold">{title}</h3>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">{detail}</p>
+          <h3 className="font-semibold">{t(title)}</h3>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">{t(detail)}</p>
         </div>
       </Card>
     </Link>

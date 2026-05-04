@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { reserveImportOrderUsage } from '@/lib/billing/enforcement'
-import { recordTenantEvent } from '@/lib/observability'
+import { captureOperationalError, recordTenantEvent } from '@/lib/observability'
 import { loadDatasetForStore, persistImportForStore } from '@/lib/server/dataset-store'
 import { importOrdersForTenant } from '@/lib/services/dataset-import'
+import { queueLifecycleAutomationForDataset } from '@/lib/services/lifecycle-automation'
 import type { TenantContext } from '@/lib/tenancy'
 import { makeOrder } from '@/test/fixtures'
 
@@ -16,7 +17,12 @@ vi.mock('@/lib/billing/enforcement', () => ({
 }))
 
 vi.mock('@/lib/observability', () => ({
+  captureOperationalError: vi.fn(),
   recordTenantEvent: vi.fn(),
+}))
+
+vi.mock('@/lib/services/lifecycle-automation', () => ({
+  queueLifecycleAutomationForDataset: vi.fn(),
 }))
 
 const context: TenantContext = {
@@ -35,6 +41,7 @@ describe('importOrdersForTenant', () => {
     vi.mocked(loadDatasetForStore).mockResolvedValue({ customers: [], orders: [], imports: [] })
     vi.mocked(persistImportForStore).mockResolvedValue(undefined)
     vi.mocked(reserveImportOrderUsage).mockResolvedValue({ release: vi.fn() })
+    vi.mocked(queueLifecycleAutomationForDataset).mockResolvedValue({ queued: 0, skipped: 0 })
   })
 
   it('loads the tenant store and persists a server-owned dataset from order commands', async () => {
@@ -58,6 +65,7 @@ describe('importOrdersForTenant', () => {
       event: 'dataset_import_persisted',
       tenant: context,
     }))
+    expect(queueLifecycleAutomationForDataset).toHaveBeenCalledWith(context, persistedDataset, { source: 'dataset_import' })
   })
 
   it('rejects oversized server action imports before persistence', async () => {
@@ -82,5 +90,27 @@ describe('importOrdersForTenant', () => {
     })).rejects.toThrow('database write failed')
 
     expect(release).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps persisted imports when lifecycle automation enqueue fails', async () => {
+    const automationError = new Error('inngest unavailable')
+    vi.mocked(queueLifecycleAutomationForDataset).mockRejectedValue(automationError)
+
+    await expect(importOrdersForTenant(context, {
+      orders: [makeOrder({ externalOrderId: 'ORDER-3' })],
+      fileName: 'orders.csv',
+      sourceChannel: 'website',
+    })).resolves.toEqual(expect.objectContaining({ orders: expect.any(Array) }))
+
+    expect(persistImportForStore).toHaveBeenCalledTimes(1)
+    expect(captureOperationalError).toHaveBeenCalledWith(automationError, expect.objectContaining({
+      operation: 'automation.lifecycle.queue',
+      tenant: context,
+    }))
+    expect(recordTenantEvent).toHaveBeenCalledWith(expect.objectContaining({
+      event: 'lifecycle_automation_queue_failed',
+      tenant: context,
+      properties: expect.objectContaining({ sourceChannel: 'website' }),
+    }))
   })
 })

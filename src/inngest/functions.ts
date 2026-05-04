@@ -108,6 +108,7 @@ export const sendLifecycleAutomation = inngest.createFunction(
           workspaceId,
           eventId: event.id,
           type: event.data.type,
+          customerProfileId: parseWorkflowCustomerProfileId(event.data.customerProfileId),
           payload: event.data as Record<string, unknown>,
         })
       })
@@ -133,6 +134,10 @@ export const sendLifecycleAutomation = inngest.createFunction(
 export const functions = [recomputeWorkspaceMetrics, sendLifecycleAutomation]
 
 function parseWorkflowWorkspaceId(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+function parseWorkflowCustomerProfileId(value: unknown) {
   return typeof value === 'string' && value.trim() ? value.trim() : null
 }
 

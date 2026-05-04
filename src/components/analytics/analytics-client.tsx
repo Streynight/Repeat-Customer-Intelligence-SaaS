@@ -13,6 +13,7 @@ import { buildCustomersHref } from '@/lib/services/customer-filters'
 import { buildRetentionAnalytics, type CustomerOpportunity, type ProductRepeatInsight, type RfmSegment } from '@/lib/services/retention-analytics'
 import { useIntelligenceDataset } from '@/components/hooks/use-intelligence-dataset'
 import { channelLabels } from '@/lib/types'
+import { useText } from '@/lib/i18n'
 import { money, percent } from '@/lib/utils'
 
 type AnalyticsTab = 'retention' | 'cohorts' | 'products' | 'opportunities'
@@ -21,6 +22,7 @@ const tabs: AnalyticsTab[] = ['retention', 'cohorts', 'products', 'opportunities
 
 export function AnalyticsClient() {
   const { dataset, loading } = useIntelligenceDataset()
+  const t = useText()
   const router = useRouter()
   const searchParams = useSearchParams()
   const selectedTab = normalizeTab(searchParams.get('tab'))
@@ -30,8 +32,8 @@ export function AnalyticsClient() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Loading analytics</CardTitle>
-          <CardDescription>Building retention cohorts, product repeat insights, and customer opportunities.</CardDescription>
+          <CardTitle>{t('Loading analytics')}</CardTitle>
+          <CardDescription>{t('Building retention cohorts, product repeat insights, and customer opportunities.')}</CardDescription>
         </CardHeader>
       </Card>
     )
@@ -44,11 +46,11 @@ export function AnalyticsClient() {
   return (
     <div className="space-y-6">
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <MetricCard label="Repeat revenue share" value={percent(analytics.summary.repeatRevenueShare)} tone="repeat" href={buildCustomersHref({ segment: 'repeat', sort: 'repeatRevenue' })} />
-        <MetricCard label="Second purchase" value={percent(analytics.summary.secondPurchaseConversion)} tone="repeat" href={buildCustomersHref({ segment: 'repeat' })} />
-        <MetricCard label="Days to 2nd order" value={formatDays(analytics.summary.averageDaysToSecondOrder)} href="/analytics?tab=cohorts" />
-        <MetricCard label="VIP concentration" value={percent(analytics.summary.vipRevenueConcentration)} tone="vip" href={buildCustomersHref({ status: 'VIP', sort: 'totalSpent' })} />
-        <MetricCard label="At-risk value" value={money(analytics.summary.atRiskValue)} tone="risk" href={buildCustomersHref({ segment: 'winback', sort: 'lastOrder' })} />
+        <MetricCard label={t('Repeat revenue share')} value={percent(analytics.summary.repeatRevenueShare)} tone="repeat" href={buildCustomersHref({ segment: 'repeat', sort: 'repeatRevenue' })} />
+        <MetricCard label={t('Second purchase')} value={percent(analytics.summary.secondPurchaseConversion)} tone="repeat" href={buildCustomersHref({ segment: 'repeat' })} />
+        <MetricCard label={t('Days to 2nd order')} value={formatDays(analytics.summary.averageDaysToSecondOrder)} href="/analytics?tab=cohorts" />
+        <MetricCard label={t('VIP concentration')} value={percent(analytics.summary.vipRevenueConcentration)} tone="vip" href={buildCustomersHref({ status: 'VIP', sort: 'totalSpent' })} />
+        <MetricCard label={t('At-risk value')} value={money(analytics.summary.atRiskValue)} tone="risk" href={buildCustomersHref({ segment: 'winback', sort: 'lastOrder' })} />
       </section>
 
       <Tabs
@@ -56,10 +58,10 @@ export function AnalyticsClient() {
         onValueChange={(value) => router.push(value === 'retention' ? '/analytics' : `/analytics?tab=${value}`)}
       >
         <TabsList className="w-full justify-start overflow-x-auto bg-secondary/55 p-1">
-          <TabsTrigger value="retention">Retention</TabsTrigger>
-          <TabsTrigger value="cohorts">Cohorts</TabsTrigger>
-          <TabsTrigger value="products">Products</TabsTrigger>
-          <TabsTrigger value="opportunities">Opportunities</TabsTrigger>
+          <TabsTrigger value="retention">{t('Retention')}</TabsTrigger>
+          <TabsTrigger value="cohorts">{t('Cohorts')}</TabsTrigger>
+          <TabsTrigger value="products">{t('Products')}</TabsTrigger>
+          <TabsTrigger value="opportunities">{t('Opportunities')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="retention" className="space-y-6">
@@ -80,16 +82,19 @@ export function AnalyticsClient() {
 }
 
 function EmptyAnalytics() {
+  const t = useText()
+
   return (
     <TreeEmptyState
-      title="Deep analytics starts after import"
-      description="Import order CSVs to unlock cohorts, RFM segments, product repeat paths, channel quality, and opportunity lists from your real customers."
-      action={{ href: '/imports', label: 'Import orders', icon: <UploadCloud size={16} /> }}
+      title={t('Deep analytics starts after import')}
+      description={t('Import order CSVs to unlock cohorts, RFM segments, product repeat paths, channel quality, and opportunity lists from your real customers.')}
+      action={{ href: '/imports', label: t('Import orders'), icon: <UploadCloud size={16} /> }}
     />
   )
 }
 
 function RetentionTab({ analytics }: { analytics: ReturnType<typeof buildRetentionAnalytics> }) {
+  const t = useText()
   const topRfm = analytics.rfmScores.slice(0, 6)
 
   return (
@@ -98,9 +103,9 @@ function RetentionTab({ analytics }: { analytics: ReturnType<typeof buildRetenti
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="size-5 text-primary" />
-            RFM customer segments
+            {t('RFM customer segments')}
           </CardTitle>
-          <CardDescription>Recency, frequency, and monetary value compressed into actionable customer groups.</CardDescription>
+          <CardDescription>{t('Recency, frequency, and monetary value compressed into actionable customer groups.')}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {segmentCounts(analytics.rfmScores).map((row) => (
@@ -111,9 +116,9 @@ function RetentionTab({ analytics }: { analytics: ReturnType<typeof buildRetenti
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-black uppercase text-muted-foreground">{row.segment}</p>
+                  <p className="text-xs font-black uppercase text-muted-foreground">{t(row.segment)}</p>
                   <strong className="mt-2 block text-3xl font-black">{row.count}</strong>
-                  <p className="text-xs text-muted-foreground">{money(row.revenue)} customer value</p>
+                  <p className="text-xs text-muted-foreground">{money(row.revenue)} {t('customer value')}</p>
                 </div>
                 <ArrowUpRight className="size-4 text-muted-foreground group-hover:text-primary" />
               </div>
@@ -124,8 +129,8 @@ function RetentionTab({ analytics }: { analytics: ReturnType<typeof buildRetenti
 
       <Card>
         <CardHeader>
-          <CardTitle>Highest RFM scores</CardTitle>
-          <CardDescription>Best customers to protect, reward, or learn from.</CardDescription>
+          <CardTitle>{t('Highest RFM scores')}</CardTitle>
+          <CardDescription>{t('Best customers to protect, reward, or learn from.')}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-2">
           {topRfm.map((score) => (
@@ -137,7 +142,7 @@ function RetentionTab({ analytics }: { analytics: ReturnType<typeof buildRetenti
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-bold">{score.customerName}</p>
-                  <p className="text-xs text-muted-foreground">R{score.recencyScore} F{score.frequencyScore} M{score.monetaryScore} - {score.segment}</p>
+                  <p className="text-xs text-muted-foreground">R{score.recencyScore} F{score.frequencyScore} M{score.monetaryScore} - {t(score.segment)}</p>
                 </div>
                 <Badge variant="secondary">{score.totalScore}</Badge>
               </div>
@@ -150,19 +155,19 @@ function RetentionTab({ analytics }: { analytics: ReturnType<typeof buildRetenti
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="size-5 text-primary" />
-            Channel quality
+            {t('Channel quality')}
           </CardTitle>
-          <CardDescription>Which first-purchase channels create repeat buyers and repeat revenue.</CardDescription>
+          <CardDescription>{t('Which first-purchase channels create repeat buyers and repeat revenue.')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>First channel</TableHead>
-                <TableHead>Customers</TableHead>
-                <TableHead>Repeat rate</TableHead>
-                <TableHead>Repeat revenue</TableHead>
-                <TableHead>Avg days to repeat</TableHead>
+                <TableHead>{t('First channel')}</TableHead>
+                <TableHead>{t('Customers')}</TableHead>
+                <TableHead>{t('Repeat rate')}</TableHead>
+                <TableHead>{t('Repeat revenue')}</TableHead>
+                <TableHead>{t('Avg days to repeat')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -170,7 +175,7 @@ function RetentionTab({ analytics }: { analytics: ReturnType<typeof buildRetenti
                 <TableRow key={row.channel}>
                   <TableCell>
                     <Link href={buildCustomersHref({ firstChannel: row.channel })} className="font-bold text-primary hover:underline">
-                      {channelLabels[row.channel]}
+                      {t(channelLabels[row.channel])}
                     </Link>
                   </TableCell>
                   <TableCell>{row.firstChannelCustomers}</TableCell>
@@ -188,21 +193,23 @@ function RetentionTab({ analytics }: { analytics: ReturnType<typeof buildRetenti
 }
 
 function CohortsTab({ analytics }: { analytics: ReturnType<typeof buildRetentionAnalytics> }) {
+  const t = useText()
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <GitBranch className="size-5 text-primary" />
-          Cohort retention
+          {t('Cohort retention')}
         </CardTitle>
-        <CardDescription>First-order month cohorts with active customer retention from M0 to M5.</CardDescription>
+        <CardDescription>{t('First-order month cohorts with active customer retention from M0 to M5.')}</CardDescription>
       </CardHeader>
       <CardContent className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Cohort</TableHead>
-              <TableHead>Size</TableHead>
+              <TableHead>{t('Cohort')}</TableHead>
+              <TableHead>{t('Size')}</TableHead>
               {Array.from({ length: 6 }, (_, index) => <TableHead key={index}>M{index}</TableHead>)}
             </TableRow>
           </TableHeader>
@@ -215,7 +222,7 @@ function CohortsTab({ analytics }: { analytics: ReturnType<typeof buildRetention
                   <TableCell key={cell.monthOffset}>
                     <div className={`rounded-lg px-2 py-2 text-center text-xs font-bold ${heatClass(cell.retentionRate)}`}>
                       <span>{percent(cell.retentionRate)}</span>
-                      <p className="mt-1 font-medium opacity-75">{cell.activeCustomers} buyers</p>
+                      <p className="mt-1 font-medium opacity-75">{cell.activeCustomers} {t('buyers')}</p>
                     </div>
                   </TableCell>
                 ))}
@@ -229,12 +236,14 @@ function CohortsTab({ analytics }: { analytics: ReturnType<typeof buildRetention
 }
 
 function ProductsTab({ products }: { products: ProductRepeatInsight[] }) {
+  const t = useText()
+
   if (products.length === 0) {
     return (
       <TreeEmptyState
-        title="No product repeat data yet"
-        description="Import CSV rows with product_name, quantity, and unit_price to unlock product journeys."
-        action={{ href: '/imports', label: 'Import product rows', icon: <UploadCloud size={16} /> }}
+        title={t('No product repeat data yet')}
+        description={t('Import CSV rows with product_name, quantity, and unit_price to unlock product journeys.')}
+        action={{ href: '/imports', label: t('Import product rows'), icon: <UploadCloud size={16} /> }}
       />
     )
   }
@@ -244,19 +253,19 @@ function ProductsTab({ products }: { products: ProductRepeatInsight[] }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Boxes className="size-5 text-primary" />
-          Product repeat intelligence
+          {t('Product repeat intelligence')}
         </CardTitle>
-        <CardDescription>Products that pull customers back, plus the next products they commonly buy.</CardDescription>
+        <CardDescription>{t('Products that pull customers back, plus the next products they commonly buy.')}</CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Product</TableHead>
-              <TableHead>Repeat revenue</TableHead>
-              <TableHead>Repeat buyers</TableHead>
-              <TableHead>Revenue</TableHead>
-              <TableHead>Common next products</TableHead>
+              <TableHead>{t('Product')}</TableHead>
+              <TableHead>{t('Repeat revenue')}</TableHead>
+              <TableHead>{t('Repeat buyers')}</TableHead>
+              <TableHead>{t('Revenue')}</TableHead>
+              <TableHead>{t('Common next products')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -274,7 +283,7 @@ function ProductsTab({ products }: { products: ProductRepeatInsight[] }) {
                   <div className="flex flex-wrap gap-1">
                     {product.commonNextProducts.length > 0 ? product.commonNextProducts.map((next) => (
                       <Badge key={next.productName} variant="secondary">{next.productName} x{next.count}</Badge>
-                    )) : <span className="text-xs text-muted-foreground">No next-product pattern yet</span>}
+                    )) : <span className="text-xs text-muted-foreground">{t('No next-product pattern yet')}</span>}
                   </div>
                 </TableCell>
               </TableRow>
@@ -287,13 +296,15 @@ function ProductsTab({ products }: { products: ProductRepeatInsight[] }) {
 }
 
 function OpportunitiesTab({ opportunities }: { opportunities: CustomerOpportunity[] }) {
+  const t = useText()
+
   if (opportunities.length === 0) {
     return (
       <TreeEmptyState
-        title="No opportunities yet"
-        description="Import more orders to surface win-back, second purchase, VIP protection, and cross-sell opportunities."
+        title={t('No opportunities yet')}
+        description={t('Import more orders to surface win-back, second purchase, VIP protection, and cross-sell opportunities.')}
         tone="risk"
-        action={{ href: '/imports', label: 'Import more orders', icon: <UploadCloud size={16} /> }}
+        action={{ href: '/imports', label: t('Import more orders'), icon: <UploadCloud size={16} /> }}
       />
     )
   }
@@ -309,17 +320,17 @@ function OpportunitiesTab({ opportunities }: { opportunities: CustomerOpportunit
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline" className="capitalize">{opportunity.type.replace('-', ' ')}</Badge>
-                <Badge variant={opportunity.priority === 'high' ? 'destructive' : 'secondary'}>{opportunity.priority}</Badge>
+                <Badge variant="outline" className="capitalize">{t(opportunity.type.replace('-', ' '))}</Badge>
+                <Badge variant={opportunity.priority === 'high' ? 'destructive' : 'secondary'}>{t(opportunity.priority)}</Badge>
               </div>
-              <h3 className="mt-3 font-black">{opportunity.title}</h3>
+              <h3 className="mt-3 font-black">{t(opportunity.title)}</h3>
               <p className="mt-1 text-sm font-semibold">{opportunity.customerName}</p>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">{opportunity.detail}</p>
-              {opportunity.targetProduct ? <p className="mt-2 text-xs font-bold text-primary">Target product: {opportunity.targetProduct}</p> : null}
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">{formatOpportunityDetail(opportunity.detail, t)}</p>
+              {opportunity.targetProduct ? <p className="mt-2 text-xs font-bold text-primary">{t('Target product:')} {opportunity.targetProduct}</p> : null}
             </div>
             <div className="text-right">
               <strong className="block text-lg">{money(opportunity.value)}</strong>
-              <p className="mt-1 text-xs text-muted-foreground">{opportunity.daysSinceLastOrder} days ago</p>
+              <p className="mt-1 text-xs text-muted-foreground">{opportunity.daysSinceLastOrder} {t('days ago')}</p>
               <ArrowUpRight className="ml-auto mt-3 size-4 text-muted-foreground group-hover:text-primary" />
             </div>
           </div>
@@ -363,4 +374,14 @@ function opportunityClass(opportunity: CustomerOpportunity) {
   if (opportunity.type === 'vip-protect') return 'border-violet-200 bg-violet-50/75'
   if (opportunity.type === 'cross-sell') return 'border-emerald-200 bg-emerald-50/60'
   return 'border-border bg-card'
+}
+
+function formatOpportunityDetail(detail: string, t: (text: string) => string) {
+  const staleMatch = /^(AtRisk|Lost) customer with (\d+) orders and no recent purchase\.$/.exec(detail)
+  if (staleMatch) return `${t(staleMatch[1])} ${t('customer with')} ${staleMatch[2]} ${t('orders and no recent purchase.')}`
+
+  const crossSellMatch = /^Has not bought (.+), one of the strongest repeat products\.$/.exec(detail)
+  if (crossSellMatch) return `${t('Has not bought')} ${crossSellMatch[1]}, ${t('one of the strongest repeat products.')}`
+
+  return t(detail)
 }

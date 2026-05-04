@@ -23,6 +23,7 @@ import { buildChannelIncomeRows, buildIncomeSummary, buildMonthlyIncomeRows, bui
 import { downloadCsv } from '@/lib/services/export'
 import { useIntelligenceDataset } from '@/components/hooks/use-intelligence-dataset'
 import { channelLabels, sourceChannels, type CsvSyncConnectionState, type CsvSyncRunResult, type FinanceSettings, type SourceChannel } from '@/lib/types'
+import { useText } from '@/lib/i18n'
 
 type IncomeTab = 'overview' | 'vat' | 'channels' | 'sync'
 
@@ -30,6 +31,7 @@ const tabs: IncomeTab[] = ['overview', 'vat', 'channels', 'sync']
 
 export function IncomeClient() {
   const { dataset, loading } = useIntelligenceDataset()
+  const t = useText()
   const router = useRouter()
   const searchParams = useSearchParams()
   const selectedTab = normalizeTab(searchParams.get('tab'))
@@ -73,8 +75,8 @@ export function IncomeClient() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Loading income workspace</CardTitle>
-          <CardDescription>Preparing revenue, VAT, and CSV sync settings.</CardDescription>
+          <CardTitle>{t('Loading income workspace')}</CardTitle>
+          <CardDescription>{t('Preparing revenue, VAT, and CSV sync settings.')}</CardDescription>
         </CardHeader>
       </Card>
     )
@@ -87,11 +89,11 @@ export function IncomeClient() {
   return (
     <div className="space-y-6">
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <MetricCard label="Gross income" value={baht(summary.grossIncome)} tone="income" href="/income" />
-        <MetricCard label="Net snapshot" value={baht(summary.netIncome)} tone="repeat" href="/income?tab=vat" />
-        <MetricCard label={`${settings.taxLabel} estimate`} value={baht(summary.taxAmount)} tone="vip" href="/income?tab=vat" />
-        <MetricCard label="Platform fees" value={baht(summary.platformFeeAmount)} tone="risk" href="/income?tab=channels" />
-        <MetricCard label="Refunds" value={baht(summary.refundAmount)} tone="risk" href="/income?tab=vat" />
+        <MetricCard label={t('Gross income')} value={baht(summary.grossIncome)} tone="income" href="/income" />
+        <MetricCard label={t('Net snapshot')} value={baht(summary.netIncome)} tone="repeat" href="/income?tab=vat" />
+        <MetricCard label={`${settings.taxLabel} ${t('estimate')}`} value={baht(summary.taxAmount)} tone="vip" href="/income?tab=vat" />
+        <MetricCard label={t('Platform fees')} value={baht(summary.platformFeeAmount)} tone="risk" href="/income?tab=channels" />
+        <MetricCard label={t('Refunds')} value={baht(summary.refundAmount)} tone="risk" href="/income?tab=vat" />
       </section>
 
       <Tabs
@@ -99,10 +101,10 @@ export function IncomeClient() {
         onValueChange={(value) => router.push(value === 'overview' ? '/income' : `/income?tab=${value}`)}
       >
         <TabsList className="w-full justify-start overflow-x-auto bg-secondary/55 p-1">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="vat">VAT</TabsTrigger>
-          <TabsTrigger value="channels">Channels</TabsTrigger>
-          <TabsTrigger value="sync">Sync</TabsTrigger>
+          <TabsTrigger value="overview">{t('Overview')}</TabsTrigger>
+          <TabsTrigger value="vat">{t('VAT')}</TabsTrigger>
+          <TabsTrigger value="channels">{t('Channels')}</TabsTrigger>
+          <TabsTrigger value="sync">{t('Sync')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -123,13 +125,15 @@ export function IncomeClient() {
 }
 
 function EmptyIncome() {
+  const t = useText()
+
   return (
     <TreeEmptyState
-      title="Income appears after the first import"
-      description="Import or schedule a CSV sync to unlock gross income, net snapshot, Thailand VAT estimates, channel income, and monthly exports."
+      title={t('Income appears after the first import')}
+      description={t('Import or schedule a CSV sync to unlock gross income, net snapshot, Thailand VAT estimates, channel income, and monthly exports.')}
       tone="income"
-      action={{ href: '/imports', label: 'Import orders', icon: <UploadCloud size={16} /> }}
-      secondaryAction={{ href: '/income?tab=sync', label: 'Add CSV sync', icon: <PlugZap size={16} /> }}
+      action={{ href: '/imports', label: t('Import orders'), icon: <UploadCloud size={16} /> }}
+      secondaryAction={{ href: '/income?tab=sync', label: t('Add CSV sync'), icon: <PlugZap size={16} /> }}
     />
   )
 }
@@ -143,26 +147,28 @@ function OverviewTab({
   monthlyRows: ReturnType<typeof buildMonthlyIncomeRows>
   settings: FinanceSettings
 }) {
+  const t = useText()
+
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Banknote className="size-5 text-primary" />
-            Monthly income
+            {t('Monthly income')}
           </CardTitle>
-          <CardDescription>Gross income and net snapshot after estimated {settings.taxLabel}, fees, and refunds.</CardDescription>
+          <CardDescription>{t('Gross income and net snapshot after estimated')} {settings.taxLabel}, {t('fees, and refunds.')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Month</TableHead>
-                <TableHead>Gross</TableHead>
+                <TableHead>{t('Month')}</TableHead>
+                <TableHead>{t('Gross')}</TableHead>
                 <TableHead>{settings.taxLabel}</TableHead>
-                <TableHead>Fees</TableHead>
-                <TableHead>Refunds</TableHead>
-                <TableHead>Net snapshot</TableHead>
+                <TableHead>{t('Fees')}</TableHead>
+                <TableHead>{t('Refunds')}</TableHead>
+                <TableHead>{t('Net snapshot')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -183,8 +189,8 @@ function OverviewTab({
 
       <Card>
         <CardHeader>
-          <CardTitle>Income mix</CardTitle>
-          <CardDescription>Snapshot for decision-making, not tax filing automation.</CardDescription>
+          <CardTitle>{t('Income mix')}</CardTitle>
+          <CardDescription>{t('Snapshot for decision-making, not tax filing automation.')}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3">
           <BreakdownRow label="Gross income" value={summary.grossIncome} />
@@ -209,6 +215,7 @@ function VatTab({
   setSettings: (settings: FinanceSettings) => void
   rows: ReturnType<typeof buildVatSummary>
 }) {
+  const t = useText()
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
 
@@ -239,26 +246,26 @@ function VatTab({
     <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
       <Card>
         <CardHeader>
-          <CardTitle>Thailand VAT settings</CardTitle>
-          <CardDescription>Default estimate is VAT-inclusive 7% for Thailand-style merchant exports.</CardDescription>
+          <CardTitle>{t('Thailand VAT settings')}</CardTitle>
+          <CardDescription>{t('Default estimate is VAT-inclusive 7% for Thailand-style merchant exports.')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="grid gap-3" onSubmit={(event) => void submitSettings(event)}>
-            <Input name="taxCountry" defaultValue={settings.taxCountry} aria-label="Tax country" />
-            <Input name="taxLabel" defaultValue={settings.taxLabel} aria-label="Tax label" />
-            <Input name="taxRatePercent" type="number" step="0.01" defaultValue={settings.taxRate * 100} aria-label="Tax rate percent" />
+            <Input name="taxCountry" defaultValue={settings.taxCountry} aria-label={t('Tax country')} />
+            <Input name="taxLabel" defaultValue={settings.taxLabel} aria-label={t('Tax label')} />
+            <Input name="taxRatePercent" type="number" step="0.01" defaultValue={settings.taxRate * 100} aria-label={t('Tax rate percent')} />
             <select
               name="taxIncluded"
               defaultValue={String(settings.taxIncluded)}
-              aria-label="Tax included"
+              aria-label={t('Tax included')}
               className="h-8 rounded-lg border border-input bg-card px-3 text-sm"
             >
-              <option value="true">Tax included in order total</option>
-              <option value="false">Tax added on top</option>
+              <option value="true">{t('Tax included in order total')}</option>
+              <option value="false">{t('Tax added on top')}</option>
             </select>
-            <Button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save VAT settings'}</Button>
+            <Button type="submit" disabled={saving}>{saving ? t('Saving...') : t('Save VAT settings')}</Button>
           </form>
-          {message ? <p className="mt-3 text-sm font-semibold text-primary">{message}</p> : null}
+          {message ? <p className="mt-3 text-sm font-semibold text-primary">{t(message)}</p> : null}
         </CardContent>
       </Card>
 
@@ -267,25 +274,25 @@ function VatTab({
           <div>
             <CardTitle className="flex items-center gap-2">
               <ReceiptText className="size-5 text-primary" />
-              Monthly VAT summary
+              {t('Monthly VAT summary')}
             </CardTitle>
-            <CardDescription>Explicit tax columns override estimates; missing tax columns use the configured estimate.</CardDescription>
+            <CardDescription>{t('Explicit tax columns override estimates; missing tax columns use the configured estimate.')}</CardDescription>
           </div>
           <Button variant="outline" onClick={() => downloadCsv('vat-summary.csv', exportVatSummaryCsv(rows, settings.taxLabel))}>
             <Download size={15} />
-            Export VAT CSV
+            {t('Export VAT CSV')}
           </Button>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Month</TableHead>
-                <TableHead>Gross</TableHead>
-                <TableHead>Explicit</TableHead>
-                <TableHead>Estimated</TableHead>
-                <TableHead>Total {settings.taxLabel}</TableHead>
-                <TableHead>Net before {settings.taxLabel}</TableHead>
+                <TableHead>{t('Month')}</TableHead>
+                <TableHead>{t('Gross')}</TableHead>
+                <TableHead>{t('Explicit')}</TableHead>
+                <TableHead>{t('Estimated')}</TableHead>
+                <TableHead>{t('Total')} {settings.taxLabel}</TableHead>
+                <TableHead>{t('Net before')} {settings.taxLabel}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -308,29 +315,31 @@ function VatTab({
 }
 
 function ChannelsTab({ rows }: { rows: ReturnType<typeof buildChannelIncomeRows> }) {
+  const t = useText()
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Channel income</CardTitle>
-        <CardDescription>Gross and net snapshot by first imported order source.</CardDescription>
+        <CardTitle>{t('Channel income')}</CardTitle>
+        <CardDescription>{t('Gross and net snapshot by first imported order source.')}</CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Channel</TableHead>
-              <TableHead>Orders</TableHead>
-              <TableHead>Gross</TableHead>
-              <TableHead>Tax</TableHead>
-              <TableHead>Fees</TableHead>
-              <TableHead>Refunds</TableHead>
-              <TableHead>Net</TableHead>
+              <TableHead>{t('Channel')}</TableHead>
+              <TableHead>{t('Orders')}</TableHead>
+              <TableHead>{t('Gross')}</TableHead>
+              <TableHead>{t('Tax')}</TableHead>
+              <TableHead>{t('Fees')}</TableHead>
+              <TableHead>{t('Refunds')}</TableHead>
+              <TableHead>{t('Net')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.map((row) => (
               <TableRow key={row.channel}>
-                <TableCell className="font-bold">{channelLabels[row.channel]}</TableCell>
+                <TableCell className="font-bold">{t(channelLabels[row.channel])}</TableCell>
                 <TableCell>{row.orderCount}</TableCell>
                 <TableCell>{baht(row.grossIncome)}</TableCell>
                 <TableCell>{baht(row.taxAmount)}</TableCell>
@@ -355,6 +364,7 @@ function SyncTab({
   runs: CsvSyncRunResult[]
   setConnections: (connections: CsvSyncConnectionState[]) => void
 }) {
+  const t = useText()
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -396,38 +406,38 @@ function SyncTab({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <PlugZap className="size-5 text-primary" />
-            CSV scheduled sync
+            {t('CSV scheduled sync')}
           </CardTitle>
-          <CardDescription>Connect an HTTPS CSV export URL. Vercel Cron calls `/api/sync/csv` hourly.</CardDescription>
+          <CardDescription>{t('Connect an HTTPS CSV export URL. Vercel Cron calls `/api/sync/csv` hourly.')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="grid gap-3" onSubmit={(event) => void submitConnection(event)}>
-            <Input name="name" placeholder="Connection name" aria-label="Connection name" />
-            <Input name="csvUrl" placeholder="https://..." aria-label="CSV URL" />
+            <Input name="name" placeholder={t('Connection name')} aria-label={t('Connection name')} />
+            <Input name="csvUrl" placeholder="https://..." aria-label={t('CSV URL')} />
             <select
               name="sourceChannel"
               defaultValue="shopee"
-              aria-label="Source channel"
+              aria-label={t('Source channel')}
               className="h-8 rounded-lg border border-input bg-card px-3 text-sm"
             >
               {sourceChannels.map((channel) => (
-                <option key={channel} value={channel}>{channelLabels[channel]}</option>
+                <option key={channel} value={channel}>{t(channelLabels[channel])}</option>
               ))}
             </select>
-            <Button disabled={saving} type="submit">{saving ? 'Testing...' : 'Test and save sync'}</Button>
+            <Button disabled={saving} type="submit">{saving ? t('Testing...') : t('Test and save sync')}</Button>
           </form>
           <p className="mt-3 rounded-lg bg-secondary/45 p-3 text-xs leading-5 text-muted-foreground">
-            Uses the same default CSV headers as manual import, including optional tax_amount, platform_fee_amount, refund_amount, discount_amount, and shipping_amount.
+            {t('Uses the same default CSV headers as manual import, including optional tax_amount, platform_fee_amount, refund_amount, discount_amount, and shipping_amount.')}
           </p>
-          {message ? <p className="mt-3 text-sm font-semibold text-primary">{message}</p> : null}
+          {message ? <p className="mt-3 text-sm font-semibold text-primary">{formatSyncMessage(message, t)}</p> : null}
         </CardContent>
       </Card>
 
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Connections</CardTitle>
-            <CardDescription>Enabled connections run on cron and can be synced manually.</CardDescription>
+            <CardTitle>{t('Connections')}</CardTitle>
+            <CardDescription>{t('Enabled connections run on cron and can be synced manually.')}</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
             {connections.length > 0 ? connections.map((connection) => (
@@ -436,17 +446,17 @@ function SyncTab({
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="font-black">{connection.name}</h3>
-                      <Badge variant={connection.enabled ? 'secondary' : 'outline'}>{connection.enabled ? 'Enabled' : 'Paused'}</Badge>
-                      {connection.lastSyncStatus ? <Badge variant={connection.lastSyncStatus === 'failed' ? 'destructive' : 'outline'}>{connection.lastSyncStatus}</Badge> : null}
+                      <Badge variant={connection.enabled ? 'secondary' : 'outline'}>{connection.enabled ? t('Enabled') : t('Paused')}</Badge>
+                      {connection.lastSyncStatus ? <Badge variant={connection.lastSyncStatus === 'failed' ? 'destructive' : 'outline'}>{t(connection.lastSyncStatus)}</Badge> : null}
                     </div>
-                    <p className="mt-1 text-sm text-muted-foreground">{channelLabels[connection.sourceChannel]} - every {connection.intervalMinutes} minutes</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{t(channelLabels[connection.sourceChannel])} - {t('every')} {connection.intervalMinutes} {t('minutes')}</p>
                     <p className="mt-1 truncate text-xs text-muted-foreground">{connection.csvUrl}</p>
                     {connection.lastSyncError ? <p className="mt-2 text-xs font-semibold text-red-700">{connection.lastSyncError}</p> : null}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" onClick={() => void runNow(connection.id)}>
                       <RefreshCw size={14} />
-                      Sync now
+                      {t('Sync now')}
                     </Button>
                     <Button
                       variant="ghost"
@@ -456,12 +466,12 @@ function SyncTab({
                         setConnections(connections.map((item) => item.id === updated.id ? updated : item))
                       }}
                     >
-                      {connection.enabled ? 'Pause' : 'Enable'}
+                      {connection.enabled ? t('Pause') : t('Enable')}
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      aria-label={`Delete ${connection.name}`}
+                      aria-label={`${t('Delete')} ${connection.name}`}
                       onClick={async () => {
                         await deleteCsvSyncConnection(connection.id)
                         setConnections(connections.filter((item) => item.id !== connection.id))
@@ -473,25 +483,25 @@ function SyncTab({
                 </div>
               </div>
             )) : (
-              <p className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">No CSV sync connections yet.</p>
+              <p className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">{t('No CSV sync connections yet.')}</p>
             )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Recent sync runs</CardTitle>
+            <CardTitle>{t('Recent sync runs')}</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-2">
             {runs.length > 0 ? runs.map((run) => (
               <div key={`${run.connectionId}-${run.startedAt}`} className="rounded-lg border border-border bg-card p-3">
                 <div>
-                  <p className="font-bold capitalize">{run.status}</p>
-                  <p className="text-xs text-muted-foreground">{run.importedRows}/{run.totalRows} imported</p>
+                  <p className="font-bold capitalize">{t(run.status)}</p>
+                  <p className="text-xs text-muted-foreground">{run.importedRows}/{run.totalRows} {t('imported')}</p>
                 </div>
               </div>
             )) : (
-              <p className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">No sync runs yet.</p>
+              <p className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">{t('No sync runs yet.')}</p>
             )}
           </CardContent>
         </Card>
@@ -501,6 +511,7 @@ function SyncTab({
 }
 
 function BreakdownRow({ label, value, tone = 'neutral' }: { label: string; value: number; tone?: 'neutral' | 'repeat' | 'vip' | 'risk' }) {
+  const t = useText()
   const toneClass = {
     neutral: 'bg-card text-foreground',
     repeat: 'bg-emerald-50 text-emerald-900',
@@ -510,7 +521,7 @@ function BreakdownRow({ label, value, tone = 'neutral' }: { label: string; value
 
   return (
     <div className={`flex items-center justify-between rounded-lg border border-border px-3 py-2 ${toneClass}`}>
-      <span className="text-sm font-semibold">{label}</span>
+      <span className="text-sm font-semibold">{t(label)}</span>
       <strong>{baht(value)}</strong>
     </div>
   )
@@ -526,4 +537,14 @@ function baht(value: number) {
     currency: 'THB',
     maximumFractionDigits: 0,
   }).format(value)
+}
+
+function formatSyncMessage(message: string, t: (text: string) => string) {
+  const connectedMatch = /^Connected (\d+) importable rows\. Cron will sync hourly\.$/.exec(message)
+  if (connectedMatch) return `${t('Connected')} ${connectedMatch[1]} ${t('importable rows. Cron will sync hourly.')}`
+
+  const syncMatch = /^Sync (\w+): (\d+)\/(\d+) new rows imported\.$/.exec(message)
+  if (syncMatch) return `${t('Sync')} ${t(syncMatch[1])}: ${syncMatch[2]}/${syncMatch[3]} ${t('new rows imported.')}`
+
+  return t(message)
 }

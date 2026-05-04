@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { AnalyticsClient } from '@/components/analytics/analytics-client'
+import { LocalizedText } from '@/components/localized-text'
 import { AppShell, PageHeader } from '@/components/ui/app-shell'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -22,8 +23,8 @@ function AnalyticsFallback() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Loading analytics</CardTitle>
-        <CardDescription>Preparing retention cohorts and customer opportunities.</CardDescription>
+        <CardTitle><LocalizedText text="Loading analytics" /></CardTitle>
+        <CardDescription><LocalizedText text="Preparing retention cohorts and customer opportunities." /></CardDescription>
       </CardHeader>
     </Card>
   )

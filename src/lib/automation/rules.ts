@@ -3,6 +3,7 @@ import type { CustomerProfile, IntelligenceDataset } from '@/lib/types'
 export type AutomationSignal = {
   type: 'churnAlert' | 'winBack' | 'repeatReminder' | 'vipDetected' | 'revenueAnomaly'
   customerId?: string
+  dedupeKey: string
   title: string
   value: number
   priority: 'high' | 'medium' | 'low'
@@ -23,6 +24,7 @@ function signalsForCustomer(customer: CustomerProfile, today: Date): AutomationS
     signals.push({
       type: 'vipDetected',
       customerId: customer.id,
+      dedupeKey: `customer:${customer.id}:vip:${customer.totalSpent}`,
       title: 'Protect VIP customer',
       value: customer.totalSpent,
       priority: 'high',
@@ -33,6 +35,7 @@ function signalsForCustomer(customer: CustomerProfile, today: Date): AutomationS
     signals.push({
       type: 'repeatReminder',
       customerId: customer.id,
+      dedupeKey: `customer:${customer.id}:repeat-reminder:${customer.lastOrderDate}`,
       title: 'Trigger second purchase reminder',
       value: customer.totalSpent,
       priority: 'medium',
@@ -43,6 +46,7 @@ function signalsForCustomer(customer: CustomerProfile, today: Date): AutomationS
     signals.push({
       type: daysSinceLastOrder >= 90 ? 'winBack' : 'churnAlert',
       customerId: customer.id,
+      dedupeKey: `customer:${customer.id}:${daysSinceLastOrder >= 90 ? 'win-back' : 'churn-alert'}:${customer.lastOrderDate}`,
       title: daysSinceLastOrder >= 90 ? 'Start win-back flow' : 'Customer is approaching churn',
       value: customer.totalSpent,
       priority: 'high',
@@ -62,12 +66,13 @@ function detectRevenueAnomaly(dataset: IntelligenceDataset): AutomationSignal | 
   const months = Array.from(monthlyRevenue.entries()).sort((a, b) => a[0].localeCompare(b[0]))
   if (months.length < 2) return null
 
-  const previous = months.at(-2)![1]
-  const current = months.at(-1)![1]
+  const [previousMonth, previous] = months.at(-2)!
+  const [currentMonth, current] = months.at(-1)!
   if (previous <= 0 || current / previous >= 0.75) return null
 
   return {
     type: 'revenueAnomaly',
+    dedupeKey: `revenue-anomaly:${previousMonth}:${currentMonth}`,
     title: 'Repeat revenue dropped sharply',
     value: previous - current,
     priority: 'high',
