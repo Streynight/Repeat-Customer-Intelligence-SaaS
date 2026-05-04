@@ -100,6 +100,16 @@ export async function createCsvSyncConnection(input: {
     resourceType: 'csv_sync_connection',
     resourceId: connection.id,
   })
+  recordTenantEvent({
+    event: 'csv_sync_connection_created',
+    tenant: context,
+    properties: {
+      connectionId: connection.id,
+      sourceChannel: connection.sourceChannel,
+      intervalMinutes: connection.intervalMinutes,
+      enabled: connection.enabled,
+    },
+  })
 
   return connectionToState(connection)
 }
@@ -126,6 +136,16 @@ export async function updateCsvSyncConnection(input: {
     resourceType: 'csv_sync_connection',
     resourceId: connection.id,
   })
+  recordTenantEvent({
+    event: 'csv_sync_connection_updated',
+    tenant: context,
+    properties: {
+      connectionId: connection.id,
+      enabled: connection.enabled,
+      intervalMinutes: connection.intervalMinutes,
+      updatedFields: Object.keys(input).filter((key) => key !== 'id'),
+    },
+  })
 
   return connectionToState(connection)
 }
@@ -138,6 +158,11 @@ export async function deleteCsvSyncConnection(id: string) {
     action: 'integration.csv_sync.deleted',
     resourceType: 'csv_sync_connection',
     resourceId: id,
+  })
+  recordTenantEvent({
+    event: 'csv_sync_connection_deleted',
+    tenant: context,
+    properties: { connectionId: id },
   })
 }
 

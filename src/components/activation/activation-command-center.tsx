@@ -20,9 +20,13 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { dashboardMetrics } from '@/lib/services/attribution'
-import { buildCustomersHref } from '@/lib/services/customer-filters'
-import { channelLabels, type IntelligenceDataset, type SourceChannel } from '@/lib/types'
+import {
+  activationMigrationSources,
+  buildActivationState,
+  type ActivationStepId,
+  type ActivationStepState,
+} from '@/lib/services/activation'
+import { channelLabels, type IntelligenceDataset } from '@/lib/types'
 import { cn, money, percent } from '@/lib/utils'
 
 type ActivationCommandCenterProps = {
@@ -33,34 +37,13 @@ type ActivationCommandCenterProps = {
   className?: string
 }
 
-type ActivationStep = {
-  id: string
-  title: string
-  detail: string
-  href: string
-  cta: string
-  done: boolean
-  Icon: LucideIcon
+const stepIcons: Record<ActivationStepId, LucideIcon> = {
+  import: FileUp,
+  identity: GitMerge,
+  repeat: Repeat2,
+  winback: CalendarClock,
+  sync: PlugZap,
 }
-
-type NextAction = {
-  title: string
-  detail: string
-  href: string
-  cta: string
-}
-
-const migrationSources: Array<{
-  channel: SourceChannel
-  detail: string
-}> = [
-  { channel: 'shopee', detail: 'Export paid orders with customer name, phone, order date, amount, and product columns.' },
-  { channel: 'tiktok', detail: 'Export recent and historical shop orders so second purchases are visible.' },
-  { channel: 'instagram', detail: 'Upload social order sheets with phone, LINE ID, or email for identity matching.' },
-  { channel: 'facebook', detail: 'Bring page or inbox order logs into one buyer profile instead of scattered chats.' },
-  { channel: 'website', detail: 'Import ecommerce orders to compare owned-channel repeat revenue against marketplaces.' },
-  { channel: 'csv', detail: 'Use any clean CSV as long as order ID, customer, date, and amount are mapped.' },
-]
 
 export function ActivationCommandCenter({
   dataset,
@@ -69,73 +52,9 @@ export function ActivationCommandCenter({
   layout = 'wide',
   className,
 }: ActivationCommandCenterProps) {
-  const metrics = dashboardMetrics(dataset)
-  const hasImport = dataset.imports.length > 0 || dataset.orders.length > 0
-  const contactsWithIdentity = dataset.customers.filter((customer) => customer.email || customer.phone || customer.lineId).length
-  const hasCustomerIdentity = contactsWithIdentity > 0
-  const hasRepeatCustomers = metrics.repeatCustomers > 0
-  const atRiskCustomers = dataset.customers.filter((customer) => customer.customerStatus === 'AtRisk' || customer.customerStatus === 'Lost')
-  const hasWinbackQueue = atRiskCustomers.length > 0
-  const hasSyncSetup = csvSyncConnectionCount > 0
-
-  const steps: ActivationStep[] = [
-    {
-      id: 'import',
-      title: 'Bring historical orders',
-      detail: 'Start with one real export from the channel customers already buy from.',
-      href: '/imports',
-      cta: 'Import CSV',
-      done: hasImport,
-      Icon: FileUp,
-    },
-    {
-      id: 'identity',
-      title: 'Resolve buyer identity',
-      detail: 'Phone, email, LINE ID, and names merge scattered orders into customer profiles.',
-      href: buildCustomersHref(),
-      cta: 'Review buyers',
-      done: hasCustomerIdentity,
-      Icon: GitMerge,
-    },
-    {
-      id: 'repeat',
-      title: 'Find repeat revenue',
-      detail: 'Detect which buyers, products, and channels already create second purchases.',
-      href: buildCustomersHref({ segment: 'repeat', sort: 'repeatRevenue' }),
-      cta: 'Open repeat list',
-      done: hasRepeatCustomers,
-      Icon: Repeat2,
-    },
-    {
-      id: 'winback',
-      title: 'Build the win-back queue',
-      detail: 'Turn stale buyers into a focused follow-up list before they are fully lost.',
-      href: buildCustomersHref({ segment: 'winback', sort: 'lastOrder' }),
-      cta: 'Open queue',
-      done: hasWinbackQueue,
-      Icon: CalendarClock,
-    },
-    {
-      id: 'sync',
-      title: 'Automate recurring sync',
-      detail: 'After the first import works, schedule a CSV sync so reporting stays current.',
-      href: '/income?tab=sync',
-      cta: 'Set sync',
-      done: hasSyncSetup,
-      Icon: PlugZap,
-    },
-  ]
-
-  const completedSteps = steps.filter((step) => step.done).length
-  const progress = Math.round((completedSteps / steps.length) * 100)
+  const activation = buildActivationState(dataset, { csvSyncConnectionCount })
+  const { completedSteps, nextAction, progress, steps } = activation
   const currentStep = steps.find((step) => !step.done) ?? steps[steps.length - 1]
-  const nextAction = getNextAction({
-    hasImport,
-    hasRepeatCustomers,
-    hasWinbackQueue,
-    hasSyncSetup,
-  })
-  const atRiskValue = atRiskCustomers.reduce((sum, customer) => sum + customer.totalSpent, 0)
 
   return (
     <Card className={cn('border-primary/15 bg-card', className)}>
@@ -194,9 +113,9 @@ export function ActivationCommandCenter({
 
         <div className="space-y-4">
           <div className={cn('grid gap-3', layout === 'wide' && 'md:grid-cols-3 xl:grid-cols-1')}>
-            <ActivationStat label="Known buyers" value={metrics.totalCustomers.toLocaleString()} detail={`${contactsWithIdentity.toLocaleString()} with contact identity`} Icon={Users} />
-            <ActivationStat label="Repeat revenue" value={money(metrics.repeatRevenue)} detail={`${metrics.repeatCustomers.toLocaleString()} repeat buyers, ${percent(metrics.repeatRate)} repeat rate`} Icon={Repeat2} />
-            <ActivationStat label="Win-back value" value={money(atRiskValue)} detail={`${atRiskCustomers.length.toLocaleString()} at-risk or lost buyers`} Icon={ShieldCheck} />
+            <ActivationStat label="Known buyers" value={activation.totalCustomers.toLocaleString()} detail={`${activation.contactsWithIdentity.toLocaleString()} with contact identity`} Icon={Users} />
+            <ActivationStat label="Repeat revenue" value={money(activation.repeatRevenue)} detail={`${activation.repeatCustomers.toLocaleString()} repeat buyers, ${percent(activation.repeatRate)} repeat rate`} Icon={Repeat2} />
+            <ActivationStat label="Win-back value" value={money(activation.atRiskValue)} detail={`${activation.atRiskCustomerCount.toLocaleString()} at-risk or lost buyers`} Icon={ShieldCheck} />
           </div>
 
           {!compact ? (
@@ -226,8 +145,8 @@ export function ActivationCommandCenter({
   )
 }
 
-function ActivationStepRow({ step, current }: { step: ActivationStep; current: boolean }) {
-  const Icon = step.Icon
+function ActivationStepRow({ step, current }: { step: ActivationStepState; current: boolean }) {
+  const Icon = stepIcons[step.id]
 
   return (
     <li>
@@ -302,7 +221,7 @@ function MigrationSourceList() {
         </Button>
       </div>
       <div className="mt-4 grid gap-2 md:grid-cols-2">
-        {migrationSources.map((source) => (
+        {activationMigrationSources.map((source) => (
           <Link
             key={source.channel}
             href="/imports"
@@ -320,68 +239,4 @@ function MigrationSourceList() {
       </div>
     </div>
   )
-}
-
-function getNextAction({
-  hasImport,
-  hasRepeatCustomers,
-  hasWinbackQueue,
-  hasSyncSetup,
-}: {
-  hasImport: boolean
-  hasRepeatCustomers: boolean
-  hasWinbackQueue: boolean
-  hasSyncSetup: boolean
-}): NextAction {
-  if (!hasImport) {
-    return {
-      title: 'Import 20-50 real orders first',
-      detail: 'A small real export is enough to prove identity matching, repeat detection, and the first retention view.',
-      href: '/imports',
-      cta: 'Import orders',
-    }
-  }
-
-  if (!hasRepeatCustomers) {
-    return {
-      title: 'Import older history to reveal second purchases',
-      detail: 'Recent orders alone often hide repeat behavior. Add prior months so the system can find second-order paths.',
-      href: '/imports',
-      cta: 'Add history',
-    }
-  }
-
-  if (hasWinbackQueue && hasSyncSetup) {
-    return {
-      title: 'Expand from reporting into operating cadence',
-      detail: 'Review repeat buyers weekly, refresh win-back focus, and keep source-channel repeat paths current.',
-      href: '/analytics',
-      cta: 'Open analytics',
-    }
-  }
-
-  if (hasWinbackQueue) {
-    return {
-      title: 'Open the win-back queue before adding new features',
-      detail: 'The fastest revenue recovery is usually buyers who already trusted the store and stopped buying.',
-      href: buildCustomersHref({ segment: 'winback', sort: 'lastOrder' }),
-      cta: 'Open queue',
-    }
-  }
-
-  if (!hasSyncSetup) {
-    return {
-      title: 'Schedule recurring CSV sync',
-      detail: 'Once the first import is clean, connect a CSV URL so operators do not have to rebuild reports manually.',
-      href: '/income?tab=sync',
-      cta: 'Set sync',
-    }
-  }
-
-  return {
-    title: 'Expand from reporting into operating cadence',
-    detail: 'Review repeat buyers weekly, refresh win-back focus, and keep source-channel repeat paths current.',
-    href: '/analytics',
-    cta: 'Open analytics',
-  }
 }
