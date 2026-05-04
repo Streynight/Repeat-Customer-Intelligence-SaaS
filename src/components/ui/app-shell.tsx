@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { BarChart3, CalendarDays, CircleDollarSign, LineChart, LogOut, Menu, Settings, ShieldCheck, Upload, Users } from 'lucide-react'
+import { BarChart3, BookOpenCheck, CalendarDays, CircleDollarSign, LineChart, LogOut, Menu, Settings, ShieldCheck, Upload, Users } from 'lucide-react'
 import { BrandLogo } from '@/components/brand-logo'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -26,6 +26,7 @@ const navItems = [
   { href: '/calendar', label: 'Calendar', icon: CalendarDays },
   { href: '/imports', label: 'Imports', icon: Upload },
   { href: '/customers', label: 'Customers', icon: Users },
+  { href: '/tutorials', label: 'Tutorials', icon: BookOpenCheck },
   { href: '/settings', label: 'Settings', icon: Settings },
   { href: '/admin', label: 'Admin', icon: ShieldCheck },
 ]

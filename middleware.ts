@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { allowsLocalDemoMode, hasSupabaseRuntimeConfig } from '@/lib/runtime-config'
 
-const protectedPaths = ['/dashboard', '/analytics', '/income', '/calendar', '/imports', '/customers', '/settings', '/admin']
+const protectedPaths = ['/dashboard', '/analytics', '/income', '/calendar', '/imports', '/customers', '/tutorials', '/settings', '/admin']
 
 export async function middleware(request: NextRequest) {
   const hasSupabaseConfig = hasSupabaseRuntimeConfig()
@@ -51,6 +51,7 @@ export const config = {
     '/calendar/:path*',
     '/imports/:path*',
     '/customers/:path*',
+    '/tutorials/:path*',
     '/settings/:path*',
     '/admin/:path*',
   ],

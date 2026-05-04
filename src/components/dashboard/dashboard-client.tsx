@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowUpRight, CalendarDays, LineChart as LineChartIcon, Repeat2, UploadCloud, Users } from 'lucide-react'
+import { ArrowUpRight, BookOpenCheck, CalendarDays, LineChart as LineChartIcon, Repeat2, UploadCloud, Users } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from 'recharts'
 import { ActivationCommandCenter } from '@/components/activation/activation-command-center'
 import { Badge } from '@/components/ui/badge'
@@ -205,6 +205,7 @@ function EmptyDashboard({ dataset }: { dataset: ReturnType<typeof useIntelligenc
             title="Start with your first order import"
             description="This workspace is clean. Upload a CSV to grow customer profiles, repeat revenue, channel paths, and follow-up timing from your own store data."
             action={{ href: '/imports', label: 'Import orders', icon: <UploadCloud size={16} /> }}
+            secondaryAction={{ href: '/tutorials', label: 'Follow tutorial', icon: <BookOpenCheck size={16} /> }}
           />
           <div className="mt-6 grid gap-3 md:grid-cols-3">
             <EmptyStep icon={UploadCloud} title="Import CSV" detail="Bring in orders from Shopee, TikTok Shop, social, website, or custom exports." />
