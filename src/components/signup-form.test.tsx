@@ -75,4 +75,13 @@ describe('SignupForm', () => {
 
     expect(mockSignInWithGoogle).toHaveBeenCalledWith('/dashboard')
   })
+
+  it('keeps checkout redirect when switching to login', () => {
+    render(<SignupForm nextPath="/billing/checkout?plan=growth" />)
+
+    expect(screen.getByRole('link', { name: /sign in/i })).toHaveAttribute(
+      'href',
+      '/login?next=%2Fbilling%2Fcheckout%3Fplan%3Dgrowth',
+    )
+  })
 })

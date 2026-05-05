@@ -43,6 +43,9 @@ export default function Home() {
           <nav className="flex items-center gap-2">
             <LanguageSwitcher className="hidden sm:inline-flex" />
             <Button asChild variant="ghost">
+              <Link href="/pricing">{t('Pricing')}</Link>
+            </Button>
+            <Button asChild variant="ghost">
               <Link href="/login">{t('Login')}</Link>
             </Button>
             <Button asChild>
@@ -74,7 +77,7 @@ export default function Home() {
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <Link href="/login">{t('Sign in')}</Link>
+              <Link href="/pricing">{t('View pricing')}</Link>
             </Button>
           </div>
           <div className="mt-8 grid gap-2 sm:grid-cols-2">

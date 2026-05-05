@@ -16,6 +16,7 @@ import { useText } from '@/lib/i18n'
 
 export function LoginForm({ nextPath = '/dashboard' }: { nextPath?: string }) {
   const t = useText()
+  const signupHref = authHref('/signup', nextPath)
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [sending, setSending] = useState(false)
@@ -134,7 +135,7 @@ export function LoginForm({ nextPath = '/dashboard' }: { nextPath?: string }) {
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           {t('New to RepeatTree?')}{' '}
-          <Link href="/signup" className="font-bold text-primary underline underline-offset-2">
+          <Link href={signupHref} className="font-bold text-primary underline underline-offset-2">
             {t('Create account')}
           </Link>
         </p>
@@ -143,4 +144,8 @@ export function LoginForm({ nextPath = '/dashboard' }: { nextPath?: string }) {
       </div>
     </main>
   )
+}
+
+function authHref(path: '/signup', nextPath: string) {
+  return nextPath === '/dashboard' ? path : `${path}?next=${encodeURIComponent(nextPath)}`
 }

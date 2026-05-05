@@ -16,6 +16,7 @@ import { useText } from '@/lib/i18n'
 
 export function SignupForm({ nextPath = '/dashboard' }: { nextPath?: string }) {
   const t = useText()
+  const loginHref = authHref('/login', nextPath)
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -170,7 +171,7 @@ export function SignupForm({ nextPath = '/dashboard' }: { nextPath?: string }) {
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           {t('Already have an account?')}{' '}
-          <Link href="/login" className="font-bold text-primary underline underline-offset-2">
+          <Link href={loginHref} className="font-bold text-primary underline underline-offset-2">
             {t('Sign in')}
           </Link>
         </p>
@@ -183,4 +184,8 @@ export function SignupForm({ nextPath = '/dashboard' }: { nextPath?: string }) {
       </div>
     </main>
   )
+}
+
+function authHref(path: '/login', nextPath: string) {
+  return nextPath === '/dashboard' ? path : `${path}?next=${encodeURIComponent(nextPath)}`
 }

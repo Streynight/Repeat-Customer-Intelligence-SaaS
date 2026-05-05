@@ -67,6 +67,30 @@ const thaiCopy: Record<string, string> = {
   Login: 'เข้าสู่ระบบ',
   'Open workspace': 'เปิด workspace',
   'Start with real data': 'เริ่มด้วยข้อมูลจริง',
+  Pricing: 'ราคา',
+  'View pricing': 'ดูราคา',
+  'Self-serve pricing': 'ราคาแบบสมัครเอง',
+  'Turn repeat customer data into paid work.': 'เปลี่ยนข้อมูลลูกค้าซื้อซ้ำให้กลายเป็นงานที่ลูกค้ายอมจ่าย',
+  'Customers can choose a plan, create an account, and enter Stripe checkout without a sales call.':
+    'ลูกค้าเลือกแพ็กเกจ สร้างบัญชี และเข้า Stripe checkout ได้เองโดยไม่ต้องคุย sales',
+  'What customers pay for': 'สิ่งที่ลูกค้าจ่ายเงินซื้อ',
+  'See who buys again and which channel keeps value.': 'เห็นว่าใครซื้อซ้ำและช่องทางไหนรักษามูลค่าไว้ได้',
+  'Clean imports': 'นำเข้าไฟล์ให้สะอาด',
+  'Upload marketplace files without rebuilding the sheet first.':
+    'อัปโหลดไฟล์ marketplace โดยไม่ต้องจัดชีตใหม่ก่อน',
+  'Team workflow': 'Workflow ของทีม',
+  'Share projects, tasks, and workspace access with teammates.':
+    'แชร์โปรเจกต์ งาน และสิทธิ์ workspace ให้เพื่อนร่วมทีม',
+  'No forced charge': 'ไม่บังคับชาร์จเงิน',
+  'The checkout route only redirects customers to Stripe. Payment still requires customer consent inside Stripe.':
+    'เส้นทาง checkout แค่พาลูกค้าไป Stripe และการจ่ายเงินยังต้องได้รับการยืนยันจากลูกค้าใน Stripe',
+  'Best default': 'ค่าเริ่มต้นที่เหมาะสุด',
+  'Start checkout': 'เริ่ม checkout',
+  'Team seats': 'ที่นั่งทีม',
+  'Checkout was cancelled. Choose a plan when ready.': 'Checkout ถูกยกเลิก เลือกแพ็กเกจใหม่ได้เมื่อพร้อม',
+  'Choose a valid self-serve plan.': 'เลือกแพ็กเกจ self-serve ที่ถูกต้อง',
+  'Checkout could not start. Try again or use billing settings after signing in.':
+    'เริ่ม checkout ไม่ได้ ลองใหม่หรือใช้หน้า billing หลังเข้าสู่ระบบ',
   'Sign in': 'เข้าสู่ระบบ',
   'Import orders': 'นำเข้าออเดอร์',
   'CSV today, native integrations as each channel is ready.': 'ใช้ CSV ได้ทันที และต่อ native integrations เมื่อแต่ละช่องทางพร้อม',

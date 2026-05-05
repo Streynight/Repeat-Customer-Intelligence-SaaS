@@ -2,8 +2,9 @@
 
 import { prisma } from '@/lib/prisma'
 import { appUrl } from '@/lib/app-url'
+import { createBillingCheckoutForTenant, type BillingCheckoutPlan } from '@/lib/billing/checkout'
 import { estimateOrganizationDatabaseStorage, type DatabaseStorageEstimate } from '@/lib/billing/storage'
-import { orderedPlans, planCatalog, planLimits, stripePriceEnvForPlan, type PlanId } from '@/lib/billing/plans'
+import { orderedPlans, planCatalog, planLimits, type PlanId } from '@/lib/billing/plans'
 import { requireStripe } from '@/lib/platform/stripe'
 import { requireTenantContext, writeAuditLog } from '@/lib/tenancy'
 
@@ -12,7 +13,7 @@ type BillingActionResult = {
   error?: string
 }
 
-export type BillingCheckoutPlan = Exclude<PlanId, 'enterprise'>
+export type { BillingCheckoutPlan } from '@/lib/billing/checkout'
 
 export type BillingPlanView = {
   id: PlanId
@@ -110,55 +111,7 @@ export async function loadBillingOverview(): Promise<BillingOverview> {
 export async function createBillingCheckout(plan: BillingCheckoutPlan): Promise<BillingActionResult> {
   try {
     const context = await requireTenantContext({ permission: 'manageBilling' })
-    const stripe = requireStripe()
-    const priceId = process.env[stripePriceEnvForPlan(plan)]
-    if (!priceId) return { error: `${stripePriceEnvForPlan(plan)} is not configured.` }
-    const limits = planLimits[plan]
-
-    const subscription = await prisma.billingSubscription.upsert({
-      where: { organizationId: context.organizationId },
-      update: {
-        monthlyOrderLimit: limits.monthlyOrders,
-        workspaceLimit: limits.workspaces,
-        databaseStorageMbLimit: limits.databaseStorageMb,
-      },
-      create: {
-        organizationId: context.organizationId,
-        plan,
-        status: 'trialing',
-        monthlyOrderLimit: limits.monthlyOrders,
-        workspaceLimit: limits.workspaces,
-        databaseStorageMbLimit: limits.databaseStorageMb,
-      },
-    })
-    const customerId = subscription.stripeCustomerId ?? await createStripeCustomer(context.organizationId, context.email)
-    if (!subscription.stripeCustomerId) {
-      await prisma.billingSubscription.update({
-        where: { organizationId: context.organizationId },
-        data: { stripeCustomerId: customerId },
-      })
-    }
-
-    const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
-      customer: customerId,
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: appUrl('/settings?billing=success'),
-      cancel_url: appUrl('/settings?billing=cancelled'),
-      metadata: {
-        organizationId: context.organizationId,
-        plan,
-      },
-    })
-
-    await writeAuditLog(context, {
-      action: 'billing.checkout.created',
-      resourceType: 'billing_subscription',
-      resourceId: subscription.id,
-      metadata: { plan },
-    })
-
-    return { url: session.url ?? undefined }
+    return { url: await createBillingCheckoutForTenant(context, plan) }
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'Unable to create billing checkout.' }
   }
@@ -189,14 +142,4 @@ export async function createBillingPortal(): Promise<BillingActionResult> {
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'Unable to create billing portal.' }
   }
-}
-
-async function createStripeCustomer(organizationId: string, email: string) {
-  const stripe = requireStripe()
-  const customer = await stripe.customers.create({
-    email,
-    metadata: { organizationId },
-  })
-
-  return customer.id
 }
