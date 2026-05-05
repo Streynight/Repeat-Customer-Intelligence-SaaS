@@ -5,9 +5,9 @@ export default function ImportsPage() {
   return (
     <AppShell>
       <PageHeader
-        eyebrow="CSV import"
+        eyebrow="Marketplace import"
         title="Import multi-channel orders"
-        description="Upload marketplace and social commerce order exports, map columns, preview rows, and process customers through the identity engine."
+        description="Upload order files from Shopee, TikTok, Lazada, or CSV. RepeatTree cleans and maps the export before analysis."
       />
       <ImportClient />
     </AppShell>

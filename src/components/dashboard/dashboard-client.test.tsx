@@ -61,6 +61,36 @@ describe('DashboardClient', () => {
     expect(screen.getByText('Open deep analytics').closest('a')).toHaveAttribute('href', '/analytics')
     expect(linkByHref('/customers?repeatChannel=tiktok&sort=repeatRevenue')).toBeInTheDocument()
   })
+
+  it('shows newly imported non-repeat orders in the dashboard recent order list', () => {
+    mockDataset = makeDataset([
+      makeCustomer({
+        id: 'new-customer',
+        fullName: 'New Buyer',
+        customerStatus: 'New',
+        totalOrders: 1,
+        totalSpent: 1500,
+        orders: [{
+          ...makeOrder({
+            externalOrderId: 'NEW-ORDER-1',
+            customerNameRaw: 'New Buyer',
+            sourceChannel: 'shopee',
+            totalAmount: 1500,
+            orderDate: '2026-05-05T00:00:00.000Z',
+          }),
+          id: 'new-order-1',
+          customerProfileId: 'new-customer',
+        }],
+      }),
+    ])
+
+    render(<DashboardClient />)
+
+    expect(screen.getByText('Recent Orders')).toBeInTheDocument()
+    expect(screen.getByText('NEW-ORDER-1')).toBeInTheDocument()
+    expect(screen.getByText(/New Buyer -/)).toBeInTheDocument()
+    expect(screen.getByText('New buyer')).toBeInTheDocument()
+  })
 })
 
 function linkByHref(href: string) {

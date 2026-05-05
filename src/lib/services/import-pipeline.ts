@@ -12,6 +12,7 @@ export type ColumnMapping = {
   orderDate: string
   totalAmount: string
   productName: string
+  sku: string
   quantity: string
   unitPrice: string
   taxAmount: string
@@ -31,6 +32,7 @@ export const defaultMapping: ColumnMapping = {
   orderDate: 'order_date',
   totalAmount: 'total_amount',
   productName: 'product_name',
+  sku: 'sku',
   quantity: 'quantity',
   unitPrice: 'unit_price',
   taxAmount: 'tax_amount',
@@ -38,6 +40,14 @@ export const defaultMapping: ColumnMapping = {
   shippingAmount: 'shipping_amount',
   platformFeeAmount: 'platform_fee_amount',
   refundAmount: 'refund_amount',
+}
+
+export type SheetCellValue = string | number | boolean | Date | null
+
+export type ParsedImportRows = {
+  fields: string[]
+  rows: Array<Record<string, string>>
+  errors: string[]
 }
 
 export type ImportDiagnosticIssue = {
@@ -81,7 +91,218 @@ const requiredMappingKeys: Array<keyof ColumnMapping> = [
   'totalAmount',
 ]
 
-export function parseCsv(text: string) {
+const columnAliases: Record<keyof ColumnMapping, string[]> = {
+  externalOrderId: [
+    'order_id',
+    'order id',
+    'order number',
+    'order no',
+    'order sn',
+    'เลขคำสั่งซื้อ',
+    'หมายเลขคำสั่งซื้อ',
+    'หมายเลขออเดอร์',
+    'รหัสคำสั่งซื้อ',
+  ],
+  customerNameRaw: [
+    'customer_name',
+    'customer name',
+    'buyer name',
+    'buyer username',
+    'recipient name',
+    'receiver name',
+    'ship to name',
+    'ชื่อผู้ซื้อ',
+    'ชื่อผู้รับ',
+    'ชื่อลูกค้า',
+  ],
+  emailRaw: [
+    'email',
+    'customer email',
+    'buyer email',
+    'อีเมล',
+  ],
+  phoneRaw: [
+    'phone',
+    'customer_phone',
+    'customer phone',
+    'phone number',
+    'buyer phone',
+    'recipient phone',
+    'receiver phone',
+    'เบอร์โทร',
+    'เบอร์โทรศัพท์',
+    'หมายเลขโทรศัพท์',
+    'โทรศัพท์ผู้รับ',
+  ],
+  lineIdRaw: [
+    'line_id',
+    'line id',
+    'line',
+    'line account',
+    'ไลน์',
+    'ไลน์ไอดี',
+  ],
+  provinceRaw: [
+    'province',
+    'state',
+    'recipient province',
+    'shipping province',
+    'จังหวัด',
+    'จังหวัดผู้รับ',
+  ],
+  orderDate: [
+    'order_date',
+    'order date',
+    'created time',
+    'create time',
+    'paid time',
+    'payment time',
+    'order creation date',
+    'วันที่สั่งซื้อ',
+    'วันที่สร้างคำสั่งซื้อ',
+    'เวลาสร้างคำสั่งซื้อ',
+    'วันที่ชำระเงิน',
+  ],
+  totalAmount: [
+    'total_amount',
+    'total amount',
+    'total',
+    'order total',
+    'grand total',
+    'total paid',
+    'paid amount',
+    'final amount',
+    'net sales',
+    'ยอดรวม',
+    'ยอดคำสั่งซื้อ',
+    'ยอดชำระ',
+    'ยอดสุทธิ',
+    'ราคาสุทธิ',
+  ],
+  productName: [
+    'product_name',
+    'product name',
+    'item name',
+    'sku name',
+    'product',
+    'item',
+    'ชื่อสินค้า',
+    'ชื่อ sku',
+    'ชื่อรายการสินค้า',
+  ],
+  sku: [
+    'sku',
+    'seller sku',
+    'sku id',
+    'variation sku',
+    'merchant sku',
+    'platform sku',
+    'รหัส sku',
+    'รหัสสินค้า',
+    'เลข sku',
+  ],
+  quantity: [
+    'quantity',
+    'qty',
+    'item quantity',
+    'จำนวน',
+    'จำนวนสินค้า',
+  ],
+  unitPrice: [
+    'unit_price',
+    'unit price',
+    'price',
+    'item price',
+    'sku unit original price',
+    'original price',
+    'ราคาต่อหน่วย',
+    'ราคาสินค้า',
+  ],
+  taxAmount: [
+    'tax_amount',
+    'tax amount',
+    'vat',
+    'vat amount',
+    'ภาษี',
+    'ภาษีมูลค่าเพิ่ม',
+  ],
+  discountAmount: [
+    'discount_amount',
+    'discount amount',
+    'seller discount',
+    'voucher',
+    'voucher amount',
+    'ส่วนลด',
+    'ส่วนลดร้านค้า',
+  ],
+  shippingAmount: [
+    'shipping_amount',
+    'shipping amount',
+    'shipping fee',
+    'delivery fee',
+    'ค่าส่ง',
+    'ค่าจัดส่ง',
+  ],
+  platformFeeAmount: [
+    'platform_fee_amount',
+    'platform fee',
+    'commission fee',
+    'transaction fee',
+    'service fee',
+    'ค่าธรรมเนียม',
+    'ค่าธรรมเนียมแพลตฟอร์ม',
+  ],
+  refundAmount: [
+    'refund_amount',
+    'refund amount',
+    'refund',
+    'returned amount',
+    'ยอดคืนเงิน',
+    'คืนเงิน',
+  ],
+}
+
+const platformColumnAliases: Partial<Record<SourceChannel, Partial<Record<keyof ColumnMapping, string[]>>>> = {
+  shopee: {
+    externalOrderId: ['order sn'],
+    customerNameRaw: ['buyer username', 'recipient name'],
+    phoneRaw: ['recipient phone', 'phone number'],
+    orderDate: ['order creation date', 'paid time'],
+    totalAmount: ['order total', 'total paid'],
+    productName: ['item name', 'product name'],
+    sku: ['variation sku', 'seller sku'],
+    unitPrice: ['sku unit original price'],
+    shippingAmount: ['shipping fee paid by buyer', 'shipping fee'],
+    discountAmount: ['seller voucher', 'seller discount'],
+    platformFeeAmount: ['transaction fee', 'commission fee'],
+  },
+  tiktok: {
+    externalOrderId: ['order id'],
+    customerNameRaw: ['buyer username', 'recipient', 'recipient name'],
+    phoneRaw: ['phone #', 'phone number'],
+    orderDate: ['created time', 'paid time'],
+    totalAmount: ['seller receivable amount', 'order amount', 'total amount'],
+    productName: ['product name', 'sku name'],
+    sku: ['seller sku', 'sku id'],
+    unitPrice: ['sku unit price', 'unit price'],
+    discountAmount: ['seller discount', 'platform discount', 'shop discount'],
+    platformFeeAmount: ['commission fee', 'transaction fee', 'platform fee'],
+  },
+  lazada: {
+    externalOrderId: ['order number', 'order item id'],
+    customerNameRaw: ['buyer name', 'customer name'],
+    phoneRaw: ['buyer phone', 'phone number'],
+    provinceRaw: ['shipping province', 'province'],
+    orderDate: ['created at', 'paid at', 'order creation date'],
+    totalAmount: ['paid price', 'item price', 'order amount'],
+    productName: ['product name', 'item name'],
+    sku: ['seller sku', 'shop sku', 'sku'],
+    shippingAmount: ['shipping fee', 'shipping amount'],
+    platformFeeAmount: ['commission amount', 'payment fee'],
+  },
+}
+
+export function parseCsv(text: string): ParsedImportRows {
   const parsed = Papa.parse<Record<string, string>>(text, {
     header: true,
     skipEmptyLines: true,
@@ -93,6 +314,39 @@ export function parseCsv(text: string) {
     fields: parsed.meta.fields ?? [],
     errors: parsed.errors.map((error) => error.message),
   }
+}
+
+export function sheetRowsToRecords(sheetRows: SheetCellValue[][]): ParsedImportRows {
+  const headerIndex = findHeaderRowIndex(sheetRows)
+  if (headerIndex === -1) {
+    return {
+      fields: [],
+      rows: [],
+      errors: ['No header row found in the spreadsheet.'],
+    }
+  }
+
+  const fields = uniqueHeaders(sheetRows[headerIndex])
+  const rows = sheetRows
+    .slice(headerIndex + 1)
+    .filter((row) => row.some((cell) => cellToString(cell)))
+    .map((row) => {
+      return fields.reduce<Record<string, string>>((record, field, index) => {
+        record[field] = cellToString(row[index])
+        return record
+      }, {})
+    })
+
+  return { fields, rows, errors: [] }
+}
+
+export function detectColumnMapping(fields: string[], sourceChannel?: SourceChannel): ColumnMapping {
+  return (Object.keys(defaultMapping) as Array<keyof ColumnMapping>).reduce<ColumnMapping>((mapping, key) => {
+    const platformAliases = sourceChannel ? platformColumnAliases[sourceChannel]?.[key] ?? [] : []
+    const match = findMatchingField(fields, [...platformAliases, ...columnAliases[key]])
+    mapping[key] = match ?? ''
+    return mapping
+  }, { ...defaultMapping })
 }
 
 export function rowsToOrders(
@@ -129,6 +383,7 @@ export function rowsToOrders(
         items: [
           {
             productName: row[mapping.productName] || 'Imported product',
+            sku: emptyToUndefined(row[mapping.sku]),
             quantity: Number.isFinite(quantity) ? quantity : 1,
             unitPrice: Number.isFinite(unitPrice) ? unitPrice : 0,
           },
@@ -144,7 +399,7 @@ export function analyzeImportRows(
   mapping: ColumnMapping,
   dataset: IntelligenceDataset,
 ): ImportDiagnostics {
-  const missingRequiredMappings = requiredMappingKeys.filter((key) => !mapping[key])
+  const missingRequiredMappings = requiredMappingKeys.filter((key) => !mapping[key] || !fieldExistsInRows(rows, mapping[key]))
   const issues: ImportDiagnosticIssue[] = []
   const likelyMerges: LikelyMerge[] = []
   const seenOrderIds = new Set<string>()
@@ -327,7 +582,7 @@ export function processOrders(
 }
 
 function cleanMoney(value?: string) {
-  return (value ?? '').replace(/[$,฿]/g, '').trim()
+  return (value ?? '').replace(/[$,฿,]/g, '').trim()
 }
 
 function optionalMoney(value?: string) {
@@ -349,4 +604,78 @@ function emptyToUndefined(value?: string) {
 function normalizeDate(value?: string) {
   const date = value ? new Date(value) : new Date()
   return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString()
+}
+
+function findHeaderRowIndex(rows: SheetCellValue[][]) {
+  let bestIndex = -1
+  let bestScore = 0
+
+  rows.forEach((row, index) => {
+    const nonEmptyCells = row.filter((cell) => cellToString(cell)).length
+    if (nonEmptyCells < 2) return
+
+    const score = row.reduce<number>((sum, cell) => sum + headerAliasScore(cellToString(cell)), 0)
+    if (score > bestScore) {
+      bestScore = score
+      bestIndex = index
+    }
+  })
+
+  if (bestIndex !== -1 && bestScore >= 2) return bestIndex
+
+  return rows.findIndex((row) => row.filter((cell) => cellToString(cell)).length >= 2)
+}
+
+function uniqueHeaders(row: SheetCellValue[]) {
+  const seen = new Map<string, number>()
+
+  return row.map((cell, index) => {
+    const base = cellToString(cell) || `column_${index + 1}`
+    const count = seen.get(base) ?? 0
+    seen.set(base, count + 1)
+    return count === 0 ? base : `${base}_${count + 1}`
+  })
+}
+
+function cellToString(value: SheetCellValue | undefined) {
+  if (value === undefined || value === null) return ''
+  if (value instanceof Date) return value.toISOString()
+  return String(value).trim()
+}
+
+function findMatchingField(fields: string[], aliases: string[]) {
+  const normalizedAliases = aliases.flatMap((alias) => normalizedColumnKeys(alias))
+
+  return fields.find((field) => {
+    const normalizedField = normalizedColumnKeys(field)
+    return normalizedAliases.some((alias) => {
+      return normalizedField.some((fieldKey) => fieldKey.includes(alias) || alias.includes(fieldKey))
+    })
+  })
+}
+
+function headerAliasScore(value: string) {
+  if (!value) return 0
+  const keys = normalizedColumnKeys(value)
+
+  return Object.values(columnAliases).some((aliases) => {
+    const normalizedAliases = aliases.flatMap((alias) => normalizedColumnKeys(alias))
+    return normalizedAliases.some((alias) => {
+      return keys.some((key) => key.includes(alias) || alias.includes(key))
+    })
+  }) ? 1 : 0
+}
+
+function normalizedColumnKeys(value: string) {
+  const clean = value
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim()
+  const compact = clean.replace(/[^\p{L}\p{N}]+/gu, '')
+
+  return clean === compact ? [clean] : [clean, compact]
+}
+
+function fieldExistsInRows(rows: Array<Record<string, string>>, field: string) {
+  return rows.length === 0 || rows.some((row) => Object.prototype.hasOwnProperty.call(row, field))
 }

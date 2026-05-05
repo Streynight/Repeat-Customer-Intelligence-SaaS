@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { analyzeImportRows, defaultMapping, rowsToOrders } from '@/lib/services/import-pipeline'
+import { analyzeImportRows, defaultMapping, detectColumnMapping, rowsToOrders, sheetRowsToRecords } from '@/lib/services/import-pipeline'
 import { csvRow, makeCustomer, makeDataset } from '@/test/fixtures'
 
 describe('analyzeImportRows', () => {
@@ -93,6 +93,77 @@ describe('analyzeImportRows', () => {
       shippingAmount: 40,
       platformFeeAmount: 30,
       refundAmount: 10,
+    })
+  })
+
+  it('converts marketplace spreadsheet rows and auto-maps mixed headers', () => {
+    const parsed = sheetRowsToRecords([
+      ['Shopee export report', null, null],
+      ['Order SN', 'Buyer Name', 'Recipient Phone', 'Created Time', 'Order Total', 'Item Name', 'Seller SKU', 'Qty'],
+      ['SHP-1', 'Mali Wong', '0812345001', new Date('2026-05-01T00:00:00.000Z'), 1290, 'Serum', 'SERUM-001', 1],
+    ])
+    const mapping = detectColumnMapping(parsed.fields, 'shopee')
+    const [order] = rowsToOrders(parsed.rows, 'shopee', mapping)
+
+    expect(parsed.errors).toEqual([])
+    expect(mapping).toMatchObject({
+      externalOrderId: 'Order SN',
+      customerNameRaw: 'Buyer Name',
+      phoneRaw: 'Recipient Phone',
+      orderDate: 'Created Time',
+      totalAmount: 'Order Total',
+      productName: 'Item Name',
+      sku: 'Seller SKU',
+      quantity: 'Qty',
+    })
+    expect(order).toMatchObject({
+      externalOrderId: 'SHP-1',
+      customerNameRaw: 'Mali Wong',
+      phoneRaw: '0812345001',
+      totalAmount: 1290,
+      sourceChannel: 'shopee',
+    })
+    expect(order.items[0]).toMatchObject({
+      productName: 'Serum',
+      sku: 'SERUM-001',
+    })
+  })
+
+  it('auto-maps Thai marketplace headers', () => {
+    const fields = ['หมายเลขคำสั่งซื้อ', 'ชื่อผู้ซื้อ', 'เบอร์โทรศัพท์', 'วันที่สั่งซื้อ', 'ยอดชำระ', 'ชื่อสินค้า', 'รหัสสินค้า', 'จำนวน']
+    const mapping = detectColumnMapping(fields)
+
+    expect(mapping).toMatchObject({
+      externalOrderId: 'หมายเลขคำสั่งซื้อ',
+      customerNameRaw: 'ชื่อผู้ซื้อ',
+      phoneRaw: 'เบอร์โทรศัพท์',
+      orderDate: 'วันที่สั่งซื้อ',
+      totalAmount: 'ยอดชำระ',
+      productName: 'ชื่อสินค้า',
+      sku: 'รหัสสินค้า',
+      quantity: 'จำนวน',
+    })
+  })
+
+  it('uses marketplace presets for platform-specific column names', () => {
+    const mapping = detectColumnMapping([
+      'Order Number',
+      'Buyer Name',
+      'Buyer Phone',
+      'Created At',
+      'Paid Price',
+      'Product Name',
+      'Shop SKU',
+    ], 'lazada')
+
+    expect(mapping).toMatchObject({
+      externalOrderId: 'Order Number',
+      customerNameRaw: 'Buyer Name',
+      phoneRaw: 'Buyer Phone',
+      orderDate: 'Created At',
+      totalAmount: 'Paid Price',
+      productName: 'Product Name',
+      sku: 'Shop SKU',
     })
   })
 })

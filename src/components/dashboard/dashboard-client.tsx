@@ -47,8 +47,8 @@ export function DashboardClient() {
   const atRiskCustomers = dataset.customers
     .filter((customer) => customer.customerStatus === 'AtRisk' || customer.customerStatus === 'Lost')
     .slice(0, 6)
-  const recentRepeatOrders = dataset.orders
-    .filter((order) => (dataset.customers.find((customer) => customer.id === order.customerProfileId)?.totalOrders ?? 0) >= 2)
+  const customerById = new Map(dataset.customers.map((customer) => [customer.id, customer]))
+  const recentOrders = [...dataset.orders]
     .sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime())
     .slice(0, 6)
 
@@ -86,7 +86,7 @@ export function DashboardClient() {
       <div className="grid gap-3 lg:grid-cols-4">
         <ActionLink href={buildCustomersHref({ segment: 'repeat', sort: 'repeatRevenue' })} title="Review repeat buyers" detail="Open the buyers driving repeated orders." />
         <ActionLink href={buildCustomersHref({ segment: 'winback', sort: 'lastOrder' })} title="Win back stale buyers" detail="Focus At Risk and Lost profiles first." />
-        <ActionLink href="/imports" title="Import latest orders" detail="Refresh the dashboard with a new CSV." />
+        <ActionLink href="/imports" title="Import latest orders" detail="Refresh the dashboard with a marketplace order file." />
         <ActionLink href="/analytics" title="Open deep analytics" detail="Cohorts, RFM, product repeat, and opportunities." />
       </div>
 
@@ -159,23 +159,34 @@ export function DashboardClient() {
         <CustomerMiniTable title="At Risk Customers" customers={atRiskCustomers} tone="risk" />
         <Card>
           <CardHeader>
-            <CardTitle>{t('Recent Repeat Orders')}</CardTitle>
-            <CardDescription>{t('Fresh repeat activity worth noticing.')}</CardDescription>
+            <CardTitle>{t('Recent Orders')}</CardTitle>
+            <CardDescription>{t('Latest imported orders visible on the dashboard.')}</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
-            {recentRepeatOrders.map((order) => (
-              <Link
-                key={order.id}
-                href={`/customers/${order.customerProfileId}`}
-                className="tree-tactile group rounded-lg border border-emerald-200/70 bg-emerald-50/55 p-3 hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45"
-              >
-                <p className="text-sm font-bold">{t(channelLabels[order.sourceChannel])}</p>
-                <p className="text-xs text-muted-foreground">{order.customerNameRaw} - {money(order.totalAmount)}</p>
-              </Link>
-            ))}
-            {recentRepeatOrders.length === 0 ? (
+            {recentOrders.map((order) => {
+              const customer = customerById.get(order.customerProfileId)
+              const isRepeatBuyer = (customer?.totalOrders ?? 0) >= 2
+
+              return (
+                <Link
+                  key={order.id}
+                  href={`/customers/${order.customerProfileId}`}
+                  className="tree-tactile group rounded-lg border border-border bg-secondary/35 p-3 hover:bg-secondary/55 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-bold">{order.externalOrderId || order.id}</p>
+                      <p className="text-xs text-muted-foreground">{order.customerNameRaw} - {money(order.totalAmount)}</p>
+                    </div>
+                    <Badge variant="secondary">{t(isRepeatBuyer ? 'Repeat buyer' : 'New buyer')}</Badge>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">{t(channelLabels[order.sourceChannel])} - {order.orderDate.slice(0, 10)}</p>
+                </Link>
+              )
+            })}
+            {recentOrders.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
-                {t('No repeat orders yet. Import more orders to spot fresh repeat activity.')}
+                {t('No orders yet. Import an order file to show recent order activity here.')}
               </p>
             ) : null}
           </CardContent>

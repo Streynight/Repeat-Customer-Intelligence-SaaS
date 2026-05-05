@@ -9,7 +9,7 @@ import type { IntelligenceDataset, OrderInput, SourceChannel } from '@/lib/types
 
 const maxServerActionImportRows = 5000
 const maxOrderItemsPerOrder = 100
-const sourceChannels = new Set<SourceChannel>(['shopee', 'tiktok', 'instagram', 'facebook', 'website', 'csv'])
+const sourceChannels = new Set<SourceChannel>(['shopee', 'tiktok', 'lazada', 'instagram', 'facebook', 'website', 'csv'])
 
 export type ImportOrdersCommand = {
   orders: OrderInput[]
@@ -123,6 +123,7 @@ function normalizeOrderInput(
 
   const items = Array.isArray(order.items)
     ? order.items.slice(0, maxOrderItemsPerOrder).map((item) => ({
+      sku: cleanOptionalText(item.sku, 120),
       productName: cleanText(item.productName, 'Imported product', 240),
       quantity: finitePositiveNumber(item.quantity) ?? 1,
       unitPrice: finiteNumber(item.unitPrice) ?? totalAmount,
@@ -147,6 +148,7 @@ function normalizeOrderInput(
     taxRate: finiteNumber(order.taxRate),
     taxIncluded: typeof order.taxIncluded === 'boolean' ? order.taxIncluded : undefined,
     items: items.length > 0 ? items : [{
+      sku: undefined,
       productName: 'Imported product',
       quantity: 1,
       unitPrice: totalAmount,

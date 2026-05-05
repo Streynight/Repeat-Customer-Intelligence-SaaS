@@ -5,6 +5,7 @@ import { clearCurrentDataset, ensureUserStore, importCurrentOrders, loadCurrentD
 import { requireClearWorkspaceConfirmation } from '@/lib/data-safety'
 import { createEmptyDataset, defaultVipThreshold } from '@/lib/empty-dataset'
 import { allowsLocalDemoMode, hasSupabaseRuntimeConfig } from '@/lib/runtime-config'
+import { classifyCustomer } from '@/lib/services/classification'
 import { processOrders } from '@/lib/services/import-pipeline'
 import type { IntelligenceDataset, OrderInput, SourceChannel } from '@/lib/types'
 
@@ -20,6 +21,8 @@ type DatasetSessionState = {
   loading: boolean
   localFallback: boolean
 }
+
+export type DatasetSource = 'production' | 'local-demo' | 'disconnected'
 
 const subscribers = new Set<(state: DatasetSessionState) => void>()
 
@@ -47,6 +50,7 @@ export function useIntelligenceDataset() {
     () => ({
       dataset: state.dataset,
       loading: state.loading,
+      dataSource: dataSourceForState(state),
       importOrders: async (orders: OrderInput[], fileName: string, sourceChannel: SourceChannel) => {
         const current = currentState()
         if (!current.storeId && !current.localFallback) {
@@ -71,6 +75,7 @@ export function useIntelligenceDataset() {
             }))
           } catch (error) {
             console.error('Failed to persist production dataset. Keeping database as source of truth.', error)
+            throw error
           }
           return
         }
@@ -101,16 +106,17 @@ export function useIntelligenceDataset() {
         throw new Error('No workspace data source is connected.')
       },
       updateVipThreshold: (vipThreshold: number) => {
+        const normalizedVipThreshold = normalizeVipThreshold(vipThreshold)
         if (typeof window !== 'undefined' && canUseLocalDemo) {
-          window.localStorage.setItem(vipStorageKey, String(vipThreshold))
+          window.localStorage.setItem(vipStorageKey, String(normalizedVipThreshold))
         }
         updateSessionState((current) => ({
           ...current,
-          dataset: { ...current.dataset, vipThreshold },
+          dataset: reclassifyDatasetForVipThreshold(current.dataset, normalizedVipThreshold),
         }))
       },
     }),
-    [state.dataset, state.loading],
+    [state],
   )
 }
 
@@ -139,6 +145,31 @@ function currentState() {
 function updateSessionState(updater: (current: DatasetSessionState) => DatasetSessionState) {
   sessionState = updater(currentState())
   subscribers.forEach((listener) => listener(sessionState!))
+}
+
+function dataSourceForState(state: DatasetSessionState): DatasetSource {
+  if (state.storeId) return 'production'
+  if (state.localFallback) return 'local-demo'
+  return 'disconnected'
+}
+
+function normalizeVipThreshold(vipThreshold: number) {
+  if (!Number.isFinite(vipThreshold) || vipThreshold < 0) {
+    throw new Error('VIP threshold must be zero or greater.')
+  }
+
+  return vipThreshold
+}
+
+function reclassifyDatasetForVipThreshold(dataset: IntelligenceDataset, vipThreshold: number): IntelligenceDataset {
+  return {
+    ...dataset,
+    vipThreshold,
+    customers: dataset.customers.map((customer) => ({
+      ...customer,
+      customerStatus: classifyCustomer(customer, vipThreshold),
+    })),
+  }
 }
 
 function ensureRemoteDatasetStarted() {
