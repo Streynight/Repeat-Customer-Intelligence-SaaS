@@ -1,6 +1,7 @@
 'use server'
 
 import { redirect } from 'next/navigation'
+import { setActiveOrganizationId } from '@/lib/active-organization'
 import { prisma } from '@/lib/prisma'
 import { type MembershipRole } from '@/lib/rbac'
 import { ensureAuthUserProfile } from '@/lib/server/auth-profile'
@@ -59,16 +60,17 @@ export async function acceptTeamInvitation(token: string) {
     throw new Error('Invitation not found.')
   }
 
+  if (invitation.email !== email) {
+    throw new Error(`This invitation was sent to ${invitation.email}. Sign in with that email to accept it.`)
+  }
+
   if (invitation.acceptedAt) {
+    await setActiveOrganizationId(invitation.organizationId)
     redirect('/dashboard')
   }
 
   if (invitation.expiresAt.getTime() < Date.now()) {
     throw new Error('This invitation has expired.')
-  }
-
-  if (invitation.email !== email) {
-    throw new Error(`This invitation was sent to ${invitation.email}. Sign in with that email to accept it.`)
   }
 
   await ensureAuthUserProfile(authUser.id, email)
@@ -113,6 +115,7 @@ export async function acceptTeamInvitation(token: string) {
     })
   })
 
+  await setActiveOrganizationId(invitation.organizationId)
   redirect('/dashboard')
 }
 

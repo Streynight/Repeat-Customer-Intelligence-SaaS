@@ -1,5 +1,6 @@
 import { headers } from 'next/headers'
 import type { Prisma } from '@/generated/prisma/client'
+import { getActiveOrganizationId } from '@/lib/active-organization'
 import { prisma } from '@/lib/prisma'
 import { hasPermission, permissionsForRole, type MembershipRole, type Permission } from '@/lib/rbac'
 import { ensureAuthUserProfile } from '@/lib/server/auth-profile'
@@ -42,21 +43,8 @@ export async function getTenantContext(): Promise<TenantContext | null> {
 
   await ensureAuthUserProfile(authUser.id, email)
 
-  const membership = await prisma.membership.findFirst({
-    where: { userId: authUser.id },
-    orderBy: { createdAt: 'asc' },
-    include: {
-      organization: {
-        include: {
-          workspaces: {
-            orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
-            take: 1,
-            include: { stores: { orderBy: { createdAt: 'asc' }, take: 1 } },
-          },
-        },
-      },
-    },
-  })
+  const activeOrganizationId = await getActiveOrganizationId()
+  const membership = await findTenantMembership(authUser.id, activeOrganizationId)
 
   if (membership) {
     const workspace = membership.organization.workspaces[0] ?? await createWorkspaceForOrganization(membership.organizationId)
@@ -173,8 +161,39 @@ async function createDefaultTenant(userId: string, email: string): Promise<Tenan
     resourceType: 'organization',
     resourceId: organization.id,
   })
-
   return context
+}
+
+async function findTenantMembership(userId: string, activeOrganizationId: string | null) {
+  const include = {
+    organization: {
+      include: {
+        workspaces: {
+          orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
+          take: 1,
+          include: { stores: { orderBy: { createdAt: 'asc' }, take: 1 } },
+        },
+      },
+    },
+  } satisfies Prisma.MembershipInclude
+
+  if (activeOrganizationId) {
+    const activeMembership = await prisma.membership.findFirst({
+      where: {
+        userId,
+        organizationId: activeOrganizationId,
+      },
+      include,
+    })
+
+    if (activeMembership) return activeMembership
+  }
+
+  return prisma.membership.findFirst({
+    where: { userId },
+    orderBy: { createdAt: 'asc' },
+    include,
+  })
 }
 
 async function createWorkspaceForOrganization(organizationId: string) {

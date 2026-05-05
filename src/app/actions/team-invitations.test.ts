@@ -23,6 +23,7 @@ const prismaMock = vi.hoisted(() => ({
 
 const getUserMock = vi.hoisted(() => vi.fn())
 const ensureAuthUserProfileMock = vi.hoisted(() => vi.fn())
+const setActiveOrganizationIdMock = vi.hoisted(() => vi.fn())
 const redirectMock = vi.hoisted(() => vi.fn((url: string) => {
   throw new Error(`redirect:${url}`)
 }))
@@ -43,6 +44,10 @@ vi.mock('@/lib/server/auth-profile', () => ({
   ensureAuthUserProfile: ensureAuthUserProfileMock,
 }))
 
+vi.mock('@/lib/active-organization', () => ({
+  setActiveOrganizationId: setActiveOrganizationIdMock,
+}))
+
 vi.mock('@/lib/team-invitations', () => ({
   hashInvitationToken: vi.fn((token: string) => `hash-${token}`),
 }))
@@ -56,6 +61,7 @@ describe('team invitation acceptance', () => {
     vi.clearAllMocks()
     getUserMock.mockResolvedValue({ data: { user: { id: 'user-2', email: 'teammate@store.com' } } })
     ensureAuthUserProfileMock.mockResolvedValue({ id: 'user-2' })
+    setActiveOrganizationIdMock.mockResolvedValue(undefined)
     txMock.membership.findFirst.mockResolvedValue(null)
     txMock.membership.create.mockResolvedValue({ id: 'membership-2' })
     txMock.invitation.update.mockResolvedValue({ id: 'invitation-1' })
@@ -109,6 +115,7 @@ describe('team invitation acceptance', () => {
       where: { id: 'invitation-1' },
       data: { acceptedAt: expect.any(Date) },
     })
+    expect(setActiveOrganizationIdMock).toHaveBeenCalledWith('org-1')
   })
 
   it('blocks acceptance from a different signed-in email', async () => {
