@@ -30,6 +30,7 @@ describe('LoginForm', () => {
 
     expect(mockSignInWithPassword).toHaveBeenCalledWith({
       identifier: 'owner@store.com',
+      nextPath: '/dashboard',
       password: 'secret123',
     })
   })
@@ -44,6 +45,7 @@ describe('LoginForm', () => {
 
     expect(mockSignInWithPassword).toHaveBeenCalledWith({
       identifier: 'store_owner',
+      nextPath: '/dashboard',
       password: 'secret123',
     })
   })
@@ -66,6 +68,6 @@ describe('LoginForm', () => {
 
     await user.click(screen.getByRole('button', { name: /continue with google/i }))
 
-    expect(mockSignInWithGoogle).toHaveBeenCalledTimes(1)
+    expect(mockSignInWithGoogle).toHaveBeenCalledWith('/dashboard')
   })
 })

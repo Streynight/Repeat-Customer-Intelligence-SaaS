@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { useText } from '@/lib/i18n'
 
-export function LoginForm() {
+export function LoginForm({ nextPath = '/dashboard' }: { nextPath?: string }) {
   const t = useText()
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
@@ -29,7 +29,7 @@ export function LoginForm() {
     setSending(true)
     setError('')
 
-    const result = await signInWithPassword({ identifier, password })
+    const result = await signInWithPassword({ identifier, password, nextPath })
 
     setSending(false)
     if (result?.error) setError(result.error)
@@ -37,7 +37,7 @@ export function LoginForm() {
 
   const continueWithGoogle = async () => {
     setConnectingGoogle(true)
-    await signInWithGoogle()
+    await signInWithGoogle(nextPath)
   }
 
   return (

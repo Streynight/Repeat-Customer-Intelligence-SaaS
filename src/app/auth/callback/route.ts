@@ -1,11 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { safeAuthRedirectPath } from '@/lib/auth-redirect'
 import { createClient } from '@/lib/supabase/server'
 import { ensureAuthUserProfile } from '@/lib/server/auth-profile'
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
-  const next = requestUrl.searchParams.get('next') || '/dashboard'
+  const next = safeAuthRedirectPath(requestUrl.searchParams.get('next'))
 
   if (code) {
     const supabase = await createClient()

@@ -63,6 +63,7 @@ describe('SignupForm', () => {
       username: 'store_owner',
       email: 'owner@store.com',
       password: 'secret123',
+      nextPath: '/dashboard',
     })
   })
 
@@ -72,6 +73,6 @@ describe('SignupForm', () => {
 
     await user.click(screen.getByRole('button', { name: /continue with google/i }))
 
-    expect(mockSignInWithGoogle).toHaveBeenCalledTimes(1)
+    expect(mockSignInWithGoogle).toHaveBeenCalledWith('/dashboard')
   })
 })

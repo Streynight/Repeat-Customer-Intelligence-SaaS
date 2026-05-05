@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation'
 import { appUrl } from '@/lib/app-url'
+import { safeAuthRedirectPath } from '@/lib/auth-redirect'
 import { normalizeUsername, validateUsername } from '@/lib/auth-users'
 import { databaseUnavailableMessage, normalizeDatabaseError } from '@/lib/database-errors'
 import { prisma } from '@/lib/prisma'
@@ -42,10 +43,12 @@ export async function signUpWithPassword({
   username: rawUsername,
   email: rawEmail,
   password,
+  nextPath,
 }: {
   username: string
   email: string
   password: string
+  nextPath?: string
 }): Promise<AuthResult> {
   if (!hasSupabaseConfig()) {
     return { error: 'Authentication is not configured for this environment.' }
@@ -57,6 +60,7 @@ export async function signUpWithPassword({
   if (usernameError) return { error: usernameError }
   if (!email || !email.includes('@')) return { error: 'Please enter a valid email address.' }
   if (password.length < 6) return { error: 'Password must be at least 6 characters.' }
+  const redirectPath = safeAuthRedirectPath(nextPath)
 
   const usernameLookup = await safeAuthRead(() => prisma.user.findUnique({ where: { username } }))
   if (usernameLookup.error) return { error: usernameLookup.error }
@@ -66,7 +70,7 @@ export async function signUpWithPassword({
   const supabase = await createClient()
   let emailRedirectTo: string
   try {
-    emailRedirectTo = appUrl('/auth/callback?next=/dashboard')
+    emailRedirectTo = appUrl(`/auth/callback?next=${encodeURIComponent(redirectPath)}`)
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'Application URL is not configured.' }
   }
@@ -98,15 +102,17 @@ export async function signUpWithPassword({
     return { error: 'That username or email is already connected to another account.' }
   }
 
-  redirect('/dashboard')
+  redirect(redirectPath)
 }
 
 export async function signInWithPassword({
   identifier: rawIdentifier,
   password,
+  nextPath,
 }: {
   identifier: string
   password: string
+  nextPath?: string
 }): Promise<AuthResult> {
   if (!hasSupabaseConfig()) {
     return { error: 'Authentication is not configured for this environment.' }
@@ -114,6 +120,7 @@ export async function signInWithPassword({
 
   const identifier = rawIdentifier.trim().toLowerCase()
   if (!identifier || !password) return { error: 'Enter your username or email and password.' }
+  const redirectPath = safeAuthRedirectPath(nextPath)
 
   let email = identifier
   if (!identifier.includes('@')) {
@@ -130,17 +137,18 @@ export async function signInWithPassword({
 
   if (error) return { error: friendlyAuthError(error.message) }
 
-  redirect('/dashboard')
+  redirect(redirectPath)
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(nextPath?: string) {
   if (!hasSupabaseConfig()) {
     redirect('/login?error=auth_not_configured')
   }
 
+  const redirectPath = safeAuthRedirectPath(nextPath)
   let redirectTo: string
   try {
-    redirectTo = appUrl('/auth/callback?next=/dashboard')
+    redirectTo = appUrl(`/auth/callback?next=${encodeURIComponent(redirectPath)}`)
   } catch {
     redirect('/login?error=app_url_not_configured')
   }
