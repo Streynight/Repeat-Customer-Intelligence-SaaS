@@ -813,6 +813,9 @@ const thaiCopy: Record<string, string> = {
   'Project task update failed.': 'อัปเดตงานไม่สำเร็จ',
   'Project task deleted.': 'ลบงานแล้ว',
   'Project task delete failed.': 'ลบงานไม่สำเร็จ',
+  'Task progress': 'ความคืบหน้างาน',
+  done: 'เสร็จแล้ว',
+  Progress: 'ความคืบหน้า',
   'Team invitation': 'คำเชิญเข้าทีม',
   'Join an existing RepeatTree workspace with the role assigned by your admin.':
     'เข้าร่วม workspace RepeatTree ที่มีอยู่ด้วย role ที่ admin กำหนด',

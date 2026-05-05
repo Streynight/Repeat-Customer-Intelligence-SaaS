@@ -224,6 +224,7 @@ function ProjectCard({
   const isOwner = project.currentUserRole === 'owner'
   const canUpdateStatus = isOwner || project.currentUserRole === 'editor'
   const assigneeOptions = buildTaskAssigneeOptions(project, currentUserId, currentUserEmail)
+  const taskSummary = summarizeProjectTasks(project.tasks)
 
   const saveStatus = async () => {
     setSavingId('status')
@@ -376,6 +377,7 @@ function ProjectCard({
         <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
           <p><span className="font-semibold text-foreground">{t('Owner')}:</span> {project.ownerEmail}</p>
           <p><span className="font-semibold text-foreground">{t('Duration')}:</span> {formatDateRange(project.startDate, project.endDate, t)}</p>
+          <p><span className="font-semibold text-foreground">{t('Task progress')}:</span> {taskSummary.done}/{taskSummary.total} {t('done')}</p>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -408,6 +410,7 @@ function ProjectCard({
 
         <ProjectTasks
           project={project}
+          taskSummary={taskSummary}
           currentUserId={currentUserId}
           canManageTasks={canUpdateStatus}
           assigneeOptions={assigneeOptions}
@@ -507,6 +510,7 @@ function ProjectCard({
 
 function ProjectTasks({
   project,
+  taskSummary,
   currentUserId,
   canManageTasks,
   assigneeOptions,
@@ -522,6 +526,7 @@ function ProjectTasks({
   onRemoveTask,
 }: {
   project: ProjectView
+  taskSummary: { total: number; done: number; percent: number }
   currentUserId: string
   canManageTasks: boolean
   assigneeOptions: Array<{ userId: string; email: string }>
@@ -543,6 +548,16 @@ function ProjectTasks({
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-semibold">{t('Tasks')}</p>
         <Badge variant="secondary">{project.tasks.length}</Badge>
+      </div>
+
+      <div className="mt-3 space-y-1.5">
+        <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+          <span>{t('Progress')}</span>
+          <span>{taskSummary.percent}%</span>
+        </div>
+        <div className="h-2 overflow-hidden rounded-full bg-muted">
+          <div className="h-full rounded-full bg-primary" style={{ width: `${taskSummary.percent}%` }} />
+        </div>
       </div>
 
       {canManageTasks ? (
@@ -663,6 +678,17 @@ function buildTaskAssigneeOptions(project: ProjectView, currentUserId: string, c
   })
 
   return Array.from(participants, ([userId, email]) => ({ userId, email }))
+}
+
+function summarizeProjectTasks(tasks: ProjectView['tasks']) {
+  const total = tasks.length
+  const done = tasks.filter((task) => task.status === 'done').length
+
+  return {
+    total,
+    done,
+    percent: total === 0 ? 0 : Math.round((done / total) * 100),
+  }
 }
 
 function formatDateRange(startDate: string | null, endDate: string | null, t: (value: string) => string) {
