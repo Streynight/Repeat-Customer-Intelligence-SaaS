@@ -19,6 +19,7 @@ export type BillingPlanView = {
   id: PlanId
   name: string
   priceMonthlyThb: number | null
+  trialDays: number
   positioning: string
   monthlyOrders: number
   workspaces: number
@@ -96,6 +97,7 @@ export async function loadBillingOverview(): Promise<BillingOverview> {
         id: planId,
         name: planEntry.name,
         priceMonthlyThb: planEntry.priceMonthlyThb,
+        trialDays: planEntry.trialDays,
         positioning: planEntry.positioning,
         monthlyOrders: planEntry.monthlyOrders,
         workspaces: planEntry.workspaces,

@@ -15,6 +15,13 @@ describe('billing plans', () => {
     expect(planCatalog.enterprise.priceMonthlyThb).toBeNull()
   })
 
+  it('starts self-serve plans with a free trial', () => {
+    expect(planCatalog.starter.trialDays).toBe(14)
+    expect(planCatalog.growth.trialDays).toBe(14)
+    expect(planCatalog.scale.trialDays).toBe(14)
+    expect(planCatalog.enterprise.trialDays).toBe(0)
+  })
+
   it('maps plans to Stripe price environment variables', () => {
     expect(stripePriceEnvForPlan('starter')).toBe('STRIPE_PRICE_STARTER')
     expect(stripePriceEnvForPlan('growth')).toBe('STRIPE_PRICE_GROWTH')

@@ -11,16 +11,19 @@ export type PlanLimits = {
 export type PlanCatalogEntry = PlanLimits & {
   name: string
   priceMonthlyThb: number | null
+  trialDays: number
   positioning: string
   features: string[]
 }
 
 export const orderedPlans = ['starter', 'growth', 'scale', 'enterprise'] as const satisfies readonly PlanId[]
+export const selfServeTrialDays = 14
 
 export const planCatalog: Record<PlanId, PlanCatalogEntry> = {
   starter: {
     name: 'Starter',
     priceMonthlyThb: 1_790,
+    trialDays: selfServeTrialDays,
     positioning: 'For small shops validating repeat-customer work.',
     monthlyOrders: 5_000,
     workspaces: 1,
@@ -32,6 +35,7 @@ export const planCatalog: Record<PlanId, PlanCatalogEntry> = {
   growth: {
     name: 'Growth',
     priceMonthlyThb: 5_390,
+    trialDays: selfServeTrialDays,
     positioning: 'For growing teams importing orders every week.',
     monthlyOrders: 25_000,
     workspaces: 3,
@@ -43,6 +47,7 @@ export const planCatalog: Record<PlanId, PlanCatalogEntry> = {
   scale: {
     name: 'Scale',
     priceMonthlyThb: 12_900,
+    trialDays: selfServeTrialDays,
     positioning: 'For multi-channel operators with serious retention volume.',
     monthlyOrders: 100_000,
     workspaces: 10,
@@ -54,6 +59,7 @@ export const planCatalog: Record<PlanId, PlanCatalogEntry> = {
   enterprise: {
     name: 'Enterprise',
     priceMonthlyThb: null,
+    trialDays: 0,
     positioning: 'For custom data volume, storage, and support needs.',
     monthlyOrders: 1_000_000,
     workspaces: 100,

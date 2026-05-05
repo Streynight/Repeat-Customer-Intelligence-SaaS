@@ -54,7 +54,7 @@ export default async function PricingPage({
             <LocalizedText text="Turn repeat customer data into paid work." />
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
-            <LocalizedText text="Customers can choose a plan, create an account, and enter Stripe checkout without a sales call." />
+            <LocalizedText text="Customers start with a 14-day free trial through Stripe Checkout. Billing starts after the trial unless they cancel." />
           </p>
         </div>
 
@@ -80,9 +80,9 @@ export default async function PricingPage({
             <div className="grid size-10 place-items-center rounded-lg bg-primary/10 text-primary">
               <LockKeyhole className="size-5" />
             </div>
-            <h2 className="mt-4 text-lg font-semibold"><LocalizedText text="No forced charge" /></h2>
+            <h2 className="mt-4 text-lg font-semibold"><LocalizedText text="Trial before billing" /></h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              <LocalizedText text="The checkout route only redirects customers to Stripe. Payment still requires customer consent inside Stripe." />
+              <LocalizedText text="Stripe Checkout starts the trial with customer consent. Billing begins after the trial unless the customer cancels in Stripe." />
             </p>
           </div>
         </section>
@@ -110,6 +110,11 @@ function PlanCard({ plan, featured }: { plan: BillingCheckoutPlan; featured?: bo
           <span className="text-3xl font-semibold tracking-tight">{formatThb(entry.priceMonthlyThb)}</span>
           <span className="ml-1 text-sm text-muted-foreground">/<LocalizedText text="mo" /></span>
         </div>
+        {entry.trialDays > 0 ? (
+          <p className="mt-2 text-sm font-semibold text-primary">
+            <LocalizedText text={trialLabel(entry.trialDays)} />
+          </p>
+        ) : null}
         <div className="mt-4 grid gap-2 text-sm text-muted-foreground">
           <PlanLimit label="Monthly orders" value={entry.monthlyOrders.toLocaleString()} />
           <PlanLimit label="DB storage" value={formatStorageMb(entry.databaseStorageMb)} />
@@ -126,7 +131,7 @@ function PlanCard({ plan, featured }: { plan: BillingCheckoutPlan; featured?: bo
         </ul>
         <Button asChild className="mt-6 w-full font-semibold">
           <Link href={checkoutHref(plan)}>
-            <LocalizedText text="Start checkout" />
+            <LocalizedText text="Start free trial" />
             <ArrowRight className="size-4" />
           </Link>
         </Button>
@@ -175,6 +180,10 @@ function PlanLimit({ label, value }: { label: string; value: string }) {
 
 function checkoutHref(plan: PlanId) {
   return `/billing/checkout?plan=${encodeURIComponent(plan)}`
+}
+
+function trialLabel(days: number) {
+  return `${days}-day free trial`
 }
 
 function formatThb(value: number | null) {

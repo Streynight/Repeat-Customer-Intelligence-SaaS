@@ -45,7 +45,7 @@ export async function syncSubscriptionToBilling(
 ) {
   const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id
   const plan = normalizeStripePlan(subscription.metadata?.plan)
-  const currentPeriodEnd = subscription.items.data[0]?.current_period_end
+  const currentPeriodEnd = subscription.trial_end ?? subscription.items.data[0]?.current_period_end
 
   const result = await billingSubscription.updateMany({
     where: { stripeCustomerId: customerId },

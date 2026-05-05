@@ -73,6 +73,8 @@ const thaiCopy: Record<string, string> = {
   'Turn repeat customer data into paid work.': 'เปลี่ยนข้อมูลลูกค้าซื้อซ้ำให้กลายเป็นงานที่ลูกค้ายอมจ่าย',
   'Customers can choose a plan, create an account, and enter Stripe checkout without a sales call.':
     'ลูกค้าเลือกแพ็กเกจ สร้างบัญชี และเข้า Stripe checkout ได้เองโดยไม่ต้องคุย sales',
+  'Customers start with a 14-day free trial through Stripe Checkout. Billing starts after the trial unless they cancel.':
+    'ลูกค้าเริ่มด้วยทดลองใช้ฟรี 14 วันผ่าน Stripe Checkout และระบบจะเริ่มคิดเงินหลังหมด trial ถ้าไม่ยกเลิก',
   'What customers pay for': 'สิ่งที่ลูกค้าจ่ายเงินซื้อ',
   'See who buys again and which channel keeps value.': 'เห็นว่าใครซื้อซ้ำและช่องทางไหนรักษามูลค่าไว้ได้',
   'Clean imports': 'นำเข้าไฟล์ให้สะอาด',
@@ -84,8 +86,13 @@ const thaiCopy: Record<string, string> = {
   'No forced charge': 'ไม่บังคับชาร์จเงิน',
   'The checkout route only redirects customers to Stripe. Payment still requires customer consent inside Stripe.':
     'เส้นทาง checkout แค่พาลูกค้าไป Stripe และการจ่ายเงินยังต้องได้รับการยืนยันจากลูกค้าใน Stripe',
+  'Trial before billing': 'ทดลองก่อนเริ่มคิดเงิน',
+  'Stripe Checkout starts the trial with customer consent. Billing begins after the trial unless the customer cancels in Stripe.':
+    'Stripe Checkout เริ่ม trial ด้วยการยืนยันจากลูกค้า และจะเริ่มคิดเงินหลังหมด trial ถ้าลูกค้าไม่ยกเลิกใน Stripe',
   'Best default': 'ค่าเริ่มต้นที่เหมาะสุด',
   'Start checkout': 'เริ่ม checkout',
+  'Start free trial': 'เริ่มทดลองใช้ฟรี',
+  '14-day free trial': 'ทดลองใช้ฟรี 14 วัน',
   'Team seats': 'ที่นั่งทีม',
   'Checkout was cancelled. Choose a plan when ready.': 'Checkout ถูกยกเลิก เลือกแพ็กเกจใหม่ได้เมื่อพร้อม',
   'Choose a valid self-serve plan.': 'เลือกแพ็กเกจ self-serve ที่ถูกต้อง',

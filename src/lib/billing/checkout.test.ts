@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseBillingCheckoutPlan } from '@/lib/billing/checkout'
+import { billingCheckoutTrialDays, parseBillingCheckoutPlan } from '@/lib/billing/checkout'
 
 describe('billing checkout helpers', () => {
   it('accepts only self-serve checkout plans', () => {
@@ -9,5 +9,11 @@ describe('billing checkout helpers', () => {
     expect(parseBillingCheckoutPlan('enterprise')).toBeNull()
     expect(parseBillingCheckoutPlan('unknown')).toBeNull()
     expect(parseBillingCheckoutPlan(null)).toBeNull()
+  })
+
+  it('uses the configured free trial for self-serve checkout plans', () => {
+    expect(billingCheckoutTrialDays('starter')).toBe(14)
+    expect(billingCheckoutTrialDays('growth')).toBe(14)
+    expect(billingCheckoutTrialDays('scale')).toBe(14)
   })
 })

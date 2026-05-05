@@ -69,11 +69,11 @@ describe('billing server actions', () => {
       workspaceLimit: 3,
       hasStripeCustomer: true,
     })
-    expect(overview.plans.map((plan) => [plan.id, plan.priceMonthlyThb])).toEqual([
-      ['starter', 1_790],
-      ['growth', 5_390],
-      ['scale', 12_900],
-      ['enterprise', null],
+    expect(overview.plans.map((plan) => [plan.id, plan.priceMonthlyThb, plan.trialDays])).toEqual([
+      ['starter', 1_790, 14],
+      ['growth', 5_390, 14],
+      ['scale', 12_900, 14],
+      ['enterprise', null, 0],
     ])
     expect(prismaMock.billingSubscription.update).toHaveBeenCalledWith({
       where: { organizationId: 'org-1' },

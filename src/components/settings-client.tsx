@@ -438,6 +438,9 @@ function BillingPanel({
                   {plan.priceMonthlyThb === null ? t('Custom') : formatThb(plan.priceMonthlyThb)}
                   {plan.priceMonthlyThb === null ? null : <span className="text-sm font-semibold text-muted-foreground">/{t('mo')}</span>}
                 </p>
+                {plan.trialDays > 0 ? (
+                  <p className="pt-1 text-sm font-semibold text-primary">{t(trialLabel(plan.trialDays))}</p>
+                ) : null}
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-2 text-sm">
@@ -464,7 +467,7 @@ function BillingPanel({
                     disabled={billingAction === plan.id}
                     onClick={() => onCheckout(checkoutPlan)}
                   >
-                    {billingAction === plan.id ? t('Opening...') : isCurrent ? t('Update checkout') : t('Choose plan')}
+                    {billingAction === plan.id ? t('Opening...') : isCurrent ? t('Update checkout') : t('Start free trial')}
                   </Button>
                 ) : (
                   <Button type="button" className="w-full" variant="outline" disabled>
@@ -617,6 +620,10 @@ function formatStorageMb(value: number) {
   }
 
   return `${value} MB`
+}
+
+function trialLabel(days: number) {
+  return `${days}-day free trial`
 }
 
 function formatThb(value: number) {

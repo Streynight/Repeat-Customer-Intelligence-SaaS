@@ -47,6 +47,7 @@ describe('stripe webhook billing sync', () => {
       customer: 'cus_123',
       status: 'active',
       metadata: { plan: 'growth' },
+      trial_end: null,
       items: { data: [{ current_period_end: 1_700_000_000 }] },
     } as never)
 
@@ -58,6 +59,7 @@ describe('stripe webhook billing sync', () => {
         plan: 'growth',
         workspaceLimit: 3,
         databaseStorageMbLimit: 2_048,
+        currentPeriodEnd: new Date(1_700_000_000 * 1000),
       }),
     }))
     expect(result).toEqual({
@@ -79,9 +81,33 @@ describe('stripe webhook billing sync', () => {
       customer: 'cus_missing',
       status: 'active',
       metadata: { plan: 'growth' },
+      trial_end: null,
       items: { data: [] },
     } as never)
 
     expect(result.action).toBe('subscription_unmatched')
+  })
+
+  it('stores trial end as the subscription period while trialing', async () => {
+    const billingSubscription = {
+      upsert: vi.fn().mockResolvedValue({}),
+      updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+    }
+
+    await syncSubscriptionToBilling(billingSubscription, {
+      id: 'sub_trial',
+      customer: 'cus_123',
+      status: 'trialing',
+      metadata: { plan: 'starter' },
+      trial_end: 1_701_000_000,
+      items: { data: [{ current_period_end: 1_800_000_000 }] },
+    } as never)
+
+    expect(billingSubscription.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        status: 'trialing',
+        currentPeriodEnd: new Date(1_701_000_000 * 1000),
+      }),
+    }))
   })
 })

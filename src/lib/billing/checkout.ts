@@ -1,5 +1,5 @@
 import { appUrl } from '@/lib/app-url'
-import { planLimits, stripePriceEnvForPlan, type PlanId } from '@/lib/billing/plans'
+import { planCatalog, planLimits, stripePriceEnvForPlan, type PlanId } from '@/lib/billing/plans'
 import { requireStripe } from '@/lib/platform/stripe'
 import { prisma } from '@/lib/prisma'
 import { type TenantContext, writeAuditLog } from '@/lib/tenancy'
@@ -11,6 +11,15 @@ const billingCheckoutPlans = new Set<BillingCheckoutPlan>(['starter', 'growth', 
 export function parseBillingCheckoutPlan(value: string | null): BillingCheckoutPlan | null {
   if (!value) return null
   return billingCheckoutPlans.has(value as BillingCheckoutPlan) ? value as BillingCheckoutPlan : null
+}
+
+export function billingCheckoutTrialDays(plan: BillingCheckoutPlan) {
+  const trialDays = planCatalog[plan].trialDays
+  if (!Number.isInteger(trialDays) || trialDays < 1) {
+    throw new Error(`Free trial is not configured for ${plan}.`)
+  }
+
+  return trialDays
 }
 
 export async function createBillingCheckoutForTenant(context: TenantContext, plan: BillingCheckoutPlan) {
@@ -36,6 +45,7 @@ export async function createBillingCheckoutForTenant(context: TenantContext, pla
     },
   })
   const customerId = subscription.stripeCustomerId ?? await createStripeCustomer(context.organizationId, context.email)
+  const trialDays = subscription.stripeSubscriptionId ? null : billingCheckoutTrialDays(plan)
   if (!subscription.stripeCustomerId) {
     await prisma.billingSubscription.update({
       where: { organizationId: context.organizationId },
@@ -49,9 +59,17 @@ export async function createBillingCheckoutForTenant(context: TenantContext, pla
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: appUrl('/settings?billing=success'),
     cancel_url: appUrl('/pricing?checkout=cancelled'),
+    payment_method_collection: 'always',
     metadata: {
       organizationId: context.organizationId,
       plan,
+    },
+    subscription_data: {
+      ...(trialDays ? { trial_period_days: trialDays } : {}),
+      metadata: {
+        organizationId: context.organizationId,
+        plan,
+      },
     },
   })
 
@@ -59,7 +77,7 @@ export async function createBillingCheckoutForTenant(context: TenantContext, pla
     action: 'billing.checkout.created',
     resourceType: 'billing_subscription',
     resourceId: subscription.id,
-    metadata: { plan },
+    metadata: { plan, trialDays },
   })
 
   if (!session.url) throw new Error('Billing checkout did not return a URL.')
