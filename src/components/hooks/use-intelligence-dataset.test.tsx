@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { clearWorkspaceConfirmationText } from '@/lib/data-safety'
 import { makeDataset, makeOrder } from '@/test/fixtures'
@@ -62,6 +63,26 @@ function ReclassificationProbe({ useDataset }: { useDataset: () => UseDatasetRes
       </button>
       <button type="button" onClick={() => updateVipThreshold(9000)}>
         raise threshold
+      </button>
+    </div>
+  )
+}
+
+function ImportFailureProbe({ useDataset }: { useDataset: () => UseDatasetResult }) {
+  const { dataset, importOrders } = useDataset()
+  const [error, setError] = useState('')
+
+  return (
+    <div>
+      <div data-testid="counts">{dataset.customers.length}:{dataset.orders.length}:{dataset.imports.length}</div>
+      <div data-testid="import-error">{error}</div>
+      <button
+        type="button"
+        onClick={() => void importOrders([makeOrder({ externalOrderId: 'SERVER-FAIL-1' })], 'orders.csv', 'shopee').catch((caught) => {
+          setError(caught instanceof Error ? caught.message : 'unknown error')
+        })}
+      >
+        import with failure
       </button>
     </div>
   )
@@ -298,6 +319,46 @@ describe('useIntelligenceDataset clean workspace defaults', () => {
     })
     expect(importCurrentOrders.mock.calls[0][0]).not.toHaveProperty('customers')
     await waitFor(() => expect(screen.getByTestId('first')).toHaveTextContent('ready:1:1:1:6500'))
+  })
+
+  it('throws production import failures instead of silently reporting success', async () => {
+    installLocalStorageMock()
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const ensureUserStore = vi.fn().mockResolvedValue('store-1')
+    const loadCurrentDataset = vi.fn().mockResolvedValue({
+      customers: [],
+      orders: [],
+      imports: [],
+    })
+    const importCurrentOrders = vi.fn().mockRejectedValue(new Error('Database temporarily unavailable.'))
+
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://repeat-tree.supabase.co')
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'anon-key')
+    vi.doMock('@/app/actions/dataset', () => ({
+      clearCurrentDataset: vi.fn(),
+      ensureUserStore,
+      importCurrentOrders,
+      loadCurrentDataset,
+    }))
+    vi.doMock('@/lib/supabase/client', () => ({
+      createClient: () => ({
+        auth: {
+          getUser: () => Promise.resolve({ data: { user: { id: 'user-1', email: 'owner@store.com' } } }),
+        },
+      }),
+    }))
+
+    const { useIntelligenceDataset } = await import('@/components/hooks/use-intelligence-dataset')
+
+    render(<ImportFailureProbe useDataset={useIntelligenceDataset} />)
+
+    await waitFor(() => expect(screen.getByTestId('counts')).toHaveTextContent('0:0:0'))
+    fireEvent.click(screen.getByRole('button', { name: 'import with failure' }))
+
+    await waitFor(() => expect(screen.getByTestId('import-error')).toHaveTextContent('Database temporarily unavailable.'))
+    expect(screen.getByTestId('counts')).toHaveTextContent('0:0:0')
+    expect(importCurrentOrders).toHaveBeenCalledTimes(1)
+    consoleError.mockRestore()
   })
 
   it('clears production data only through an explicit confirmation command', async () => {

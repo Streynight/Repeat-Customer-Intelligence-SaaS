@@ -59,6 +59,19 @@ describe('ImportClient', () => {
     expect(importOrders.mock.calls[0][0].length).toBeGreaterThan(0)
   })
 
+  it('keeps the preview visible and reports an explicit error when saving fails', async () => {
+    const user = userEvent.setup()
+    importOrders.mockRejectedValueOnce(new Error('Database temporarily unavailable.'))
+    render(<ImportClient />)
+
+    await user.click(screen.getAllByRole('button', { name: /try sample/i })[0])
+    await user.click(screen.getByRole('button', { name: /confirm import/i }))
+
+    expect(await screen.findByText('Import failed. The order was not saved. Please try again.')).toBeInTheDocument()
+    expect(screen.getByText('Database temporarily unavailable.')).toBeInTheDocument()
+    expect(screen.getByText('Import preview')).toBeInTheDocument()
+  })
+
   it('accepts PDF only as a preview warning and does not parse it as orders', async () => {
     const user = userEvent.setup()
     render(<ImportClient />)

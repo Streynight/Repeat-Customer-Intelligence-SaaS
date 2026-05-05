@@ -75,6 +75,7 @@ export function useIntelligenceDataset() {
             }))
           } catch (error) {
             console.error('Failed to persist production dataset. Keeping database as source of truth.', error)
+            throw error
           }
           return
         }

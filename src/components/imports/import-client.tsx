@@ -91,10 +91,16 @@ export function ImportClient() {
 
     const orders = rowsToOrders(rows, sourceChannel, mapping)
     setStatus(`Saving ${orders.length} rows…`)
-    await importOrders(orders, fileName || 'orders.csv', sourceChannel)
-    setStatus(`Imported ${orders.length} rows`)
-    setRows([])
-    setFields([])
+    try {
+      await importOrders(orders, fileName || 'orders.csv', sourceChannel)
+      setStatus(`Imported ${orders.length} rows`)
+      setRows([])
+      setFields([])
+      setErrors([])
+    } catch (error) {
+      setStatus('Import failed. The order was not saved. Please try again.')
+      setErrors([error instanceof Error ? error.message : 'Import failed. The order was not saved. Please try again.'])
+    }
   }
 
   return (

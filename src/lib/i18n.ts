@@ -329,6 +329,7 @@ const thaiCopy: Record<string, string> = {
   'Focus At Risk and Lost profiles first.': 'เริ่มจากลูกค้าเสี่ยงหายและหายไปแล้วก่อน',
   'Import latest orders': 'นำเข้าออเดอร์ล่าสุด',
   'Refresh the dashboard with a new CSV.': 'รีเฟรชแดชบอร์ดด้วย CSV ใหม่',
+  'Refresh the dashboard with a marketplace order file.': 'รีเฟรชแดชบอร์ดด้วยไฟล์ออเดอร์ marketplace',
   'Open deep analytics': 'เปิด analytics เชิงลึก',
   'Cohorts, RFM, product repeat, and opportunities.': 'Cohort, RFM, สินค้าซื้อซ้ำ และโอกาส',
   'Total income': 'รายได้รวม',
@@ -346,6 +347,12 @@ const thaiCopy: Record<string, string> = {
   'Fresh repeat activity worth noticing.': 'กิจกรรมซื้อซ้ำล่าสุดที่ควรติดตาม',
   'No repeat orders yet. Import more orders to spot fresh repeat activity.':
     'ยังไม่มีออเดอร์ซื้อซ้ำ นำเข้าออเดอร์เพิ่มเพื่อเห็นกิจกรรมซื้อซ้ำล่าสุด',
+  'Recent Orders': 'ออเดอร์ล่าสุด',
+  'Latest imported orders visible on the dashboard.': 'ออเดอร์ที่นำเข้าล่าสุดซึ่งแสดงบนแดชบอร์ด',
+  'Repeat buyer': 'ลูกค้าซื้อซ้ำ',
+  'New buyer': 'ลูกค้าใหม่',
+  'No orders yet. Import an order file to show recent order activity here.':
+    'ยังไม่มีออเดอร์ นำเข้าไฟล์ออเดอร์เพื่อแสดงกิจกรรมล่าสุดตรงนี้',
   'Loading workspace': 'กำลังโหลด workspace',
   'Checking your store data before showing repeat intelligence.': 'กำลังตรวจข้อมูลร้านก่อนแสดงข้อมูลซื้อซ้ำ',
   'Start with your first order import': 'เริ่มด้วยการนำเข้าออเดอร์แรก',
@@ -770,6 +777,8 @@ const thaiCopy: Record<string, string> = {
   'Ready to preview': 'พร้อม preview',
   'Import blocked. Fix required mappings or provide at least one valid row.':
     'Import ถูกบล็อก แก้ mapping ที่จำเป็นหรือใส่อย่างน้อยหนึ่งแถวที่ valid',
+  'Import failed. The order was not saved. Please try again.':
+    'Import ไม่สำเร็จ ออเดอร์ยังไม่ถูกบันทึก กรุณาลองอีกครั้ง',
   Loaded: 'โหลดแล้ว',
   'Review the preview, then confirm import.': 'ตรวจ preview แล้วค่อยยืนยัน import',
   Saving: 'กำลังบันทึก',
