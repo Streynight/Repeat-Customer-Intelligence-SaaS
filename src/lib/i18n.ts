@@ -42,8 +42,8 @@ const thaiCopy: Record<string, string> = {
     'รวมตัวตนลูกค้าข้ามช่องทาง พร้อมจัดกลุ่มลูกค้าซื้อซ้ำ VIP เสี่ยงหาย และหายไปแล้ว',
   'Production settings for customer classification, tenant operations, and lifecycle automation.':
     'ตั้งค่าการจัดกลุ่มลูกค้า การทำงานของ workspace และ automation lifecycle สำหรับ production',
-  'Read-only operating view for tenant health, billing state, ingestion failures, and audit activity.':
-    'หน้าตรวจสอบแบบอ่านอย่างเดียวสำหรับสุขภาพ tenant, billing, ingestion failure และ audit activity',
+  'Operational control for tenant health, team roles, ingestion failures, and audit activity.':
+    'หน้าควบคุมการทำงานสำหรับสุขภาพ tenant, role ทีม, ingestion failure และ audit activity',
   'See repeat orders, revenue, channel activity, and follow-up timing by day without adding manual event work.':
     'ดูออเดอร์ซื้อซ้ำ รายได้ กิจกรรมช่องทาง และจังหวะ follow-up รายวันโดยไม่ต้องสร้าง event เอง',
   'Track gross income, net snapshot, Thailand VAT estimates, channel income, and scheduled CSV order syncs.':
@@ -726,7 +726,13 @@ const thaiCopy: Record<string, string> = {
   'Tenant and subscription state.': 'สถานะ tenant และ subscription',
   'No organization': 'ไม่มีองค์กร',
   Team: 'ทีม',
-  'Current organization members.': 'สมาชิกองค์กรปัจจุบัน',
+  'Manage organization members.': 'จัดการสมาชิกองค์กร',
+  Owner: 'เจ้าของ',
+  Editor: 'ผู้แก้ไข',
+  Analyst: 'นักวิเคราะห์',
+  Billing: 'การเงิน',
+  Viewer: 'ผู้ดู',
+  Save: 'บันทึก',
   Ingestion: 'Ingestion',
   'Recent failed jobs.': 'งานล่าสุดที่ล้มเหลว',
   'No failed ingestion jobs.': 'ไม่มีงาน ingestion ที่ล้มเหลว',

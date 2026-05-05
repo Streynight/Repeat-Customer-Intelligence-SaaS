@@ -22,6 +22,22 @@ describe('rbac', () => {
     expect(hasPermission('viewer', 'manageIntegrations')).toBe(false)
   })
 
+  it('lets admins manage operations and view admin diagnostics without billing ownership', () => {
+    expect(hasPermission('admin', 'viewAdmin')).toBe(true)
+    expect(hasPermission('admin', 'manageWorkspace')).toBe(true)
+    expect(hasPermission('admin', 'manageMembers')).toBe(true)
+    expect(hasPermission('admin', 'manageBilling')).toBe(false)
+    expect(hasPermission('admin', 'manageOrganization')).toBe(false)
+  })
+
+  it('lets editors edit operational data without admin controls', () => {
+    expect(hasPermission('editor', 'manageImports')).toBe(true)
+    expect(hasPermission('editor', 'manageIntegrations')).toBe(true)
+    expect(hasPermission('editor', 'readAnalytics')).toBe(true)
+    expect(hasPermission('editor', 'manageMembers')).toBe(false)
+    expect(hasPermission('editor', 'viewAdmin')).toBe(false)
+  })
+
   it('allows explicit extra permissions without widening the base role', () => {
     expect(hasPermission('analyst', 'manageBilling')).toBe(false)
     expect(hasPermission('analyst', 'manageBilling', ['manageBilling'])).toBe(true)

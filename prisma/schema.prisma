@@ -555,6 +555,7 @@ enum CsvSyncStatus {
 enum MembershipRole {
   owner
   admin
+  editor
   analyst
   billing
   viewer
