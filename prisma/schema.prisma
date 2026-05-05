@@ -21,6 +21,7 @@ model User {
   auditLogs            AuditLog[]     @relation("AuditActor")
   ownedProjects        Project[]      @relation("ProjectOwner")
   projectShares        ProjectShare[]
+  assignedProjectTasks ProjectTask[]   @relation("ProjectTaskAssignee")
 
   @@map("users")
 }
@@ -160,6 +161,7 @@ model Project {
   organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   owner          User            @relation("ProjectOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
   shares         ProjectShare[]
+  tasks          ProjectTask[]
 
   @@index([organizationId, ownerUserId])
   @@index([organizationId, status])
@@ -178,6 +180,23 @@ model ProjectShare {
   @@unique([projectId, userId])
   @@index([userId])
   @@map("project_shares")
+}
+
+model ProjectTask {
+  id             String            @id @default(uuid())
+  projectId      String            @map("project_id")
+  assignedUserId String?           @map("assigned_user_id")
+  title          String
+  status         ProjectTaskStatus @default(open)
+  dueDate        DateTime?         @map("due_date")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+  project        Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignedUser   User?             @relation("ProjectTaskAssignee", fields: [assignedUserId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, status])
+  @@index([assignedUserId])
+  @@map("project_tasks")
 }
 
 model Store {
@@ -598,6 +617,11 @@ enum ProjectStatus {
 enum ProjectShareRole {
   viewer
   editor
+}
+
+enum ProjectTaskStatus {
+  open
+  done
 }
 
 enum MembershipRole {

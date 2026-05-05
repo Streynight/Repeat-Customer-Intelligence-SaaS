@@ -3,13 +3,17 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import {
+  createProjectTask,
   createProject,
+  deleteProjectTask,
   removeProjectShare,
   shareProject,
   updateProjectDuration,
   updateProjectStatus,
+  updateProjectTaskStatus,
   type ProjectShareRole,
   type ProjectStatus,
+  type ProjectTaskStatus,
   type ProjectView,
   type ProjectsPageData,
 } from '@/app/actions/projects'
@@ -23,6 +27,7 @@ import { useText } from '@/lib/i18n'
 
 const statusOptions = ['active', 'completed', 'archived'] as const
 const shareRoleOptions = ['editor', 'viewer'] as const
+const taskStatusOptions = ['open', 'done'] as const
 
 const statusLabels: Record<ProjectStatus, string> = {
   active: 'Active',
@@ -34,6 +39,11 @@ const projectRoleLabels: Record<ProjectShareRole | 'owner', string> = {
   owner: 'Owner',
   editor: 'Editor',
   viewer: 'Viewer',
+}
+
+const taskStatusLabels: Record<ProjectTaskStatus, string> = {
+  open: 'Open',
+  done: 'Done',
 }
 
 export function ProjectsClient({ data }: { data: ProjectsPageData }) {
@@ -122,6 +132,8 @@ export function ProjectsClient({ data }: { data: ProjectsPageData }) {
         emptyText="No owned projects yet."
         projects={data.ownedProjects}
         teammates={data.teammates}
+        currentUserId={data.currentUserId}
+        currentUserEmail={data.currentUserEmail}
         onRefresh={() => router.refresh()}
       />
 
@@ -130,6 +142,8 @@ export function ProjectsClient({ data }: { data: ProjectsPageData }) {
         emptyText="No shared projects yet."
         projects={data.sharedProjects}
         teammates={data.teammates}
+        currentUserId={data.currentUserId}
+        currentUserEmail={data.currentUserEmail}
         onRefresh={() => router.refresh()}
       />
     </div>
@@ -141,12 +155,16 @@ function ProjectSection({
   emptyText,
   projects,
   teammates,
+  currentUserId,
+  currentUserEmail,
   onRefresh,
 }: {
   title: string
   emptyText: string
   projects: ProjectView[]
   teammates: ProjectsPageData['teammates']
+  currentUserId: string
+  currentUserEmail: string
   onRefresh: () => void
 }) {
   const t = useText()
@@ -163,7 +181,14 @@ function ProjectSection({
       ) : (
         <div className="grid gap-4 xl:grid-cols-2">
           {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} teammates={teammates} onRefresh={onRefresh} />
+            <ProjectCard
+              key={project.id}
+              project={project}
+              teammates={teammates}
+              currentUserId={currentUserId}
+              currentUserEmail={currentUserEmail}
+              onRefresh={onRefresh}
+            />
           ))}
         </div>
       )}
@@ -174,10 +199,14 @@ function ProjectSection({
 function ProjectCard({
   project,
   teammates,
+  currentUserId,
+  currentUserEmail,
   onRefresh,
 }: {
   project: ProjectView
   teammates: ProjectsPageData['teammates']
+  currentUserId: string
+  currentUserEmail: string
   onRefresh: () => void
 }) {
   const t = useText()
@@ -186,11 +215,15 @@ function ProjectCard({
   const [endDate, setEndDate] = useState(dateInputValue(project.endDate))
   const [shareUserId, setShareUserId] = useState(teammates[0]?.userId ?? '')
   const [shareRole, setShareRole] = useState<ProjectShareRole>('editor')
+  const [taskTitle, setTaskTitle] = useState('')
+  const [taskAssignedUserId, setTaskAssignedUserId] = useState('')
+  const [taskDueDate, setTaskDueDate] = useState('')
   const [savingId, setSavingId] = useState<string | null>(null)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const isOwner = project.currentUserRole === 'owner'
   const canUpdateStatus = isOwner || project.currentUserRole === 'editor'
+  const assigneeOptions = buildTaskAssigneeOptions(project, currentUserId, currentUserEmail)
 
   const saveStatus = async () => {
     setSavingId('status')
@@ -263,6 +296,68 @@ function ProjectCard({
     onRefresh()
   }
 
+  const submitTask = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!taskTitle.trim()) return
+
+    setSavingId('task')
+    setMessage('')
+    setError('')
+
+    const result = await createProjectTask({
+      projectId: project.id,
+      title: taskTitle,
+      assignedUserId: taskAssignedUserId,
+      dueDate: taskDueDate,
+    })
+
+    setSavingId(null)
+    if (!result.ok) {
+      setError(result.error ?? t('Project task create failed.'))
+      return
+    }
+
+    setTaskTitle('')
+    setTaskAssignedUserId('')
+    setTaskDueDate('')
+    setMessage(result.message ?? t('Project task created.'))
+    onRefresh()
+  }
+
+  const saveTaskStatus = async (taskId: string, status: ProjectTaskStatus) => {
+    setSavingId(taskId)
+    setMessage('')
+    setError('')
+
+    const result = await updateProjectTaskStatus({ taskId, status })
+
+    setSavingId(null)
+    if (!result.ok) {
+      setError(result.error ?? t('Project task update failed.'))
+      return
+    }
+
+    setMessage(result.message ?? t('Project task updated.'))
+    onRefresh()
+  }
+
+  const removeTask = async (taskId: string) => {
+    setSavingId(taskId)
+    setMessage('')
+    setError('')
+
+    const result = await deleteProjectTask(taskId)
+
+    setSavingId(null)
+    if (!result.ok) {
+      setError(result.error ?? t('Project task delete failed.'))
+      return
+    }
+
+    setMessage(result.message ?? t('Project task deleted.'))
+    onRefresh()
+  }
+
   return (
     <Card>
       <CardHeader className="space-y-3">
@@ -310,6 +405,23 @@ function ProjectCard({
             </Button>
           </div>
         </div>
+
+        <ProjectTasks
+          project={project}
+          currentUserId={currentUserId}
+          canManageTasks={canUpdateStatus}
+          assigneeOptions={assigneeOptions}
+          taskTitle={taskTitle}
+          taskAssignedUserId={taskAssignedUserId}
+          taskDueDate={taskDueDate}
+          savingId={savingId}
+          onTaskTitleChange={setTaskTitle}
+          onTaskAssignedUserIdChange={setTaskAssignedUserId}
+          onTaskDueDateChange={setTaskDueDate}
+          onSubmitTask={submitTask}
+          onSaveTaskStatus={saveTaskStatus}
+          onRemoveTask={removeTask}
+        />
 
         {isOwner ? (
           <>
@@ -393,6 +505,127 @@ function ProjectCard({
   )
 }
 
+function ProjectTasks({
+  project,
+  currentUserId,
+  canManageTasks,
+  assigneeOptions,
+  taskTitle,
+  taskAssignedUserId,
+  taskDueDate,
+  savingId,
+  onTaskTitleChange,
+  onTaskAssignedUserIdChange,
+  onTaskDueDateChange,
+  onSubmitTask,
+  onSaveTaskStatus,
+  onRemoveTask,
+}: {
+  project: ProjectView
+  currentUserId: string
+  canManageTasks: boolean
+  assigneeOptions: Array<{ userId: string; email: string }>
+  taskTitle: string
+  taskAssignedUserId: string
+  taskDueDate: string
+  savingId: string | null
+  onTaskTitleChange: (value: string) => void
+  onTaskAssignedUserIdChange: (value: string) => void
+  onTaskDueDateChange: (value: string) => void
+  onSubmitTask: (event: React.FormEvent<HTMLFormElement>) => void
+  onSaveTaskStatus: (taskId: string, status: ProjectTaskStatus) => void
+  onRemoveTask: (taskId: string) => void
+}) {
+  const t = useText()
+
+  return (
+    <div className="rounded-md border border-border p-3">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold">{t('Tasks')}</p>
+        <Badge variant="secondary">{project.tasks.length}</Badge>
+      </div>
+
+      {canManageTasks ? (
+        <form className="mt-3 grid gap-3 lg:grid-cols-[1fr_auto_auto_auto]" onSubmit={(event) => onSubmitTask(event)}>
+          <Input
+            value={taskTitle}
+            onChange={(event) => onTaskTitleChange(event.target.value)}
+            maxLength={160}
+            placeholder={t('Add task')}
+            aria-label={t('Task title')}
+          />
+          <select
+            aria-label={t('Task assignee')}
+            value={taskAssignedUserId}
+            onChange={(event) => onTaskAssignedUserIdChange(event.target.value)}
+            className="h-9 rounded-md border border-input bg-card px-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+          >
+            <option value="">{t('Unassigned')}</option>
+            {assigneeOptions.map((assignee) => (
+              <option key={assignee.userId} value={assignee.userId}>{assignee.email}</option>
+            ))}
+          </select>
+          <Input
+            type="date"
+            value={taskDueDate}
+            onChange={(event) => onTaskDueDateChange(event.target.value)}
+            aria-label={t('Task due date')}
+          />
+          <Button type="submit" disabled={savingId === 'task' || !taskTitle.trim()}>
+            {savingId === 'task' ? t('Saving...') : t('Add')}
+          </Button>
+        </form>
+      ) : null}
+
+      <div className="mt-3 space-y-2">
+        {project.tasks.length === 0 ? (
+          <p className="rounded-md border border-dashed border-border p-3 text-sm text-muted-foreground">{t('No tasks yet.')}</p>
+        ) : project.tasks.map((task) => {
+          const canUpdateTask = canManageTasks || task.assignedUserId === currentUserId
+
+          return (
+            <div key={task.id} className="flex flex-col gap-2 rounded-md border border-border p-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{task.title}</p>
+                <p className="text-xs text-muted-foreground">
+                  {task.assignedUserEmail ?? t('Unassigned')} - {task.dueDate ? formatDate(task.dueDate) : t('No due date')}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={task.status === 'done' ? 'secondary' : 'outline'}>{t(taskStatusLabels[task.status])}</Badge>
+                {canUpdateTask ? (
+                  <select
+                    aria-label={t('Task status')}
+                    value={task.status}
+                    disabled={savingId === task.id}
+                    onChange={(event) => onSaveTaskStatus(task.id, event.target.value as ProjectTaskStatus)}
+                    className="h-8 rounded-md border border-input bg-card px-2 text-xs font-medium focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+                  >
+                    {taskStatusOptions.map((status) => (
+                      <option key={status} value={status}>{t(taskStatusLabels[status])}</option>
+                    ))}
+                  </select>
+                ) : null}
+                {canManageTasks ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={savingId === task.id}
+                    onClick={() => onRemoveTask(task.id)}
+                  >
+                    {savingId === task.id ? t('Saving...') : t('Delete')}
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function ActionState({ message, error }: { message: string; error: string }) {
   if (error) {
     return (
@@ -415,6 +648,21 @@ function ActionState({ message, error }: { message: string; error: string }) {
 
 function dateInputValue(value: string | null) {
   return value?.slice(0, 10) ?? ''
+}
+
+function buildTaskAssigneeOptions(project: ProjectView, currentUserId: string, currentUserEmail: string) {
+  const participants = new Map<string, string>()
+  participants.set(project.ownerUserId, project.ownerEmail)
+
+  if (project.currentUserRole !== 'owner') {
+    participants.set(currentUserId, currentUserEmail)
+  }
+
+  project.shares.forEach((share) => {
+    participants.set(share.userId, share.email)
+  })
+
+  return Array.from(participants, ([userId, email]) => ({ userId, email }))
 }
 
 function formatDateRange(startDate: string | null, endDate: string | null, t: (value: string) => string) {

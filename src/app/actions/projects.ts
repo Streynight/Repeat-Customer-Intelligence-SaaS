@@ -7,9 +7,11 @@ import { requireTenantContext, writeAuditLog, type TenantContext } from '@/lib/t
 
 const projectStatuses = ['active', 'completed', 'archived'] as const
 const projectShareRoles = ['viewer', 'editor'] as const
+const projectTaskStatuses = ['open', 'done'] as const
 
 export type ProjectStatus = (typeof projectStatuses)[number]
 export type ProjectShareRole = (typeof projectShareRoles)[number]
+export type ProjectTaskStatus = (typeof projectTaskStatuses)[number]
 
 export type ProjectActionResult = {
   ok: boolean
@@ -24,6 +26,15 @@ export type ProjectShareView = {
   role: ProjectShareRole
 }
 
+export type ProjectTaskView = {
+  id: string
+  title: string
+  status: ProjectTaskStatus
+  dueDate: string | null
+  assignedUserId: string | null
+  assignedUserEmail: string | null
+}
+
 export type ProjectView = {
   id: string
   name: string
@@ -36,6 +47,7 @@ export type ProjectView = {
   ownerEmail: string
   currentUserRole: 'owner' | ProjectShareRole
   shares: ProjectShareView[]
+  tasks: ProjectTaskView[]
 }
 
 export type ProjectTeammateView = {
@@ -46,6 +58,7 @@ export type ProjectTeammateView = {
 
 export type ProjectsPageData = {
   currentUserId: string
+  currentUserEmail: string
   ownedProjects: ProjectView[]
   sharedProjects: ProjectView[]
   teammates: ProjectTeammateView[]
@@ -55,6 +68,10 @@ const projectInclude = {
   owner: { select: { id: true, email: true } },
   shares: {
     include: { user: { select: { id: true, email: true } } },
+    orderBy: { createdAt: 'asc' },
+  },
+  tasks: {
+    include: { assignedUser: { select: { id: true, email: true } } },
     orderBy: { createdAt: 'asc' },
   },
 } satisfies Prisma.ProjectInclude
@@ -87,6 +104,7 @@ export async function loadProjects(): Promise<ProjectsPageData> {
 
   return {
     currentUserId: context.userId,
+    currentUserEmail: context.email,
     ownedProjects: projects
       .filter((project) => project.ownerUserId === context.userId)
       .map((project) => serializeProject(project, context.userId)),
@@ -323,6 +341,122 @@ export async function removeProjectShare(shareId: string): Promise<ProjectAction
   }
 }
 
+export async function createProjectTask(input: {
+  projectId: string
+  title: string
+  assignedUserId?: string
+  dueDate?: string
+}): Promise<ProjectActionResult> {
+  try {
+    const context = await requireTenantContext({ permission: 'readAnalytics' })
+    const projectId = normalizeId(input.projectId, 'Project id is required.')
+    const title = normalizeTaskTitle(input.title)
+    const dueDate = parseDateInput(input.dueDate, 'Task due date')
+    const project = await findProjectForAccess(context, projectId)
+
+    if (!canEditProjectStatus(project, context.userId)) {
+      throw new Error('Project editor access is required.')
+    }
+
+    const assignedUserId = await normalizeTaskAssignee(context, project.id, project.ownerUserId, input.assignedUserId)
+    const task = await prisma.projectTask.create({
+      data: {
+        projectId: project.id,
+        title,
+        assignedUserId,
+        dueDate,
+      },
+      select: { id: true },
+    })
+
+    await writeAuditLog(context, {
+      action: 'project.task_created',
+      resourceType: 'project_task',
+      resourceId: task.id,
+      metadata: {
+        projectId: project.id,
+        assignedUserId,
+        dueDate: dueDate?.toISOString() ?? null,
+      },
+    })
+
+    revalidatePath('/projects')
+    return { ok: true, message: 'Project task created.' }
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : 'Project task create failed.',
+    }
+  }
+}
+
+export async function updateProjectTaskStatus(input: {
+  taskId: string
+  status: ProjectTaskStatus
+}): Promise<ProjectActionResult> {
+  try {
+    const context = await requireTenantContext({ permission: 'readAnalytics' })
+    const taskId = normalizeId(input.taskId, 'Project task id is required.')
+    const status = normalizeProjectTaskStatus(input.status)
+    const task = await findTaskForAccess(context, taskId)
+
+    if (!canEditProjectStatus(task.project, context.userId) && task.assignedUserId !== context.userId) {
+      throw new Error('Task assignee or project editor access is required.')
+    }
+
+    await prisma.projectTask.update({
+      where: { id: task.id },
+      data: { status },
+    })
+
+    await writeAuditLog(context, {
+      action: 'project.task_status_updated',
+      resourceType: 'project_task',
+      resourceId: task.id,
+      metadata: {
+        projectId: task.project.id,
+        status,
+      },
+    })
+
+    revalidatePath('/projects')
+    return { ok: true, message: 'Project task updated.' }
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : 'Project task update failed.',
+    }
+  }
+}
+
+export async function deleteProjectTask(taskId: string): Promise<ProjectActionResult> {
+  try {
+    const context = await requireTenantContext({ permission: 'readAnalytics' })
+    const normalizedTaskId = normalizeId(taskId, 'Project task id is required.')
+    const task = await findTaskForAccess(context, normalizedTaskId)
+
+    if (!canEditProjectStatus(task.project, context.userId)) {
+      throw new Error('Project editor access is required.')
+    }
+
+    await prisma.projectTask.delete({ where: { id: task.id } })
+    await writeAuditLog(context, {
+      action: 'project.task_deleted',
+      resourceType: 'project_task',
+      resourceId: task.id,
+      metadata: { projectId: task.project.id },
+    })
+
+    revalidatePath('/projects')
+    return { ok: true, message: 'Project task deleted.' }
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : 'Project task delete failed.',
+    }
+  }
+}
+
 async function requireOwnedProject(context: TenantContext, projectId: string) {
   const project = await prisma.project.findFirst({
     where: {
@@ -368,6 +502,68 @@ async function findProjectForAccess(context: TenantContext, projectId: string) {
   return project
 }
 
+async function findTaskForAccess(context: TenantContext, taskId: string) {
+  const task = await prisma.projectTask.findFirst({
+    where: {
+      id: taskId,
+      project: {
+        organizationId: context.organizationId,
+        OR: [
+          { ownerUserId: context.userId },
+          { shares: { some: { userId: context.userId } } },
+        ],
+      },
+    },
+    select: {
+      id: true,
+      assignedUserId: true,
+      project: {
+        select: {
+          id: true,
+          ownerUserId: true,
+          shares: {
+            where: { userId: context.userId },
+            select: { role: true },
+            take: 1,
+          },
+        },
+      },
+    },
+  })
+
+  if (!task) {
+    throw new Error('Project task not found.')
+  }
+
+  return task
+}
+
+async function normalizeTaskAssignee(
+  context: TenantContext,
+  projectId: string,
+  ownerUserId: string,
+  assignedUserIdValue: string | undefined,
+) {
+  const assignedUserId = assignedUserIdValue?.trim()
+  if (!assignedUserId) return null
+  if (assignedUserId === ownerUserId) return assignedUserId
+
+  const share = await prisma.projectShare.findFirst({
+    where: {
+      projectId,
+      userId: assignedUserId,
+      project: { organizationId: context.organizationId },
+    },
+    select: { id: true },
+  })
+
+  if (!share) {
+    throw new Error('Task assignee must have project access.')
+  }
+
+  return assignedUserId
+}
+
 function serializeProject(project: ProjectWithAccess, currentUserId: string): ProjectView {
   const currentShare = project.shares.find((share) => share.userId === currentUserId)
 
@@ -390,6 +586,14 @@ function serializeProject(project: ProjectWithAccess, currentUserId: string): Pr
         role: share.role,
       }))
       : [],
+    tasks: project.tasks.map((task) => ({
+      id: task.id,
+      title: task.title,
+      status: task.status,
+      dueDate: task.dueDate?.toISOString() ?? null,
+      assignedUserId: task.assignedUserId,
+      assignedUserEmail: task.assignedUser?.email ?? null,
+    })),
   }
 }
 
@@ -412,6 +616,13 @@ function normalizeProjectDescription(value: string | undefined) {
   if (!description) return null
   if (description.length > 500) throw new Error('Project description must be 500 characters or less.')
   return description
+}
+
+function normalizeTaskTitle(value: string) {
+  const title = value.trim()
+  if (!title) throw new Error('Project task title is required.')
+  if (title.length > 160) throw new Error('Project task title must be 160 characters or less.')
+  return title
 }
 
 function normalizeProjectDates(startValue: string | undefined, endValue: string | undefined) {
@@ -455,6 +666,14 @@ function normalizeProjectShareRole(value: unknown): ProjectShareRole {
   }
 
   return value as ProjectShareRole
+}
+
+function normalizeProjectTaskStatus(value: unknown): ProjectTaskStatus {
+  if (!projectTaskStatuses.includes(value as ProjectTaskStatus)) {
+    throw new Error('Project task status is invalid.')
+  }
+
+  return value as ProjectTaskStatus
 }
 
 function normalizeId(value: string, errorMessage: string) {

@@ -1,5 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createProject, loadProjects, shareProject, updateProjectDuration, updateProjectStatus } from '@/app/actions/projects'
+import {
+  createProject,
+  createProjectTask,
+  loadProjects,
+  shareProject,
+  updateProjectDuration,
+  updateProjectStatus,
+  updateProjectTaskStatus,
+} from '@/app/actions/projects'
 
 const prismaMock = vi.hoisted(() => ({
   project: {
@@ -12,6 +20,12 @@ const prismaMock = vi.hoisted(() => ({
     delete: vi.fn(),
     findFirst: vi.fn(),
     upsert: vi.fn(),
+  },
+  projectTask: {
+    create: vi.fn(),
+    delete: vi.fn(),
+    findFirst: vi.fn(),
+    update: vi.fn(),
   },
   membership: {
     findFirst: vi.fn(),
@@ -55,6 +69,14 @@ describe('project server actions', () => {
     prismaMock.project.findFirst.mockResolvedValue({ id: 'project-1', ownerUserId: 'user-1', shares: [] })
     prismaMock.project.update.mockResolvedValue({ id: 'project-1' })
     prismaMock.projectShare.upsert.mockResolvedValue({ id: 'share-1' })
+    prismaMock.projectShare.findFirst.mockResolvedValue({ id: 'share-1' })
+    prismaMock.projectTask.create.mockResolvedValue({ id: 'task-1' })
+    prismaMock.projectTask.findFirst.mockResolvedValue({
+      id: 'task-1',
+      assignedUserId: 'user-2',
+      project: { id: 'project-1', ownerUserId: 'owner-1', shares: [{ role: 'viewer' }] },
+    })
+    prismaMock.projectTask.update.mockResolvedValue({ id: 'task-1' })
     prismaMock.membership.findMany.mockResolvedValue([])
     prismaMock.membership.findFirst.mockResolvedValue({
       id: 'membership-2',
@@ -124,6 +146,7 @@ describe('project server actions', () => {
       id: 'shared-project',
       currentUserRole: 'editor',
       shares: [],
+      tasks: [],
     })
     expect(data.teammates).toEqual([
       { userId: 'user-2', email: 'teammate@store.com', membershipRole: 'editor' },
@@ -203,6 +226,66 @@ describe('project server actions', () => {
 
     expect(viewerResult).toEqual({ ok: false, error: 'Project editor access is required.' })
   })
+
+  it('creates project tasks only when the assignee has project access', async () => {
+    prismaMock.project.findFirst.mockResolvedValueOnce({
+      id: 'project-1',
+      ownerUserId: 'user-1',
+      shares: [],
+    })
+
+    const result = await createProjectTask({
+      projectId: 'project-1',
+      title: '  Follow up VIP buyers  ',
+      assignedUserId: 'user-2',
+      dueDate: '2026-05-20',
+    })
+
+    expect(result).toEqual({ ok: true, message: 'Project task created.' })
+    expect(prismaMock.projectTask.create).toHaveBeenCalledWith({
+      data: {
+        projectId: 'project-1',
+        title: 'Follow up VIP buyers',
+        assignedUserId: 'user-2',
+        dueDate: new Date('2026-05-20T00:00:00.000Z'),
+      },
+      select: { id: true },
+    })
+
+    prismaMock.projectShare.findFirst.mockResolvedValueOnce(null)
+    const blockedResult = await createProjectTask({
+      projectId: 'project-1',
+      title: 'Blocked assignee',
+      assignedUserId: 'outside-user',
+    })
+
+    expect(blockedResult).toEqual({ ok: false, error: 'Task assignee must have project access.' })
+  })
+
+  it('lets assigned viewers update their own task status', async () => {
+    prismaMock.projectTask.findFirst.mockResolvedValueOnce({
+      id: 'task-1',
+      assignedUserId: 'user-1',
+      project: { id: 'project-1', ownerUserId: 'owner-1', shares: [{ role: 'viewer' }] },
+    })
+
+    const result = await updateProjectTaskStatus({ taskId: 'task-1', status: 'done' })
+
+    expect(result).toEqual({ ok: true, message: 'Project task updated.' })
+    expect(prismaMock.projectTask.update).toHaveBeenCalledWith({
+      where: { id: 'task-1' },
+      data: { status: 'done' },
+    })
+
+    prismaMock.projectTask.findFirst.mockResolvedValueOnce({
+      id: 'task-2',
+      assignedUserId: 'user-2',
+      project: { id: 'project-1', ownerUserId: 'owner-1', shares: [{ role: 'viewer' }] },
+    })
+
+    const blockedResult = await updateProjectTaskStatus({ taskId: 'task-2', status: 'done' })
+    expect(blockedResult).toEqual({ ok: false, error: 'Task assignee or project editor access is required.' })
+  })
 })
 
 function projectRecord(overrides: Record<string, unknown>) {
@@ -219,6 +302,7 @@ function projectRecord(overrides: Record<string, unknown>) {
     ownerUserId: 'user-1',
     owner: { id: 'user-1', email: 'owner@store.com' },
     shares: [],
+    tasks: [],
     ...overrides,
   }
 }
