@@ -15,10 +15,10 @@ describe('billing plans', () => {
     expect(planCatalog.enterprise.priceMonthlyThb).toBeNull()
   })
 
-  it('starts self-serve plans with a free trial', () => {
-    expect(planCatalog.starter.trialDays).toBe(14)
-    expect(planCatalog.growth.trialDays).toBe(14)
-    expect(planCatalog.scale.trialDays).toBe(14)
+  it('limits free trial to the default growth plan', () => {
+    expect(planCatalog.starter.trialDays).toBe(0)
+    expect(planCatalog.growth.trialDays).toBe(7)
+    expect(planCatalog.scale.trialDays).toBe(0)
     expect(planCatalog.enterprise.trialDays).toBe(0)
   })
 

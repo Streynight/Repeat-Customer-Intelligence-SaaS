@@ -15,8 +15,8 @@ export function parseBillingCheckoutPlan(value: string | null): BillingCheckoutP
 
 export function billingCheckoutTrialDays(plan: BillingCheckoutPlan) {
   const trialDays = planCatalog[plan].trialDays
-  if (!Number.isInteger(trialDays) || trialDays < 1) {
-    throw new Error(`Free trial is not configured for ${plan}.`)
+  if (!Number.isInteger(trialDays) || trialDays < 0) {
+    throw new Error(`Free trial days are not valid for ${plan}.`)
   }
 
   return trialDays
@@ -45,7 +45,8 @@ export async function createBillingCheckoutForTenant(context: TenantContext, pla
     },
   })
   const customerId = subscription.stripeCustomerId ?? await createStripeCustomer(context.organizationId, context.email)
-  const trialDays = subscription.stripeSubscriptionId ? null : billingCheckoutTrialDays(plan)
+  const configuredTrialDays = billingCheckoutTrialDays(plan)
+  const trialDays = !subscription.stripeSubscriptionId && configuredTrialDays > 0 ? configuredTrialDays : null
   if (!subscription.stripeCustomerId) {
     await prisma.billingSubscription.update({
       where: { organizationId: context.organizationId },

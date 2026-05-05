@@ -12,8 +12,8 @@ describe('billing checkout helpers', () => {
   })
 
   it('uses the configured free trial for self-serve checkout plans', () => {
-    expect(billingCheckoutTrialDays('starter')).toBe(14)
-    expect(billingCheckoutTrialDays('growth')).toBe(14)
-    expect(billingCheckoutTrialDays('scale')).toBe(14)
+    expect(billingCheckoutTrialDays('starter')).toBe(0)
+    expect(billingCheckoutTrialDays('growth')).toBe(7)
+    expect(billingCheckoutTrialDays('scale')).toBe(0)
   })
 })

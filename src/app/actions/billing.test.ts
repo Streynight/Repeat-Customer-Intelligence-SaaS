@@ -70,9 +70,9 @@ describe('billing server actions', () => {
       hasStripeCustomer: true,
     })
     expect(overview.plans.map((plan) => [plan.id, plan.priceMonthlyThb, plan.trialDays])).toEqual([
-      ['starter', 1_790, 14],
-      ['growth', 5_390, 14],
-      ['scale', 12_900, 14],
+      ['starter', 1_790, 0],
+      ['growth', 5_390, 7],
+      ['scale', 12_900, 0],
       ['enterprise', null, 0],
     ])
     expect(prismaMock.billingSubscription.update).toHaveBeenCalledWith({

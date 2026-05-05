@@ -423,6 +423,7 @@ function BillingPanel({
         {billing.plans.map((plan) => {
           const isCurrent = plan.id === billing.current.plan
           const checkoutPlan: BillingCheckoutPlan | null = isCheckoutPlan(plan.id) ? plan.id : null
+          const hasTrial = plan.trialDays > 0
 
           return (
             <Card key={plan.id} className={isCurrent ? 'border-primary/40 bg-primary/5' : undefined}>
@@ -438,7 +439,7 @@ function BillingPanel({
                   {plan.priceMonthlyThb === null ? t('Custom') : formatThb(plan.priceMonthlyThb)}
                   {plan.priceMonthlyThb === null ? null : <span className="text-sm font-semibold text-muted-foreground">/{t('mo')}</span>}
                 </p>
-                {plan.trialDays > 0 ? (
+                {hasTrial ? (
                   <p className="pt-1 text-sm font-semibold text-primary">{t(trialLabel(plan.trialDays))}</p>
                 ) : null}
               </CardHeader>
@@ -467,7 +468,7 @@ function BillingPanel({
                     disabled={billingAction === plan.id}
                     onClick={() => onCheckout(checkoutPlan)}
                   >
-                    {billingAction === plan.id ? t('Opening...') : isCurrent ? t('Update checkout') : t('Start free trial')}
+                    {billingAction === plan.id ? t('Opening...') : isCurrent ? t('Update checkout') : t(hasTrial ? 'Start free trial' : 'Start paid plan')}
                   </Button>
                 ) : (
                   <Button type="button" className="w-full" variant="outline" disabled>

@@ -54,7 +54,7 @@ export default async function PricingPage({
             <LocalizedText text="Turn repeat customer data into paid work." />
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
-            <LocalizedText text="Customers start with a 14-day free trial through Stripe Checkout. Billing starts after the trial unless they cancel." />
+            <LocalizedText text="Start with a 7-day Growth trial through Stripe Checkout, or choose a paid plan when you already know your volume." />
           </p>
         </div>
 
@@ -82,7 +82,7 @@ export default async function PricingPage({
             </div>
             <h2 className="mt-4 text-lg font-semibold"><LocalizedText text="Trial before billing" /></h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              <LocalizedText text="Stripe Checkout starts the trial with customer consent. Billing begins after the trial unless the customer cancels in Stripe." />
+              <LocalizedText text="Growth includes a short trial for real import testing. Starter and Scale use paid checkout to keep production capacity controlled." />
             </p>
           </div>
         </section>
@@ -93,6 +93,7 @@ export default async function PricingPage({
 
 function PlanCard({ plan, featured }: { plan: BillingCheckoutPlan; featured?: boolean }) {
   const entry = planCatalog[plan]
+  const hasTrial = entry.trialDays > 0
 
   return (
     <Card className={cn(featured && 'border-primary/50 shadow-primary/10')}>
@@ -110,7 +111,7 @@ function PlanCard({ plan, featured }: { plan: BillingCheckoutPlan; featured?: bo
           <span className="text-3xl font-semibold tracking-tight">{formatThb(entry.priceMonthlyThb)}</span>
           <span className="ml-1 text-sm text-muted-foreground">/<LocalizedText text="mo" /></span>
         </div>
-        {entry.trialDays > 0 ? (
+        {hasTrial ? (
           <p className="mt-2 text-sm font-semibold text-primary">
             <LocalizedText text={trialLabel(entry.trialDays)} />
           </p>
@@ -131,7 +132,7 @@ function PlanCard({ plan, featured }: { plan: BillingCheckoutPlan; featured?: bo
         </ul>
         <Button asChild className="mt-6 w-full font-semibold">
           <Link href={checkoutHref(plan)}>
-            <LocalizedText text="Start free trial" />
+            <LocalizedText text={hasTrial ? 'Start free trial' : 'Start paid plan'} />
             <ArrowRight className="size-4" />
           </Link>
         </Button>

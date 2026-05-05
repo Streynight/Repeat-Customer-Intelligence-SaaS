@@ -75,6 +75,8 @@ const thaiCopy: Record<string, string> = {
     'ลูกค้าเลือกแพ็กเกจ สร้างบัญชี และเข้า Stripe checkout ได้เองโดยไม่ต้องคุย sales',
   'Customers start with a 14-day free trial through Stripe Checkout. Billing starts after the trial unless they cancel.':
     'ลูกค้าเริ่มด้วยทดลองใช้ฟรี 14 วันผ่าน Stripe Checkout และระบบจะเริ่มคิดเงินหลังหมด trial ถ้าไม่ยกเลิก',
+  'Start with a 7-day Growth trial through Stripe Checkout, or choose a paid plan when you already know your volume.':
+    'เริ่มด้วย Growth trial 7 วันผ่าน Stripe Checkout หรือเลือกแพ็กเกจจ่ายเงินได้เลยเมื่อรู้ volume ของตัวเองแล้ว',
   'What customers pay for': 'สิ่งที่ลูกค้าจ่ายเงินซื้อ',
   'See who buys again and which channel keeps value.': 'เห็นว่าใครซื้อซ้ำและช่องทางไหนรักษามูลค่าไว้ได้',
   'Clean imports': 'นำเข้าไฟล์ให้สะอาด',
@@ -89,10 +91,14 @@ const thaiCopy: Record<string, string> = {
   'Trial before billing': 'ทดลองก่อนเริ่มคิดเงิน',
   'Stripe Checkout starts the trial with customer consent. Billing begins after the trial unless the customer cancels in Stripe.':
     'Stripe Checkout เริ่ม trial ด้วยการยืนยันจากลูกค้า และจะเริ่มคิดเงินหลังหมด trial ถ้าลูกค้าไม่ยกเลิกใน Stripe',
+  'Growth includes a short trial for real import testing. Starter and Scale use paid checkout to keep production capacity controlled.':
+    'Growth มี trial สั้นสำหรับทดสอบ import จริง ส่วน Starter และ Scale ใช้ paid checkout เพื่อคุม capacity production',
   'Best default': 'ค่าเริ่มต้นที่เหมาะสุด',
   'Start checkout': 'เริ่ม checkout',
   'Start free trial': 'เริ่มทดลองใช้ฟรี',
+  'Start paid plan': 'เริ่มแพ็กเกจจ่ายเงิน',
   '14-day free trial': 'ทดลองใช้ฟรี 14 วัน',
+  '7-day free trial': 'ทดลองใช้ฟรี 7 วัน',
   'Team seats': 'ที่นั่งทีม',
   'Checkout was cancelled. Choose a plan when ready.': 'Checkout ถูกยกเลิก เลือกแพ็กเกจใหม่ได้เมื่อพร้อม',
   'Choose a valid self-serve plan.': 'เลือกแพ็กเกจ self-serve ที่ถูกต้อง',
