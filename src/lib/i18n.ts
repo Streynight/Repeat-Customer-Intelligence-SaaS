@@ -764,6 +764,7 @@ const thaiCopy: Record<string, string> = {
   'This invitation has already been accepted.': 'คำเชิญนี้ถูกตอบรับแล้ว',
   'Sign in or create an account with the invited email to accept this invite.':
     'เข้าสู่ระบบหรือสร้างบัญชีด้วยอีเมลที่ถูกเชิญเพื่อรับคำเชิญนี้',
+  'Sign in with invited email': 'เข้าสู่ระบบด้วยอีเมลที่ถูกเชิญ',
   'Accept invitation': 'รับคำเชิญ',
   Ingestion: 'Ingestion',
   'Recent failed jobs.': 'งานล่าสุดที่ล้มเหลว',

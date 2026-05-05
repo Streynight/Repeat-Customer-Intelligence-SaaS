@@ -87,10 +87,15 @@ export default async function TeamInvitePage({
           ) : null}
 
           {invitation.status === 'pending' && invitation.signedInEmail && invitation.signedInEmail !== invitation.email ? (
-            <InviteAlert
-              variant="destructive"
-              text={`This invitation was sent to ${invitation.email}. Sign in with that email to accept it.`}
-            />
+            <div className="grid gap-3">
+              <InviteAlert
+                variant="destructive"
+                text={`This invitation was sent to ${invitation.email}. Sign in with that email to accept it.`}
+              />
+              <Button asChild>
+                <Link href={`/login${authQuery}`}><LocalizedText text="Sign in with invited email" /></Link>
+              </Button>
+            </div>
           ) : null}
 
           {invitation.status === 'pending' && invitation.signedInEmail === invitation.email ? (
