@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { BarChart3, BookOpenCheck, CalendarDays, CircleDollarSign, LineChart, LogOut, Menu, Settings, ShieldCheck, Upload, Users } from 'lucide-react'
+import { BarChart3, BookOpenCheck, CalendarDays, CircleDollarSign, FolderKanban, LineChart, LogOut, Menu, Settings, ShieldCheck, Upload, Users } from 'lucide-react'
 import { BrandLogo } from '@/components/brand-logo'
 import { LanguageSwitcher } from '@/components/language-switcher'
 import { Button } from '@/components/ui/button'
@@ -25,6 +25,7 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: BarChart3 },
   { href: '/analytics', label: 'Analytics', icon: LineChart },
   { href: '/income', label: 'Income', icon: CircleDollarSign },
+  { href: '/projects', label: 'Projects', icon: FolderKanban },
   { href: '/calendar', label: 'Calendar', icon: CalendarDays },
   { href: '/imports', label: 'Imports', icon: Upload },
   { href: '/customers', label: 'Customers', icon: Users },

@@ -44,6 +44,8 @@ function hasCurrentSchemaDelegates(client: PrismaClient) {
       delegates.organization &&
       delegates.workspace &&
       delegates.membership &&
+      delegates.project &&
+      delegates.projectShare &&
       delegates.auditLog,
   )
 }
