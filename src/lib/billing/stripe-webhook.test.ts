@@ -29,7 +29,8 @@ describe('stripe webhook billing sync', () => {
       update: expect.objectContaining({
         stripeCustomerId: 'cus_123',
         plan: 'scale',
-        monthlyOrderLimit: 1_000_000,
+        monthlyOrderLimit: 100_000,
+        databaseStorageMbLimit: 10_240,
       }),
     }))
     expect(result).toEqual({ action: 'checkout_synced', organizationId: 'org_123', plan: 'scale' })
@@ -56,6 +57,7 @@ describe('stripe webhook billing sync', () => {
         status: 'active',
         plan: 'growth',
         workspaceLimit: 3,
+        databaseStorageMbLimit: 2_048,
       }),
     }))
     expect(result).toEqual({

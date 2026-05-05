@@ -24,6 +24,7 @@ export async function syncCheckoutSessionToBilling(
       plan,
       monthlyOrderLimit: planLimits[plan].monthlyOrders,
       workspaceLimit: planLimits[plan].workspaces,
+      databaseStorageMbLimit: planLimits[plan].databaseStorageMb,
     },
     create: {
       organizationId,
@@ -31,6 +32,7 @@ export async function syncCheckoutSessionToBilling(
       plan,
       monthlyOrderLimit: planLimits[plan].monthlyOrders,
       workspaceLimit: planLimits[plan].workspaces,
+      databaseStorageMbLimit: planLimits[plan].databaseStorageMb,
     },
   })
 
@@ -53,6 +55,7 @@ export async function syncSubscriptionToBilling(
       plan,
       monthlyOrderLimit: planLimits[plan].monthlyOrders,
       workspaceLimit: planLimits[plan].workspaces,
+      databaseStorageMbLimit: planLimits[plan].databaseStorageMb,
       currentPeriodEnd: currentPeriodEnd ? new Date(currentPeriodEnd * 1000) : null,
     },
   })

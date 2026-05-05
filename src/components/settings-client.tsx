@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useMemo, useState, type ReactNode } from 'react'
 import { AlertTriangle, ArrowUpRight, CheckCircle2, Database, RotateCcw, ShieldAlert, SlidersHorizontal, UploadCloud, Users } from 'lucide-react'
+import { createBillingCheckout, createBillingPortal, type BillingCheckoutPlan, type BillingOverview } from '@/app/actions/billing'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -31,7 +32,7 @@ const dataSourceDetails: Record<DatasetSource, string> = {
   disconnected: 'Connect Supabase before importing production customer data.',
 }
 
-export function SettingsClient() {
+export function SettingsClient({ billing }: { billing?: BillingOverview }) {
   const t = useText()
   const { dataset, loading, dataSource, updateVipThreshold, clearDataset } = useIntelligenceDataset()
   const [clearing, setClearing] = useState(false)
@@ -40,6 +41,8 @@ export function SettingsClient() {
   const [vipThresholdDraft, setVipThresholdDraft] = useState<string | null>(null)
   const [vipError, setVipError] = useState<string | null>(null)
   const [vipMessage, setVipMessage] = useState<string | null>(null)
+  const [billingAction, setBillingAction] = useState<string | null>(null)
+  const [billingError, setBillingError] = useState<string | null>(null)
   const today = useMemo(() => new Date(), [])
   const overview = useMemo(() => buildWorkspaceOverview(dataset), [dataset])
   const recommendedAction = useMemo(() => recommendedWorkspaceAction(dataset, overview.identityCoverage), [dataset, overview.identityCoverage])
@@ -85,6 +88,36 @@ export function SettingsClient() {
     }
   }
 
+  const startCheckout = async (plan: BillingCheckoutPlan) => {
+    setBillingAction(plan)
+    setBillingError(null)
+
+    const result = await createBillingCheckout(plan)
+    setBillingAction(null)
+
+    if (result.error || !result.url) {
+      setBillingError(result.error ?? t('Billing checkout did not return a URL.'))
+      return
+    }
+
+    window.location.assign(result.url)
+  }
+
+  const openBillingPortal = async () => {
+    setBillingAction('portal')
+    setBillingError(null)
+
+    const result = await createBillingPortal()
+    setBillingAction(null)
+
+    if (result.error || !result.url) {
+      setBillingError(result.error ?? t('Billing portal did not return a URL.'))
+      return
+    }
+
+    window.location.assign(result.url)
+  }
+
   if (loading) {
     return (
       <Card>
@@ -101,6 +134,7 @@ export function SettingsClient() {
       <TabsList className="h-auto flex-wrap justify-start bg-secondary/55">
         <TabsTrigger value="overview">{t('Overview')}</TabsTrigger>
         <TabsTrigger value="rules">{t('Rules')}</TabsTrigger>
+        {billing ? <TabsTrigger value="billing">{t('Billing')}</TabsTrigger> : null}
         <TabsTrigger value="operations">{t('Operations')}</TabsTrigger>
       </TabsList>
       <TabsContent value="overview" className="mt-4">
@@ -201,6 +235,17 @@ export function SettingsClient() {
           </CardContent>
         </Card>
       </TabsContent>
+      {billing ? (
+        <TabsContent value="billing" className="mt-4">
+          <BillingPanel
+            billing={billing}
+            billingAction={billingAction}
+            billingError={billingError}
+            onCheckout={(plan) => void startCheckout(plan)}
+            onOpenPortal={() => void openBillingPortal()}
+          />
+        </TabsContent>
+      ) : null}
       <TabsContent value="operations" className="mt-4">
         <Card className="border-primary/10 bg-card">
           <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start">
@@ -319,6 +364,145 @@ function countVipCustomersAtThreshold(customers: CustomerProfile[], vipThreshold
   return customers.filter((customer) => classifyCustomer(customer, vipThreshold, today) === 'VIP').length
 }
 
+function BillingPanel({
+  billing,
+  billingAction,
+  billingError,
+  onCheckout,
+  onOpenPortal,
+}: {
+  billing: BillingOverview
+  billingAction: string | null
+  billingError: string | null
+  onCheckout: (plan: BillingCheckoutPlan) => void
+  onOpenPortal: () => void
+}) {
+  const t = useText()
+  const orderPercent = percentageOfLimit(billing.current.monthlyOrderUsage, billing.current.monthlyOrderLimit)
+  const storagePercent = percentageOfLimit(billing.current.databaseStorageMbUsage, billing.current.databaseStorageMbLimit)
+
+  return (
+    <div className="space-y-4">
+      <Card className="border-primary/10 bg-card">
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <CardTitle>{t('Subscription and usage')}</CardTitle>
+            <CardDescription>{t('Market-adjusted pricing for repeat customer intelligence, imports, collaboration, and database storage.')}</CardDescription>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="secondary">{t('Current plan')}: {t(billing.current.plan)}</Badge>
+            <Badge variant="outline">{t(billing.current.status)}</Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="grid gap-4 lg:grid-cols-[1fr_1fr_auto]">
+          <UsageMeter
+            label={t('Monthly orders')}
+            value={`${billing.current.monthlyOrderUsage.toLocaleString()} / ${billing.current.monthlyOrderLimit.toLocaleString()}`}
+            percent={orderPercent}
+          />
+          <UsageMeter
+            label={t('Database storage')}
+            value={`${formatStorageMb(billing.current.databaseStorageMbUsage)} / ${formatStorageMb(billing.current.databaseStorageMbLimit)}`}
+            percent={storagePercent}
+          />
+          <div className="flex items-end">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!billing.current.hasStripeCustomer || billingAction === 'portal'}
+              onClick={onOpenPortal}
+            >
+              {billingAction === 'portal' ? t('Opening...') : t('Manage billing')}
+            </Button>
+          </div>
+          {billingError ? <p role="alert" className="text-sm font-semibold text-destructive lg:col-span-3">{billingError}</p> : null}
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-4 xl:grid-cols-4">
+        {billing.plans.map((plan) => {
+          const isCurrent = plan.id === billing.current.plan
+          const checkoutPlan: BillingCheckoutPlan | null = isCheckoutPlan(plan.id) ? plan.id : null
+
+          return (
+            <Card key={plan.id} className={isCurrent ? 'border-primary/40 bg-primary/5' : undefined}>
+              <CardHeader>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <CardTitle>{t(plan.name)}</CardTitle>
+                    <CardDescription>{t(plan.positioning)}</CardDescription>
+                  </div>
+                  {isCurrent ? <Badge>{t('Current')}</Badge> : null}
+                </div>
+                <p className="pt-2 text-3xl font-black tracking-tight">
+                  {plan.priceMonthlyThb === null ? t('Custom') : formatThb(plan.priceMonthlyThb)}
+                  {plan.priceMonthlyThb === null ? null : <span className="text-sm font-semibold text-muted-foreground">/{t('mo')}</span>}
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-2 text-sm">
+                  <PlanLimit label={t('Orders')} value={plan.monthlyOrders.toLocaleString()} />
+                  <PlanLimit label={t('DB storage')} value={formatStorageMb(plan.databaseStorageMb)} />
+                  <PlanLimit label={t('Users')} value={plan.users.toLocaleString()} />
+                  <PlanLimit label={t('Workspaces')} value={plan.workspaces.toLocaleString()} />
+                  <PlanLimit label={t('Integrations')} value={plan.nativeIntegrations.toLocaleString()} />
+                </div>
+                <Separator />
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex gap-2">
+                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
+                      <span>{t(feature)}</span>
+                    </li>
+                  ))}
+                </ul>
+                {checkoutPlan ? (
+                  <Button
+                    type="button"
+                    className="w-full"
+                    variant={isCurrent ? 'outline' : 'default'}
+                    disabled={billingAction === plan.id}
+                    onClick={() => onCheckout(checkoutPlan)}
+                  >
+                    {billingAction === plan.id ? t('Opening...') : isCurrent ? t('Update checkout') : t('Choose plan')}
+                  </Button>
+                ) : (
+                  <Button type="button" className="w-full" variant="outline" disabled>
+                    {t('Contact for enterprise')}
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function UsageMeter({ label, value, percent }: { label: string; value: string; percent: number }) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <span className="font-semibold">{label}</span>
+        <span className="text-muted-foreground">{value}</span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-muted">
+        <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, percent)}%` }} />
+      </div>
+    </div>
+  )
+}
+
+function PlanLimit({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-semibold">{value}</span>
+    </div>
+  )
+}
+
 function StatTile({
   label,
   value,
@@ -415,4 +599,30 @@ function RulePill({ label, detail }: { label: string; detail: string }) {
       <p className="mt-1 text-xs leading-5 text-muted-foreground">{t(detail)}</p>
     </div>
   )
+}
+
+function isCheckoutPlan(plan: BillingOverview['plans'][number]['id']): plan is BillingCheckoutPlan {
+  return plan !== 'enterprise'
+}
+
+function percentageOfLimit(usage: number, limit: number) {
+  if (limit <= 0) return 0
+  return Math.round((usage / limit) * 100)
+}
+
+function formatStorageMb(value: number) {
+  if (value >= 1024) {
+    const gb = value / 1024
+    return `${Number.isInteger(gb) ? gb.toFixed(0) : gb.toFixed(1)} GB`
+  }
+
+  return `${value} MB`
+}
+
+function formatThb(value: number) {
+  return new Intl.NumberFormat('th-TH', {
+    style: 'currency',
+    currency: 'THB',
+    maximumFractionDigits: 0,
+  }).format(value)
 }

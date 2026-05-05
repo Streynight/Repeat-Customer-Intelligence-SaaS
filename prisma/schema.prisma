@@ -140,6 +140,8 @@ model BillingSubscription {
   monthlyOrderLimit    Int                 @default(10000) @map("monthly_order_limit")
   monthlyOrderUsage    Int                 @default(0) @map("monthly_order_usage")
   workspaceLimit       Int                 @default(1) @map("workspace_limit")
+  databaseStorageMbLimit Int               @default(512) @map("database_storage_mb_limit")
+  databaseStorageMbUsage Int               @default(0) @map("database_storage_mb_usage")
   createdAt            DateTime            @default(now()) @map("created_at")
   updatedAt            DateTime            @updatedAt @map("updated_at")
   organization         Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)

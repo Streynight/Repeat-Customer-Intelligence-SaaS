@@ -44,6 +44,8 @@ describe('billing enforcement', () => {
       status: 'active',
       monthlyOrderLimit: 10_000,
       monthlyOrderUsage: 100,
+      databaseStorageMbLimit: 512,
+      databaseStorageMbUsage: 12,
     })
     prismaMock.billingSubscription.updateMany.mockResolvedValue({ count: 1 })
     prismaMock.store.findFirst.mockResolvedValue({
@@ -59,6 +61,8 @@ describe('billing enforcement', () => {
       status: 'canceled',
       monthlyOrderLimit: 10_000,
       monthlyOrderUsage: 0,
+      databaseStorageMbLimit: 512,
+      databaseStorageMbUsage: 0,
     })
 
     await expect(requireBillableSubscription(context)).rejects.toThrow('Subscription is not active')
@@ -93,6 +97,8 @@ describe('billing enforcement', () => {
       status: 'active',
       monthlyOrderLimit: 10_000,
       monthlyOrderUsage: 9999,
+      databaseStorageMbLimit: 512,
+      databaseStorageMbUsage: 12,
     })
 
     await expect(reserveImportOrderUsage(context, 2)).rejects.toThrow('Monthly order limit reached')

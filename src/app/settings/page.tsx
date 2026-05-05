@@ -1,7 +1,23 @@
+import { redirect } from 'next/navigation'
+import { loadBillingOverview } from '@/app/actions/billing'
 import { SettingsClient } from '@/components/settings-client'
 import { AppShell, PageHeader } from '@/components/ui/app-shell'
 
-export default function SettingsPage() {
+export const dynamic = 'force-dynamic'
+
+export default async function SettingsPage() {
+  let billing: Awaited<ReturnType<typeof loadBillingOverview>>
+
+  try {
+    billing = await loadBillingOverview()
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Not authenticated') {
+      redirect('/login')
+    }
+
+    throw error
+  }
+
   return (
     <AppShell>
       <PageHeader
@@ -9,7 +25,7 @@ export default function SettingsPage() {
         title="Settings"
         description="Workspace status, classification controls, and safe production data operations."
       />
-      <SettingsClient />
+      <SettingsClient billing={billing} />
     </AppShell>
   )
 }

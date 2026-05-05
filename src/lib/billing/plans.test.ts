@@ -1,10 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { isWithinPlanLimit, planLimits, stripePriceEnvForPlan } from '@/lib/billing/plans'
+import { isWithinPlanLimit, planCatalog, planLimits, stripePriceEnvForPlan } from '@/lib/billing/plans'
 
 describe('billing plans', () => {
   it('defines paid plan limits for usage enforcement', () => {
     expect(planLimits.growth.monthlyOrders).toBeGreaterThan(planLimits.starter.monthlyOrders)
     expect(planLimits.scale.nativeIntegrations).toBeGreaterThanOrEqual(planLimits.growth.nativeIntegrations)
+    expect(planLimits.scale.databaseStorageMb).toBeGreaterThan(planLimits.growth.databaseStorageMb)
+  })
+
+  it('uses market-adjusted monthly pricing for self-serve plans', () => {
+    expect(planCatalog.starter.priceMonthlyThb).toBe(1_790)
+    expect(planCatalog.growth.priceMonthlyThb).toBe(5_390)
+    expect(planCatalog.scale.priceMonthlyThb).toBe(12_900)
+    expect(planCatalog.enterprise.priceMonthlyThb).toBeNull()
   })
 
   it('maps plans to Stripe price environment variables', () => {

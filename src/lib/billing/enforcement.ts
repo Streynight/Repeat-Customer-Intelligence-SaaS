@@ -10,6 +10,8 @@ type BillingSubscriptionSnapshot = {
   status: string
   monthlyOrderLimit: number
   monthlyOrderUsage: number
+  databaseStorageMbLimit: number
+  databaseStorageMbUsage: number
 }
 
 export async function reserveImportOrderUsage(context: TenantContext, orderCount: number) {
@@ -102,6 +104,8 @@ async function requireBillableSubscriptionForOrganization(organizationId: string
       status: true,
       monthlyOrderLimit: true,
       monthlyOrderUsage: true,
+      databaseStorageMbLimit: true,
+      databaseStorageMbUsage: true,
     },
   })
 
@@ -121,6 +125,8 @@ async function requireBillableSubscriptionForOrganization(organizationId: string
     status: subscription.status,
     monthlyOrderLimit: subscription.monthlyOrderLimit,
     monthlyOrderUsage: subscription.monthlyOrderUsage,
+    databaseStorageMbLimit: subscription.databaseStorageMbLimit,
+    databaseStorageMbUsage: subscription.databaseStorageMbUsage,
   }
 }
 
