@@ -1,8 +1,9 @@
-export type SourceChannel = 'shopee' | 'tiktok' | 'instagram' | 'facebook' | 'website' | 'csv'
+export type SourceChannel = 'shopee' | 'tiktok' | 'lazada' | 'instagram' | 'facebook' | 'website' | 'csv'
 
 export type CustomerStatus = 'New' | 'Repeat' | 'VIP' | 'AtRisk' | 'Lost'
 
 export type OrderItemInput = {
+  sku?: string
   productName: string
   quantity: number
   unitPrice: number
@@ -133,6 +134,7 @@ export type CsvSyncRunResult = {
 export const sourceChannels: SourceChannel[] = [
   'shopee',
   'tiktok',
+  'lazada',
   'instagram',
   'facebook',
   'website',
@@ -142,6 +144,7 @@ export const sourceChannels: SourceChannel[] = [
 export const channelLabels: Record<SourceChannel, string> = {
   shopee: 'Shopee',
   tiktok: 'TikTok Shop',
+  lazada: 'Lazada',
   instagram: 'Instagram',
   facebook: 'Facebook',
   website: 'Website',

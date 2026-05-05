@@ -43,6 +43,30 @@ function ActionsProbe({ useDataset }: { useDataset: () => UseDatasetResult }) {
   )
 }
 
+function ReclassificationProbe({ useDataset }: { useDataset: () => UseDatasetResult }) {
+  const { dataset, importOrders, updateVipThreshold } = useDataset()
+  const status = dataset.customers[0]?.customerStatus ?? 'none'
+
+  return (
+    <div>
+      <div data-testid="customer-status">{status}</div>
+      <button
+        type="button"
+        onClick={() => void importOrders([
+          makeOrder({ externalOrderId: 'VIP-1', orderDate: '2099-05-01T00:00:00.000Z', totalAmount: 2000 }),
+          makeOrder({ externalOrderId: 'VIP-2', orderDate: '2099-05-02T00:00:00.000Z', totalAmount: 2500 }),
+          makeOrder({ externalOrderId: 'VIP-3', orderDate: '2099-05-03T00:00:00.000Z', totalAmount: 2500 }),
+        ], 'vip-orders.csv', 'shopee')}
+      >
+        import vip
+      </button>
+      <button type="button" onClick={() => updateVipThreshold(9000)}>
+        raise threshold
+      </button>
+    </div>
+  )
+}
+
 describe('useIntelligenceDataset clean workspace defaults', () => {
   afterEach(() => {
     vi.resetModules()
@@ -186,6 +210,32 @@ describe('useIntelligenceDataset clean workspace defaults', () => {
     fireEvent.click(screen.getByRole('button', { name: 'clear' }))
     await waitFor(() => expect(screen.getByTestId('first')).toHaveTextContent('ready:0:0:0:9000'))
     expect(screen.getByTestId('second')).toHaveTextContent('ready:0:0:0:9000')
+  })
+
+  it('reclassifies loaded customers when the VIP threshold changes', async () => {
+    installLocalStorageMock()
+    vi.stubEnv('NEXT_PUBLIC_APP_URL', 'http://localhost:3000')
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://example.supabase.co')
+    vi.stubEnv('NEXT_PUBLIC_ALLOW_LOCAL_DEMO_MODE', 'true')
+    vi.doMock('@/app/actions/dataset', () => ({
+      clearCurrentDataset: vi.fn(),
+      ensureUserStore: vi.fn(),
+      importCurrentOrders: vi.fn(),
+      loadCurrentDataset: vi.fn(),
+    }))
+    vi.doMock('@/lib/supabase/client', () => ({
+      createClient: vi.fn(),
+    }))
+
+    const { useIntelligenceDataset } = await import('@/components/hooks/use-intelligence-dataset')
+
+    render(<ReclassificationProbe useDataset={useIntelligenceDataset} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'import vip' }))
+    await waitFor(() => expect(screen.getByTestId('customer-status')).toHaveTextContent('VIP'))
+
+    fireEvent.click(screen.getByRole('button', { name: 'raise threshold' }))
+    await waitFor(() => expect(screen.getByTestId('customer-status')).toHaveTextContent('Repeat'))
   })
 
   it('imports production orders through a server-owned command instead of sending a full dataset', async () => {

@@ -34,6 +34,13 @@ describe('ImportClient', () => {
     expect(screen.getByText('Valid rows')).toBeInTheDocument()
   })
 
+  it('offers marketplace source presets including Lazada', () => {
+    render(<ImportClient />)
+
+    expect(screen.getByRole('combobox', { name: 'Import source' })).toHaveTextContent('Shopee')
+    expect(screen.getByText('Lazada sample')).toBeInTheDocument()
+  })
+
   it('shows a clean empty import history before any import', () => {
     mockDataset = makeDataset([])
     render(<ImportClient />)
@@ -50,6 +57,22 @@ describe('ImportClient', () => {
 
     expect(importOrders).toHaveBeenCalledTimes(1)
     expect(importOrders.mock.calls[0][0].length).toBeGreaterThan(0)
+  })
+
+  it('accepts PDF only as a preview warning and does not parse it as orders', async () => {
+    const user = userEvent.setup()
+    render(<ImportClient />)
+
+    const file = new File(['%PDF-1.4'], 'orders.pdf', { type: 'application/pdf' })
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
+
+    await user.upload(input, file)
+
+    expect(
+      screen.getAllByText('PDF preview only. Upload CSV or XLSX order data for repeat-customer analysis.'),
+    ).not.toHaveLength(0)
+    expect(screen.queryByText('Import preview')).not.toBeInTheDocument()
+    expect(importOrders).not.toHaveBeenCalled()
   })
 
   it('disables confirm import when required mappings are missing', async () => {

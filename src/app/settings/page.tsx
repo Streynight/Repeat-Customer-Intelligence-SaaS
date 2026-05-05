@@ -7,7 +7,7 @@ export default function SettingsPage() {
       <PageHeader
         eyebrow="Configuration"
         title="Settings"
-        description="Production settings for customer classification, tenant operations, and lifecycle automation."
+        description="Workspace status, classification controls, and safe production data operations."
       />
       <SettingsClient />
     </AppShell>

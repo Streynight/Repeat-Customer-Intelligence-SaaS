@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { AlertTriangle, CheckCircle2, Download, GitMerge, PlayCircle, UploadCloud } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Download, FileSpreadsheet, GitMerge, PlayCircle, UploadCloud } from 'lucide-react'
 import { ActivationCommandCenter } from '@/components/activation/activation-command-center'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -10,14 +10,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { TreeSprout } from '@/components/ui/tree-surfaces'
 import {
   analyzeImportRows,
   defaultMapping,
+  detectColumnMapping,
   parseCsv,
+  sheetRowsToRecords,
   rowsToOrders,
   type ColumnMapping,
   type ImportDiagnostics,
+  type ParsedImportRows,
+  type SheetCellValue,
 } from '@/lib/services/import-pipeline'
 import { downloadSampleCsv, sampleCsvTemplates, type SampleCsvTemplate } from '@/lib/sample-csv'
 import { useIntelligenceDataset } from '@/components/hooks/use-intelligence-dataset'
@@ -33,7 +36,7 @@ export function ImportClient() {
   const [rows, setRows] = useState<Array<Record<string, string>>>([])
   const [mapping, setMapping] = useState<ColumnMapping>(defaultMapping)
   const [errors, setErrors] = useState<string[]>([])
-  const [status, setStatus] = useState('Waiting for CSV')
+  const [status, setStatus] = useState('Waiting for order file')
   const diagnostics = useMemo<ImportDiagnostics | null>(
     () => rows.length > 0 ? analyzeImportRows(rows, sourceChannel, mapping, dataset) : null,
     [dataset, mapping, rows, sourceChannel],
@@ -42,20 +45,38 @@ export function ImportClient() {
 
   const readFile = async (file: File) => {
     setFileName(file.name)
-    setStatus('Parsing CSV')
-    const text = await file.text()
-    const parsed = parseCsv(text)
-    setFields(parsed.fields)
-    setRows(parsed.rows)
-    setErrors(parsed.errors)
-    setStatus(parsed.errors.length ? 'Needs mapping review' : 'Ready to preview')
+    setErrors([])
+
+    try {
+      const parsed = await parseImportFile(file)
+      const nextMapping = detectColumnMapping(parsed.fields, sourceChannel)
+      setFields(parsed.fields)
+      setRows(parsed.rows)
+      setMapping(nextMapping)
+      setErrors(parsed.errors)
+      setStatus(parsed.rows.length === 0 && parsed.errors.length ? parsed.errors[0] : parsed.errors.length ? 'Needs mapping review' : 'Ready to preview')
+    } catch (error) {
+      setFields([])
+      setRows([])
+      setMapping(defaultMapping)
+      setErrors([error instanceof Error ? error.message : 'Could not read this order file.'])
+      setStatus('Import blocked. Upload CSV or XLSX order data.')
+    }
+  }
+
+  const changeSourceChannel = (value: SourceChannel) => {
+    setSourceChannel(value)
+    if (fields.length > 0) {
+      setMapping(detectColumnMapping(fields, value))
+    }
   }
 
   const trySample = (template: SampleCsvTemplate) => {
     const parsed = parseCsv(template.csv)
+    const nextSourceChannel = template.id === 'custom' ? 'csv' : template.id
     setFileName(template.fileName)
-    setSourceChannel(template.id === 'custom' ? 'csv' : template.id)
-    setMapping(defaultMapping)
+    setSourceChannel(nextSourceChannel)
+    setMapping(detectColumnMapping(parsed.fields, nextSourceChannel))
     setFields(parsed.fields)
     setRows(parsed.rows)
     setErrors(parsed.errors)
@@ -80,6 +101,19 @@ export function ImportClient() {
     <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
       <div className="space-y-6">
         <Card className="border-primary/20 bg-card">
+          <div className="mb-4 grid gap-2 md:max-w-xs">
+            <Label htmlFor="import-source">{t('Import source')}</Label>
+            <Select value={sourceChannel} onValueChange={(value) => changeSourceChannel(value as SourceChannel)}>
+              <SelectTrigger id="import-source" aria-label={t('Import source')} className="bg-card">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {sourceChannels.map((channel) => (
+                  <SelectItem key={channel} value={channel}>{t(channelLabels[channel])}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <label
             className="tree-tactile flex min-h-56 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-primary/25 bg-secondary/25 p-8 text-center hover:border-primary/45 hover:bg-secondary/40 hover:shadow-md focus-within:ring-3 focus-within:ring-ring/45"
             onDragOver={(event) => event.preventDefault()}
@@ -92,15 +126,15 @@ export function ImportClient() {
             <input
               className="sr-only"
               type="file"
-              accept=".csv,text/csv"
+              accept=".csv,.xlsx,.pdf,text/csv,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               onChange={(event) => event.target.files?.[0] && void readFile(event.target.files[0])}
             />
-            <TreeSprout className="size-12" />
-            <h2 className="mt-4 text-xl font-semibold">{t('Upload order CSV')}</h2>
-            <p className="mt-2 max-w-lg text-sm leading-6 text-muted-foreground">{t('Drop one real shop export to build profiles, repeat paths, income, and calendar timing.')}</p>
+            <FileSpreadsheet className="size-12 rounded-xl border border-primary/15 bg-primary/10 p-2 text-primary" />
+            <h2 className="mt-4 text-xl font-semibold">{t('Upload marketplace order file')}</h2>
+            <p className="mt-2 max-w-lg text-sm leading-6 text-muted-foreground">{t('Upload order files from Shopee, TikTok, Lazada, or CSV. RepeatTree cleans the file before building repeat-customer intelligence.')}</p>
             <span className="mt-5 inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-primary px-2.5 text-sm font-bold text-primary-foreground">
               <UploadCloud size={15} />
-              {t('Choose CSV')}
+              {t('Choose CSV or XLSX')}
             </span>
           </label>
         </Card>
@@ -108,12 +142,12 @@ export function ImportClient() {
         <Card>
           <CardHeader className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
-              <CardTitle>{t('Try sample CSVs')}</CardTitle>
+              <CardTitle>{t('Try platform templates')}</CardTitle>
               <CardDescription className="mt-1 max-w-2xl leading-6">
-                {t('Use these merchant-style files only for local validation before connecting native commerce integrations.')}
+                {t('Start with a marketplace preset, then upload the real export without editing columns first.')}
               </CardDescription>
             </div>
-            <Badge variant="secondary">{t('Fallback import')}</Badge>
+            <Badge variant="secondary">{t('Marketplace import')}</Badge>
           </CardHeader>
           <CardContent className="grid gap-3 lg:grid-cols-3">
             {sampleCsvTemplates.map((template) => (
@@ -140,9 +174,9 @@ export function ImportClient() {
             <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <h2 className="text-lg font-black">{t('Column mapping')}</h2>
-                <p className="text-sm text-muted-foreground">{t('Map your CSV columns before confirming import. Required: order ID, customer name, order date, and total amount.')}</p>
+                <p className="text-sm text-muted-foreground">{t('RepeatTree auto-maps known marketplace columns. Review only the fields that look wrong.')}</p>
               </div>
-              <Select value={sourceChannel} onValueChange={(value) => setSourceChannel(value as SourceChannel)}>
+              <Select value={sourceChannel} onValueChange={(value) => changeSourceChannel(value as SourceChannel)}>
                 <SelectTrigger aria-label={t('Source channel')} className="bg-card">
                   <SelectValue />
                 </SelectTrigger>
@@ -232,7 +266,7 @@ export function ImportClient() {
               {t('Best test file: 20-50 orders with repeat buyers, phone or email columns, order dates, total amounts, and product names.')}
             </p>
             <p>
-              {t('Supported source labels: Shopee, TikTok Shop, Instagram, Facebook, Website, and Custom CSV.')}
+              {t('Supported uploads: CSV and XLSX. PDF is accepted only as a preview warning because report PDFs are not raw order data.')}
             </p>
             <p className="rounded-lg bg-primary/10 p-3 text-primary">
               {t('Privacy note: imported order data is saved to your Supabase Postgres database and persists across sessions. New accounts stay empty until you import or intentionally try a sample CSV.')}
@@ -272,6 +306,30 @@ export function ImportClient() {
       </div>
     </div>
   )
+}
+
+async function parseImportFile(file: File): Promise<ParsedImportRows> {
+  const fileName = file.name.toLowerCase()
+
+  if (file.type === 'application/pdf' || fileName.endsWith('.pdf')) {
+    return {
+      fields: [],
+      rows: [],
+      errors: ['PDF preview only. Upload CSV or XLSX order data for repeat-customer analysis.'],
+    }
+  }
+
+  if (fileName.endsWith('.xlsx')) {
+    const { readSheet } = await import('read-excel-file/browser')
+    const sheetRows = await readSheet(file)
+    return sheetRowsToRecords(sheetRows as SheetCellValue[][])
+  }
+
+  if (fileName.endsWith('.csv') || file.type === 'text/csv') {
+    return parseCsv(await file.text())
+  }
+
+  throw new Error('Unsupported file type. Upload CSV, XLSX, or PDF preview files.')
 }
 
 function ImportDiagnosticsPanel({ diagnostics }: { diagnostics: ImportDiagnostics }) {

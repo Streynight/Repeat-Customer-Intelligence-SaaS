@@ -18,6 +18,7 @@ const thaiCopy: Record<string, string> = {
   Dashboard: 'แดชบอร์ด',
   'Deep retention analytics': 'วิเคราะห์ลูกค้าเชิงลึก',
   'Import multi-channel orders': 'นำเข้าออเดอร์หลายช่องทาง',
+  'Marketplace import': 'นำเข้าไฟล์ marketplace',
   Imports: 'นำเข้า',
   Income: 'รายได้',
   'Income and VAT': 'รายได้และ VAT',
@@ -53,6 +54,8 @@ const thaiCopy: Record<string, string> = {
     'เข้าใจในไม่กี่วินาทีว่าใครซื้อซ้ำ ใครคือ VIP หรือเสี่ยงหาย และช่องทางไหนสร้างรายได้ซื้อซ้ำ',
   'Upload marketplace and social commerce order exports, map columns, preview rows, and process customers through the identity engine.':
     'อัปโหลดไฟล์ออเดอร์จาก marketplace หรือ social commerce, map columns, preview rows และรวมลูกค้าผ่าน identity engine',
+  'Upload order files from Shopee, TikTok, Lazada, or CSV. RepeatTree cleans and maps the export before analysis.':
+    'อัปโหลดไฟล์ออเดอร์จาก Shopee, TikTok, Lazada หรือ CSV แล้ว RepeatTree จะ clean และ map ไฟล์ก่อนวิเคราะห์',
 
   'Repeat Customer Intelligence': 'ระบบวิเคราะห์ลูกค้าซื้อซ้ำ',
   'Operator-grade retention SaaS': 'Retention SaaS สำหรับทีมปฏิบัติการ',
@@ -143,6 +146,80 @@ const thaiCopy: Record<string, string> = {
     'Lifecycle triggers รองรับด้วย jobs, audit logs และ tenant permissions',
   'Automation events support churn alerts, VIP detection, repeat reminders, win-back triggers, and revenue anomaly workflows.':
     'Automation events รองรับ churn alerts, ตรวจ VIP, แจ้งเตือนซื้อซ้ำ, win-back triggers และ revenue anomaly workflows',
+  'Workspace status, classification controls, and safe production data operations.':
+    'สถานะ workspace, การตั้งค่าการจัดกลุ่มลูกค้า และการจัดการข้อมูล production อย่างปลอดภัย',
+  'Loading settings': 'กำลังโหลดการตั้งค่า',
+  'Checking workspace data source before showing controls.': 'กำลังตรวจแหล่งข้อมูล workspace ก่อนแสดง control',
+  'Workspace status': 'สถานะ workspace',
+  'Production workspace': 'Production workspace',
+  'Local demo storage': 'พื้นที่เก็บ local demo',
+  'No data source connected': 'ยังไม่ได้เชื่อมต่อแหล่งข้อมูล',
+  'Data is loaded from the tenant-scoped production store.': 'ข้อมูลโหลดจาก production store ที่แยกตาม tenant',
+  'Local demo mode is active. Do not use it for customer truth.':
+    'กำลังใช้ local demo mode อย่าใช้เป็นแหล่งข้อมูลจริงของลูกค้า',
+  'Connect Supabase before importing production customer data.': 'เชื่อมต่อ Supabase ก่อนนำเข้าข้อมูลลูกค้าระดับ production',
+  'Recommended next action': 'Action ถัดไปที่แนะนำ',
+  'known profiles': 'โปรไฟล์ที่รู้จัก',
+  threshold: 'เกณฑ์',
+  'Win-back queue': 'คิวดึงลูกค้ากลับ',
+  'At Risk or Lost': 'เสี่ยงหายหรือหายไปแล้ว',
+  'Identity coverage': 'ความครบถ้วนของตัวตน',
+  'profiles with email, phone, or LINE ID': 'โปรไฟล์ที่มีอีเมล เบอร์โทร หรือ LINE ID',
+  'Active channels': 'ช่องทางที่มีข้อมูล',
+  'No channel data': 'ยังไม่มีข้อมูลช่องทาง',
+  'Last import': 'การนำเข้าล่าสุด',
+  'Import orders to start': 'นำเข้าออเดอร์เพื่อเริ่ม',
+  'OK': 'ปกติ',
+  'Needs work': 'ต้องปรับ',
+  'Import first orders': 'นำเข้าออเดอร์แรก',
+  'Settings are most useful after the first real order import.':
+    'Settings จะมีประโยชน์ที่สุดหลังนำเข้าออเดอร์จริงครั้งแรก',
+  'Improve customer identity': 'ปรับตัวตนลูกค้าให้ครบขึ้น',
+  'Many profiles are missing email, phone, or LINE ID, so future merges may be weaker.':
+    'หลายโปรไฟล์ขาดอีเมล เบอร์โทร หรือ LINE ID ทำให้การ merge รอบถัดไปอาจอ่อนลง',
+  'At Risk and Lost customers are already visible from this workspace.':
+    'ลูกค้าเสี่ยงหายและหายไปแล้วพร้อมให้ตรวจจาก workspace นี้',
+  'More order history is needed before repeat and VIP work becomes useful.':
+    'ต้องมีประวัติออเดอร์เพิ่มก่อนที่งาน repeat และ VIP จะมีประโยชน์จริง',
+  'Open retention analytics': 'เปิด retention analytics',
+  'This workspace has enough data for cohort, RFM, and opportunity review.':
+    'Workspace นี้มีข้อมูลพอสำหรับตรวจ cohort, RFM และ opportunity',
+  'Upload or sync the next CSV.': 'อัปโหลดหรือ sync CSV ชุดถัดไป',
+  'Review win-back queue': 'ตรวจคิวดึงลูกค้ากลับ',
+  'Open stale customers sorted by last order.': 'เปิดลูกค้าที่ห่างไปแล้วโดยเรียงจากออเดอร์ล่าสุด',
+  'Check VAT and income': 'ตรวจ VAT และรายได้',
+  'Review tax estimate and CSV sync settings.': 'ตรวจค่าประมาณภาษีและการตั้งค่า CSV sync',
+  'Apply threshold': 'ใช้เกณฑ์นี้',
+  'Enter a VIP spend threshold of 0 or more.': 'ใส่ยอดขั้นต่ำ VIP ตั้งแต่ 0 ขึ้นไป',
+  'VIP threshold applied to this session.': 'ใช้เกณฑ์ VIP กับ session นี้แล้ว',
+  'VIP threshold was not updated.': 'ยังไม่ได้อัปเดตเกณฑ์ VIP',
+  'Current VIP': 'VIP ปัจจุบัน',
+  'Preview VIP': 'Preview VIP',
+  'Current threshold': 'เกณฑ์ปัจจุบัน',
+  Invalid: 'ไม่ถูกต้อง',
+  'using active status': 'ตามสถานะที่ใช้อยู่',
+  'if this threshold is applied': 'ถ้าใช้เกณฑ์นี้',
+  'used for new imports': 'ใช้กับการนำเข้ารอบใหม่',
+  '1 order': '1 ออเดอร์',
+  '2+ orders': '2 ออเดอร์ขึ้นไป',
+  '3+ orders and spend threshold': '3 ออเดอร์ขึ้นไปและยอดถึงเกณฑ์',
+  'No purchase in 30 days': 'ไม่ซื้อใน 30 วัน',
+  'No purchase in 90 days': 'ไม่ซื้อใน 90 วัน',
+  'Safe workspace operations': 'การจัดการ workspace แบบปลอดภัย',
+  'Use these controls only when you mean to change workspace data.':
+    'ใช้ control เหล่านี้เฉพาะเมื่อคุณตั้งใจเปลี่ยนข้อมูล workspace',
+  'Open admin diagnostics': 'เปิด admin diagnostics',
+  'Check tenant, billing, ingestion failures, and audit activity.':
+    'ตรวจ tenant, billing, ingestion failure และ audit activity',
+  'Open operating guide': 'เปิดคู่มือการใช้งาน',
+  'Follow the shortest setup path for a real merchant workspace.':
+    'ทำตามเส้นทาง setup ที่สั้นที่สุดสำหรับ workspace ร้านค้าจริง',
+  'Review retention analytics': 'ตรวจ retention analytics',
+  'Use cohorts, RFM, products, and opportunities after import.':
+    'ใช้ cohort, RFM, สินค้า และ opportunity หลังนำเข้า',
+  'Data reset': 'Reset ข้อมูล',
+  'Clearing removes imported customers, orders, and import history from this workspace.':
+    'การล้างข้อมูลจะลบลูกค้า ออเดอร์ และประวัติ import ที่นำเข้าใน workspace นี้',
   'Data reset confirmation': 'ยืนยันการ reset ข้อมูล',
   'Workspace data was not cleared. Check the confirmation text and try again.':
     'ยังไม่ได้ล้างข้อมูล workspace ตรวจข้อความยืนยันแล้วลองอีกครั้ง',
@@ -160,6 +237,7 @@ const thaiCopy: Record<string, string> = {
 
   Shopee: 'Shopee',
   'TikTok Shop': 'TikTok Shop',
+  Lazada: 'Lazada',
   Instagram: 'Instagram',
   Facebook: 'Facebook',
   Website: 'เว็บไซต์',
@@ -345,18 +423,28 @@ const thaiCopy: Record<string, string> = {
   'No follow-up reminders due.': 'ยังไม่มีรายการ follow-up ที่ถึงเวลา',
 
   'Upload order CSV': 'อัปโหลด CSV ออเดอร์',
+  'Upload marketplace order file': 'อัปโหลดไฟล์ออเดอร์ marketplace',
+  'Upload order files from Shopee, TikTok, Lazada, or CSV. RepeatTree cleans the file before building repeat-customer intelligence.':
+    'อัปโหลดไฟล์ออเดอร์จาก Shopee, TikTok, Lazada หรือ CSV แล้ว RepeatTree จะ clean ไฟล์ก่อนสร้างข้อมูลลูกค้าซื้อซ้ำ',
   'Drop one real shop export to build profiles, repeat paths, income, and calendar timing.':
     'วางไฟล์ export ร้านจริงหนึ่งไฟล์เพื่อสร้างโปรไฟล์ เส้นทางซื้อซ้ำ รายได้ และจังหวะปฏิทิน',
   'Choose CSV': 'เลือก CSV',
+  'Choose CSV or XLSX': 'เลือก CSV หรือ XLSX',
+  'Import source': 'แหล่งนำเข้า',
   'Try sample CSVs': 'ลอง CSV ตัวอย่าง',
+  'Try platform templates': 'ลอง template ตามแพลตฟอร์ม',
   'Use these merchant-style files only for local validation before connecting native commerce integrations.':
     'ใช้ไฟล์สไตล์ร้านค้าเหล่านี้เพื่อ validate ในเครื่องก่อนต่อ native commerce integrations',
+  'Start with a marketplace preset, then upload the real export without editing columns first.':
+    'เริ่มจาก preset ของ marketplace แล้วอัปโหลด export จริงโดยไม่ต้องแก้ column ก่อน',
   'Fallback import': 'Fallback import',
   'Try sample': 'ลองตัวอย่าง',
   Download: 'ดาวน์โหลด',
   'Column mapping': 'จับคู่คอลัมน์',
   'Map your CSV columns before confirming import. Required: order ID, customer name, order date, and total amount.':
     'จับคู่คอลัมน์ CSV ก่อนยืนยัน import ช่องบังคับคือ order ID, ชื่อลูกค้า, วันที่ออเดอร์ และยอดรวม',
+  'RepeatTree auto-maps known marketplace columns. Review only the fields that look wrong.':
+    'RepeatTree map column marketplace ที่รู้จักให้อัตโนมัติ ตรวจเฉพาะ field ที่ดูผิด',
   'Source channel': 'ช่องทางต้นทาง',
   'Not mapped': 'ยังไม่จับคู่',
   'Identity matching reminder': 'เตือนเรื่องการจับคู่ตัวตน',
@@ -369,6 +457,15 @@ const thaiCopy: Record<string, string> = {
     'ยังไม่มีแถว valid ให้ preview แก้ mapping ที่จำเป็นหรือ error ในแถวก่อน',
   'Real data readiness': 'ความพร้อมของข้อมูลจริง',
   'Import status': 'สถานะ import',
+  'Supported uploads: CSV and XLSX. PDF is accepted only as a preview warning because report PDFs are not raw order data.':
+    'รองรับ CSV และ XLSX ส่วน PDF รับไว้เพื่อแจ้งเตือนเท่านั้น เพราะ PDF report ไม่ใช่ raw order data',
+  'Waiting for order file': 'รอไฟล์ออเดอร์',
+  'PDF preview only. Upload CSV or XLSX order data for repeat-customer analysis.':
+    'PDF เป็น preview เท่านั้น อัปโหลด CSV หรือ XLSX order data เพื่อวิเคราะห์ลูกค้าซื้อซ้ำ',
+  'Import blocked. Upload CSV or XLSX order data.': 'Import ถูกบล็อก อัปโหลด CSV หรือ XLSX order data',
+  'Unsupported file type. Upload CSV, XLSX, or PDF preview files.':
+    'ชนิดไฟล์ไม่รองรับ อัปโหลด CSV, XLSX หรือ PDF สำหรับ preview',
+  'Could not read this order file.': 'อ่านไฟล์ออเดอร์นี้ไม่ได้',
   'Good CSV headers:': 'หัวคอลัมน์ CSV ที่ดี:',
   'Import history': 'ประวัติ import',
   'Loading import history.': 'กำลังโหลดประวัติ import',
@@ -684,11 +781,14 @@ const thaiCopy: Record<string, string> = {
   'fuzzyName': 'ชื่อใกล้เคียง',
   'Shopee sample': 'ตัวอย่าง Shopee',
   'TikTok Shop sample': 'ตัวอย่าง TikTok Shop',
+  'Lazada sample': 'ตัวอย่าง Lazada',
   'Custom CSV sample': 'ตัวอย่าง Custom CSV',
   'Marketplace-style exports with repeated phone numbers across later social orders.':
     'Export สไตล์ marketplace ที่มีเบอร์โทรซ้ำในออเดอร์ social ภายหลัง',
   'TikTok buyers who repurchase through TikTok and later website checkout.':
     'ผู้ซื้อ TikTok ที่ซื้อซ้ำผ่าน TikTok และภายหลังผ่าน website checkout',
+  'Lazada-style orders with buyer, phone, SKU, fees, and repeat purchase fields.':
+    'ออเดอร์สไตล์ Lazada ที่มีผู้ซื้อ เบอร์โทร SKU ค่าธรรมเนียม และข้อมูลซื้อซ้ำ',
   'Generic CSV for Instagram, Facebook, website, or offline order sheets.':
     'CSV ทั่วไปสำหรับ Instagram, Facebook, website หรือ sheet ออเดอร์ offline',
   'Preparing revenue, VAT, and sync tools.': 'กำลังเตรียมรายได้ VAT และเครื่องมือ sync',

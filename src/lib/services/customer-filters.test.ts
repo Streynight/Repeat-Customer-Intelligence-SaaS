@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   buildCustomersHref,
   customerMatchesProduct,
@@ -10,6 +10,15 @@ import {
 import type { CustomerProfile, OrderRecord, SourceChannel } from '@/lib/types'
 
 describe('customer filters', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-20T00:00:00.000Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   const customers = [
     customer('repeat-shopee', 'Mali Wong', 'Repeat', 3200, [
       order('m-1', 'shopee', '2026-01-01', 1000),

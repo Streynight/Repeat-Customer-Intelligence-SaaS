@@ -64,6 +64,7 @@ export async function loadDatasetForStore(
       taxRate: Number(o.taxRate),
       taxIncluded: o.taxIncluded,
       items: o.items.map((item) => ({
+        sku: item.sku ?? undefined,
         productName: item.productName,
         quantity: item.quantity,
         unitPrice: Number(item.unitPrice),
@@ -126,6 +127,7 @@ export async function persistImportForStore(storeId: string, dataset: Intelligen
       customer.orders.flatMap((order) =>
         order.items.map((item) => ({
           orderId: orderIdForStore(storeId, order),
+          sku: item.sku ?? null,
           productName: item.productName,
           quantity: item.quantity,
           unitPrice: item.unitPrice,

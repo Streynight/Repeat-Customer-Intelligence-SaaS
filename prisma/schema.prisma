@@ -227,6 +227,7 @@ model Order {
 model OrderItem {
   id          String  @id @default(uuid())
   orderId     String  @map("order_id")
+  sku         String?
   productName String  @map("product_name")
   quantity    Int
   unitPrice   Decimal @map("unit_price") @db.Decimal(12, 2)
@@ -523,6 +524,7 @@ model AutomationEvent {
 enum SourceChannel {
   shopee
   tiktok
+  lazada
   instagram
   facebook
   website
