@@ -11,22 +11,22 @@ import { useText } from '@/lib/i18n'
 
 const workflow = [
   {
+    step: '1',
     title: 'Upload order files',
     body: 'Use Shopee, TikTok, Lazada, CSV, or XLSX exports without rebuilding the sheet.',
     icon: Upload,
-    href: '/imports',
   },
   {
+    step: '2',
     title: 'Clean customer data',
     body: 'Map messy columns and merge buyers by email, phone, LINE ID, and channel identity.',
     icon: Users,
-    href: '/customers',
   },
   {
+    step: '3',
     title: 'Act on repeat buyers',
     body: 'Find VIP, second-purchase, and win-back queues your team can work this week.',
     icon: Repeat2,
-    href: '/dashboard',
   },
 ]
 
@@ -71,13 +71,13 @@ export default function Home() {
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <Button asChild size="lg">
-              <Link href="/signup">
-                {t('Start with real data')}
+              <Link href="/billing/checkout?plan=growth">
+                {t('Start 7-day Growth trial')}
                 <ArrowRight size={17} />
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <Link href="/pricing">{t('View pricing')}</Link>
+              <Link href="/pricing">{t('Compare plans')}</Link>
             </Button>
           </div>
           <div className="mt-8 grid gap-2 sm:grid-cols-2">
@@ -96,22 +96,21 @@ export default function Home() {
       <section className="border-y border-border bg-card/70">
         <div className="mx-auto grid max-w-7xl gap-3 px-5 py-5 md:grid-cols-3 lg:px-8">
           {workflow.map((item) => (
-            <Link
+            <div
               key={item.title}
-              href={item.href}
-              className="group rounded-lg border border-border bg-card p-4 transition hover:border-primary/35 hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/45"
+              className="rounded-lg border border-border bg-card p-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <span className="grid size-9 place-items-center rounded-lg bg-primary/10 text-primary">
+                  <span className="grid size-9 place-items-center rounded-lg bg-primary/10 text-primary" aria-hidden="true">
                     <item.icon size={18} />
                   </span>
                   <h2 className="mt-3 font-semibold">{t(item.title)}</h2>
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">{t(item.body)}</p>
                 </div>
-                <ArrowRight className="size-4 text-muted-foreground group-hover:text-primary" />
+                <Badge variant="outline">{item.step}</Badge>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       </section>
@@ -129,7 +128,7 @@ function ProductPreview() {
           <p className="text-xs font-semibold uppercase text-muted-foreground">{t('Workspace')}</p>
           <h2 className="font-semibold">{t('Retention command center')}</h2>
         </div>
-        <Badge variant="secondary">{t('No demo data')}</Badge>
+        <Badge variant="secondary">{t('Ready after import')}</Badge>
       </div>
 
       <div className="grid gap-3 p-4">
@@ -143,8 +142,8 @@ function ProductPreview() {
           <div className="rounded-lg border border-border p-4">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase text-muted-foreground">{t('Readiness path')}</p>
-                <h3 className="font-semibold">{t('Import to action')}</h3>
+                <p className="text-xs font-semibold uppercase text-muted-foreground">{t('First file setup')}</p>
+                <h3 className="font-semibold">{t('From file to buyer list')}</h3>
               </div>
               <LineChart className="size-5 text-primary" />
             </div>
@@ -156,7 +155,7 @@ function ProductPreview() {
           </div>
 
           <div className="rounded-lg border border-border p-4">
-            <p className="text-xs font-semibold uppercase text-muted-foreground">{t('Automation queue')}</p>
+            <p className="text-xs font-semibold uppercase text-muted-foreground">{t('Action queues')}</p>
             <div className="mt-3 space-y-3 text-sm">
               <PreviewQueue icon={<Database />} label={t('Repeat buyers')} status={t('List')} />
               <PreviewQueue icon={<CalendarDays />} label={t('Win-back')} status={t('Action')} />

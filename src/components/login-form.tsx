@@ -50,10 +50,10 @@ export function LoginForm({ nextPath = '/dashboard' }: { nextPath?: string }) {
           </div>
           <h1 className="mt-5 text-4xl font-semibold tracking-tight">{t('Return to your operating workspace.')}</h1>
           <p className="mt-4 max-w-md text-sm leading-6 text-muted-foreground">
-            {t('Access tenant-scoped imports, repeat revenue views, customer risk queues, and production health checks from the same workspace.')}
+            {t('Open your imports, repeat buyers, projects, and billing from one workspace.')}
           </p>
           <div className="mt-6 grid gap-3">
-            {['Tenant context is enforced', 'Health checks run against live services', 'Workspace data stays empty until imported'].map((item) => (
+            {['Use username, email, or Google', 'Your team keeps one shared workspace', 'Order data appears after import'].map((item) => (
               <div key={item} className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium">
                 <Database className="size-4 text-primary" />
                 {t(item)}
@@ -71,7 +71,7 @@ export function LoginForm({ nextPath = '/dashboard' }: { nextPath?: string }) {
           </div>
           <CardTitle className="mt-4 text-2xl font-semibold">{t('Sign in')}</CardTitle>
           <CardDescription className="leading-6">
-            {t('Use your username or email and password, or continue with Google.')}
+            {t('Use username, email, or Google to get back to your workspace.')}
           </CardDescription>
         </CardHeader>
 

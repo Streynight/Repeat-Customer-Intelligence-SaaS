@@ -70,8 +70,10 @@ const thaiCopy: Record<string, string> = {
   Login: 'เข้าสู่ระบบ',
   'Open workspace': 'เปิด workspace',
   'Start with real data': 'เริ่มด้วยข้อมูลจริง',
+  'Start 7-day Growth trial': 'เริ่มทดลอง Growth 7 วัน',
   Pricing: 'ราคา',
   'View pricing': 'ดูราคา',
+  'Compare plans': 'เปรียบเทียบแพ็กเกจ',
   'Self-serve pricing': 'ราคาแบบสมัครเอง',
   'Turn repeat customer data into paid work.': 'เปลี่ยนข้อมูลลูกค้าซื้อซ้ำให้กลายเป็นงานที่ลูกค้ายอมจ่าย',
   'Customers can choose a plan, create an account, and enter Stripe checkout without a sales call.':
@@ -134,6 +136,7 @@ const thaiCopy: Record<string, string> = {
   Workspace: 'Workspace',
   'Retention command center': 'ศูนย์ควบคุม retention',
   'No demo data': 'ไม่มีข้อมูล demo',
+  'Ready after import': 'พร้อมหลังนำเข้าไฟล์',
   'Repeat revenue': 'รายได้ซื้อซ้ำ',
   '0 until import': '0 จนกว่าจะนำเข้า',
   'Repeat rate': 'อัตราซื้อซ้ำ',
@@ -142,6 +145,8 @@ const thaiCopy: Record<string, string> = {
   Tracked: 'ติดตามแล้ว',
   'Readiness path': 'เส้นทางความพร้อม',
   'Import to action': 'จาก import สู่ action',
+  'First file setup': 'ตั้งค่าไฟล์แรก',
+  'From file to buyer list': 'จากไฟล์สู่รายชื่อลูกค้า',
   'CSV validation': 'ตรวจ CSV',
   'Import file': 'ไฟล์นำเข้า',
   Ready: 'พร้อม',
@@ -154,6 +159,7 @@ const thaiCopy: Record<string, string> = {
   'Buyer queues': 'คิวลูกค้า',
   Queued: 'เข้าคิวแล้ว',
   'Automation queue': 'คิว automation',
+  'Action queues': 'คิวที่ต้องทำต่อ',
   'CSV sync': 'CSV sync',
   'Win-back': 'ดึงลูกค้ากลับ',
   Event: 'Event',
@@ -167,11 +173,18 @@ const thaiCopy: Record<string, string> = {
   'Return to your operating workspace.': 'กลับเข้าสู่ workspace ที่ใช้ดูแลธุรกิจ',
   'Access tenant-scoped imports, repeat revenue views, customer risk queues, and production health checks from the same workspace.':
     'เข้าถึงการนำเข้าข้อมูลที่แยกตาม tenant, มุมมองรายได้ซื้อซ้ำ, คิวลูกค้าเสี่ยงหาย และ production health checks ในที่เดียว',
+  'Open your imports, repeat buyers, projects, and billing from one workspace.':
+    'เปิดไฟล์นำเข้า ลูกค้าซื้อซ้ำ โปรเจกต์ และ billing ได้จาก workspace เดียว',
   'Tenant context is enforced': 'บังคับใช้ tenant context',
   'Health checks run against live services': 'Health checks ตรวจ service จริง',
   'Workspace data stays empty until imported': 'Workspace จะว่างจนกว่าจะนำเข้าข้อมูล',
+  'Use username, email, or Google': 'ใช้ username, email หรือ Google',
+  'Your team keeps one shared workspace': 'ทีมของคุณใช้ workspace เดียวร่วมกัน',
+  'Order data appears after import': 'ข้อมูลออเดอร์จะแสดงหลังนำเข้าไฟล์',
   'Use your username or email and password, or continue with Google.':
     'ใช้ username หรือ email พร้อมรหัสผ่าน หรือเข้าสู่ระบบด้วย Google',
+  'Use username, email, or Google to get back to your workspace.':
+    'ใช้ username, email หรือ Google เพื่อกลับเข้า workspace ของคุณ',
   'Username or email': 'Username หรือ email',
   Password: 'รหัสผ่าน',
   'Your password': 'รหัสผ่านของคุณ',
@@ -184,12 +197,18 @@ const thaiCopy: Record<string, string> = {
   'Create a clean revenue workspace.': 'สร้าง workspace รายได้ที่สะอาด',
   'New accounts start without demo revenue. Your dashboard, customer profiles, and automation queues appear after you import real orders.':
     'บัญชีใหม่เริ่มโดยไม่มีรายได้ demo แดชบอร์ด โปรไฟล์ลูกค้า และคิว automation จะปรากฏหลังนำเข้าออเดอร์จริง',
+  'Create your workspace, then upload one real order file to see repeat buyers and customer queues.':
+    'สร้าง workspace แล้วอัปโหลดไฟล์ออเดอร์จริงหนึ่งไฟล์ เพื่อดูรายชื่อลูกค้าซื้อซ้ำและคิวลูกค้า',
+  'CSV/XLSX import first': 'เริ่มจากไฟล์ CSV/XLSX',
   'No fake customer records': 'ไม่มีข้อมูลลูกค้าปลอม',
   'Tenant-scoped workspace by default': 'workspace แยกตาม tenant ตั้งแต่เริ่ม',
   'Production services checked before use': 'ตรวจ service production ก่อนใช้งาน',
+  'Invite teammates later': 'ชวนทีมเพิ่มได้ภายหลัง',
   'Create your RepeatTree account': 'สร้างบัญชี RepeatTree',
   'Sign up with a username and password, or continue with Google.':
     'สมัครด้วย username และรหัสผ่าน หรือดำเนินการต่อด้วย Google',
+  'Use email and password, or continue with Google. You can upload files after signup.':
+    'ใช้อีเมลและรหัสผ่าน หรือดำเนินการต่อด้วย Google แล้วอัปโหลดไฟล์ได้หลังสมัคร',
   Username: 'Username',
   Email: 'Email',
   'Confirm password': 'ยืนยันรหัสผ่าน',
@@ -198,6 +217,7 @@ const thaiCopy: Record<string, string> = {
   'Creating account...': 'กำลังสร้างบัญชี...',
   'Already have an account?': 'มีบัญชีอยู่แล้ว?',
   'Preview empty workspace': 'ดูตัวอย่าง workspace ว่าง',
+  'Compare plans first': 'ดูแพ็กเกจก่อน',
   'Passwords do not match.': 'รหัสผ่านไม่ตรงกัน',
 
   Rules: 'กฎ',

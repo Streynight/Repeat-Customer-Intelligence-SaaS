@@ -62,10 +62,10 @@ export function SignupForm({ nextPath = '/dashboard' }: { nextPath?: string }) {
           </div>
           <h1 className="mt-5 text-4xl font-semibold tracking-tight">{t('Create a clean revenue workspace.')}</h1>
           <p className="mt-4 max-w-md text-sm leading-6 text-muted-foreground">
-            {t('New accounts start without demo revenue. Your dashboard, customer profiles, and automation queues appear after you import real orders.')}
+            {t('Create your workspace, then upload one real order file to see repeat buyers and customer queues.')}
           </p>
           <div className="mt-6 grid gap-3">
-            {['No fake customer records', 'Tenant-scoped workspace by default', 'Production services checked before use'].map((item) => (
+            {['CSV/XLSX import first', 'No fake customer records', 'Invite teammates later'].map((item) => (
               <div key={item} className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium">
                 <CheckCircle2 className="size-4 text-primary" />
                 {t(item)}
@@ -83,7 +83,7 @@ export function SignupForm({ nextPath = '/dashboard' }: { nextPath?: string }) {
           </div>
           <CardTitle className="mt-4 text-2xl font-semibold">{t('Create your RepeatTree account')}</CardTitle>
           <CardDescription className="leading-6">
-            {t('Sign up with a username and password, or continue with Google.')}
+            {t('Use email and password, or continue with Google. You can upload files after signup.')}
           </CardDescription>
         </CardHeader>
 
@@ -176,8 +176,8 @@ export function SignupForm({ nextPath = '/dashboard' }: { nextPath?: string }) {
           </Link>
         </p>
 
-        <Link href="/dashboard" className="mt-4 block text-center text-sm font-bold text-muted-foreground hover:text-foreground">
-          {t('Preview empty workspace')}
+        <Link href="/pricing" className="mt-4 block text-center text-sm font-bold text-muted-foreground hover:text-foreground">
+          {t('Compare plans first')}
         </Link>
         </CardContent>
       </Card>
