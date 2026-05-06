@@ -11,26 +11,26 @@ import { useText } from '@/lib/i18n'
 
 const workflow = [
   {
-    title: 'Import orders',
-    body: 'CSV today, native integrations as each channel is ready.',
+    title: 'Upload order files',
+    body: 'Use Shopee, TikTok, Lazada, CSV, or XLSX exports without rebuilding the sheet.',
     icon: Upload,
     href: '/imports',
   },
   {
-    title: 'Resolve customers',
-    body: 'Merge email, phone, LINE ID, and channel identity signals.',
+    title: 'Clean customer data',
+    body: 'Map messy columns and merge buyers by email, phone, LINE ID, and channel identity.',
     icon: Users,
     href: '/customers',
   },
   {
-    title: 'Act on repeat value',
-    body: 'Prioritize VIP protection, second purchase, and win-back work.',
+    title: 'Act on repeat buyers',
+    body: 'Find VIP, second-purchase, and win-back queues your team can work this week.',
     icon: Repeat2,
     href: '/dashboard',
   },
 ]
 
-const checks = ['Tenant-scoped imports', 'Billing-aware usage', 'Retry-safe jobs', 'Health checks live']
+const checks = ['CSV/XLSX marketplace files', 'Auto column mapping', 'Repeat buyer lists', 'Team access control']
 
 export default function Home() {
   const t = useText()
@@ -61,13 +61,13 @@ export default function Home() {
       <section className="mx-auto grid max-w-7xl gap-8 px-5 py-10 lg:grid-cols-[1fr_520px] lg:px-8 lg:py-14">
         <div className="flex flex-col justify-center">
           <Badge variant="secondary" className="w-fit border-primary/20 bg-primary/10 text-primary">
-            {t('Operator-grade retention SaaS')}
+            {t('Marketplace order intelligence')}
           </Badge>
           <h1 className="mt-5 max-w-3xl text-4xl font-semibold tracking-tight text-foreground md:text-6xl">
             {t('Repeat Customer Intelligence')}
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
-            {t('A production workspace for merchants who need retained revenue, channel quality, customer risk, and automation readiness from real order data.')}
+            {t('Upload messy marketplace order exports. RepeatTree cleans the file, matches customers, and shows who is ready to buy again.')}
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <Button asChild size="lg">
@@ -149,18 +149,18 @@ function ProductPreview() {
               <LineChart className="size-5 text-primary" />
             </div>
             <div className="space-y-3">
-              <PreviewBar label={t('CSV validation')} value={t('Ready')} width="92%" className="bg-primary" />
-              <PreviewBar label={t('Customer resolution')} value={t('Scoped')} width="72%" className="bg-cyan-500" />
-              <PreviewBar label={t('Automation events')} value={t('Queued')} width="58%" className="bg-violet-500" />
+              <PreviewBar label={t('Import file')} value={t('Mapped')} width="92%" className="bg-primary" />
+              <PreviewBar label={t('Customer match')} value={t('Merged')} width="72%" className="bg-cyan-500" />
+              <PreviewBar label={t('Buyer queues')} value={t('Ready')} width="58%" className="bg-violet-500" />
             </div>
           </div>
 
           <div className="rounded-lg border border-border p-4">
             <p className="text-xs font-semibold uppercase text-muted-foreground">{t('Automation queue')}</p>
             <div className="mt-3 space-y-3 text-sm">
-              <PreviewQueue icon={<Database />} label={t('CSV sync')} status={t('Tenant')} />
-              <PreviewQueue icon={<CalendarDays />} label={t('Win-back')} status={t('Event')} />
-              <PreviewQueue icon={<Users />} label={t('VIP review')} status={t('Rule')} />
+              <PreviewQueue icon={<Database />} label={t('Repeat buyers')} status={t('List')} />
+              <PreviewQueue icon={<CalendarDays />} label={t('Win-back')} status={t('Action')} />
+              <PreviewQueue icon={<Users />} label={t('VIP customers')} status={t('Priority')} />
             </div>
           </div>
         </div>
