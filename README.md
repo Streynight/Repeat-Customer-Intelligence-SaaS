@@ -1,88 +1,113 @@
-# RepeatTree: Customer Revenue Intelligence SaaS
+# RepeatTree
 
-RepeatTree is a production-grade Customer Revenue Intelligence platform for ecommerce operators. It is designed to help teams understand repeat purchase behavior, retention, LTV, channel quality, churn risk, lifecycle opportunities, and the actions that increase repeat revenue.
+**Customer Revenue Intelligence for ecommerce operators in Southeast Asia.**
 
-This is not a CSV-first MVP or a demo dashboard. CSV import remains available only as a fallback ingestion path. The production architecture is multi-tenant, database-backed, observable, billable, and built for native ecommerce integrations.
+RepeatTree helps Shopify, TikTok Shop, Shopee, and Lazada merchants understand who buys repeatedly, who is about to churn, and which actions move revenue — powered by Claude AI and built on a production-grade multi-tenant SaaS architecture.
 
-## Product Direction
+> Built solo in 4 days · 39 commits · TypeScript strict · production-ready infrastructure
 
-RepeatTree is a revenue operating system for ecommerce businesses. It must support:
+---
 
-- organizations, workspaces, team memberships, RBAC, and audit logs
-- secure tenant isolation derived from the authenticated server session
-- subscription billing, plan limits, and usage controls
-- native integrations for Shopify, WooCommerce, Stripe, Meta Ads, Google Ads, TikTok Shop, Shopee, and Lazada
-- ingestion jobs, raw event capture, normalized orders, identity resolution, metric snapshots, cohort metrics, channel attribution, segments, recommendations, and automation events
-- churn alerts, win-back triggers, repeat purchase reminders, VIP detection, revenue anomaly alerts, and operator-grade AI insights
+## What it does
 
-## Required Stack
+| Feature | Description |
+|---|---|
+| **Retention analytics** | MRR waterfall, NRR/GRR, cohort retention grids by month |
+| **RFM segmentation** | Champion, Loyal, At-Risk, Lost — recomputed on every sync |
+| **AI operator insights** | Streaming Claude-powered recommendations based on live workspace metrics |
+| **Lifecycle automation** | Churn alerts, win-back triggers, VIP protection, second-purchase nudges |
+| **Shopify integration** | Full sync, incremental sync, webhook-driven real-time ingestion |
+| **Marketplace imports** | Shopee, TikTok Shop, Lazada CSV/XLSX with auto column mapping |
+| **Multi-tenant SaaS** | Organizations, workspaces, RBAC, audit logs, Stripe billing |
+| **Localization** | English + Thai (ภาษาไทย) |
 
-- Next.js App Router
-- TypeScript
-- Supabase Auth
-- Supabase Postgres
-- Prisma
-- Redis / Upstash
-- Inngest
-- Stripe
-- Resend
-- PostHog
-- Sentry
+---
 
-## Local Setup
+## Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 16 App Router, React 19, Tailwind CSS v4, shadcn/ui |
+| Language | TypeScript (strict mode, zero `any`) |
+| Database | Supabase Postgres + Prisma ORM (771-line schema) |
+| Auth | Supabase Auth — server session only, never client-side |
+| Background jobs | Inngest — event-driven, step functions, retry-safe |
+| Cache / locks | Upstash Redis — rate limiting, idempotency, distributed locks |
+| Billing | Stripe — subscriptions, free trials, plan limits |
+| AI | Anthropic Claude API — streaming responses, prompt caching |
+| Email | Resend |
+| Analytics | PostHog |
+| Errors | Sentry |
+| Deployment | Vercel |
+
+---
+
+## Architecture
+
+### Tenant isolation
+Every database query is scoped to `organizationId` or `workspaceId`, enforced at the service layer — not at the route level. `TenantContext` is derived from the Supabase server session. Client-side session is never trusted.
+
+### Event-driven background jobs
+Long-running work (metric recomputation, Shopify syncs, automation event dispatch) runs as Inngest step functions. Each job records an `IngestionJob` before processing — safe to retry, safe to replay.
+
+### Distributed locking
+Metric recompute jobs acquire a Redis lock before execution. Concurrent webhook events cannot trigger duplicate pipeline runs.
+
+### Billing-gated features
+Feature access checks `BillingSubscription` before execution. Plan limits are enforced server-side — never just hidden in the UI.
+
+### AI insights
+`src/lib/ai/operator-insights.ts` maps live workspace metrics (RFM distribution, repeat rate, revenue at risk) to actionable Claude-generated recommendations. Streamed to the client with Anthropic's streaming API and prompt caching.
+
+---
+
+## Data model (key entities)
+
+```
+Organization → Workspace → Store
+                        → IntegrationConnection (Shopify, etc.)
+                        → NormalizedOrder → CustomerIdentity
+                        → CustomerMetricSnapshot (RFM, LTV, churn score)
+                        → CohortMetric
+                        → Segment → AutomationRule → AutomationEvent
+                        → Recommendation
+Organization → BillingSubscription (Stripe)
+Organization → Membership (RBAC) → AuditLog
+```
+
+---
+
+## Local setup
 
 ```bash
 npm install
 cp .env.example .env.local
-npm run prisma:generate
 npm run dev
 ```
 
-Protected product routes require Supabase configuration unless explicit local demo mode is enabled:
+For local dev without Supabase:
 
 ```env
 ALLOW_LOCAL_DEMO_MODE=true
 NEXT_PUBLIC_ALLOW_LOCAL_DEMO_MODE=true
 ```
 
-Do not enable local demo mode in production.
-
-## Production Environment
-
-Fill `.env.local` or Vercel environment variables for:
-
-- Supabase Auth and Postgres: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `DATABASE_URL`, `DIRECT_URL`
-- Jobs and webhooks: `CRON_SECRET`, `INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY`, `INTEGRATION_WEBHOOK_SECRET`
-- Platform services: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`, `POSTHOG_KEY`, `SENTRY_DSN`
-- Stripe plans: `STRIPE_PRICE_STARTER`, `STRIPE_PRICE_GROWTH`, `STRIPE_PRICE_SCALE`
-
-Production health must fail if `ALLOW_LOCAL_DEMO_MODE` or `NEXT_PUBLIC_ALLOW_LOCAL_DEMO_MODE` is enabled for a non-localhost `NEXT_PUBLIC_APP_URL`. Demo mode is only a local development fallback, never production truth.
-
-## Current Architecture
-
-Core production foundations now live in:
-
-- `prisma/schema.prisma`: organizations, workspaces, memberships, billing, integrations, ingestion, identity, metrics, recommendations, automation, and audit logs
-- `src/lib/tenancy.ts`: server-derived `TenantContext`
-- `src/lib/rbac.ts`: role and permission model
-- `src/lib/server/dataset-store.ts`: database dataset persistence boundary
-- `src/inngest/*` and `src/app/api/inngest/route.ts`: background job entrypoint
-- `src/app/api/billing/stripe/route.ts`: Stripe webhook sync
-- `src/app/api/integrations/[provider]/webhook/route.ts`: native integration webhook contract
-- `src/app/admin/page.tsx`: read-only operational diagnostics
+---
 
 ## Verification
-
-Use this baseline before shipping changes:
 
 ```bash
 npm run release:verify
 ```
 
-The release verifier includes `npm run architecture:check`, which blocks regressions where API routes call server actions for background work, lib/service code depends on app actions, billing reservations lose release handling, or lifecycle automation loses idempotency guards.
+Runs TypeScript strict check, architecture boundary validation, and production health checks.
+See `docs/production-migration-runbook.md` for full deploy steps.
 
-For code-only checks before production secrets are configured, run `npm run release:verify:code`. Production promotion still requires `npm run health:env` and `npm run health:live` to pass against real environment variables.
+---
 
-For live database changes, use expand/backfill/contract migrations. Do not force destructive Prisma pushes against production data.
+## Built by
 
-Production migration and deploy verification steps live in `docs/production-migration-runbook.md`.
+**Streynight** — self-taught AI/ML engineer with a background in Culinary Arts & Design.
+Building at the intersection of AI, product, and Southeast Asian ecommerce.
+
+→ [github.com/Streynight](https://github.com/Streynight)
